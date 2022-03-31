@@ -1,0 +1,41 @@
+diff --git a/src/cpp/CMakeLists.txt b/src/cpp/CMakeLists.txt
+index 22b866b..50cb4c6 100644
+--- a/src/cpp/CMakeLists.txt
++++ b/src/cpp/CMakeLists.txt
+@@ -224,13 +224,6 @@ endif()
+ 
+ include_directories(SYSTEM "${YAML_CPP_INCLUDE_DIR}")
+ 
+-# determine whether we should statically link boost. we always do this
+-# unless we are building a non-packaged build on linux (in which case
+-# boost dynamic libraries are presumed to be installed on the system ldpath)
+-if(APPLE OR WIN32 OR RSTUDIO_PACKAGE_BUILD)
+-   set(Boost_USE_STATIC_LIBS ON)
+-endif()
+-
+ # default Boost versions
+ if(NOT RSTUDIO_BOOST_REQUESTED_VERSION)
+    set(RSTUDIO_BOOST_REQUESTED_VERSION 1.78.0)
+diff --git a/src/cpp/desktop/CMakeLists.txt b/src/cpp/desktop/CMakeLists.txt
+index a316b32..8173f65 100644
+--- a/src/cpp/desktop/CMakeLists.txt
++++ b/src/cpp/desktop/CMakeLists.txt
+@@ -321,18 +321,6 @@ if(NOT RSTUDIO_ELECTRON)
+    endif(WIN32)
+ 
+ 
+-   # determine whether we should bundle Qt. we pretty much always want to
+-   # bundle it unless we are building on linux and NOT linking against the
+-   # qtsdk -- in that case we are linking against system versions of the
+-   # qt libraries which should therefore not be bundled
+-   if(APPLE OR WIN32 OR
+-      RSTUDIO_PACKAGE_BUILD OR
+-      (${QT_LIBRARY_DIR} MATCHES ".*QtSDK.*"))
+-
+-      set(RSTUDIO_BUNDLE_QT TRUE)
+-
+-   endif()
+-
+    set(RSTUDIO_QTMODULES
+       Qt5::Core
+       Qt5::Widgets

@@ -1,0 +1,62 @@
+diff -ruN rstudio-2022.02.0-443.orig/src/cpp/session/CMakeLists.txt rstudio-2022.02.0-443/src/cpp/session/CMakeLists.txt
+--- rstudio-2022.02.0-443.orig/src/cpp/session/CMakeLists.txt	2022-03-27 14:24:06.651028517
++++ rstudio-2022.02.0-443/src/cpp/session/CMakeLists.txt	2022-03-27 14:30:06.014535855
+@@ -37,10 +37,10 @@
+       set(RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR "${RSTUDIO_DEPENDENCIES_DIR}/dictionaries")
+    endif()
+    
+-   if(EXISTS "${RSTUDIO_TOOLS_ROOT}/mathjax-27")
+-      set(RSTUDIO_DEPENDENCIES_MATHJAX_DIR "${RSTUDIO_TOOLS_ROOT}/mathjax-27")
++   if(RSTUDIO_DEPENDENCIES_MATHJAX_DIR)
++      add_compile_definitions(RSTUDIO_DEPENDENCIES_MATHJAX_DIR="${RSTUDIO_DEPENDENCIES_MATHJAX_DIR}")
+    else()
+-      set(RSTUDIO_DEPENDENCIES_MATHJAX_DIR "${RSTUDIO_DEPENDENCIES_DIR}/mathjax-27")
++      add_compile_definitions(RSTUDIO_DEPENDENCIES_MATHJAX_DIR="${RSTUDIO_DEPENDENCIES_DIR}/mathjax-27")
+    endif()
+ 
+    if(EXISTS "${RSTUDIO_TOOLS_ROOT}/quarto")
+diff -ruN rstudio-2022.02.0-443.orig/src/cpp/session/include/session/SessionOptions.gen.hpp rstudio-2022.02.0-443/src/cpp/session/include/session/SessionOptions.gen.hpp
+--- rstudio-2022.02.0-443.orig/src/cpp/session/include/session/SessionOptions.gen.hpp	2022-02-16 14:26:03.000000000
++++ rstudio-2022.02.0-443/src/cpp/session/include/session/SessionOptions.gen.hpp	2022-03-27 14:10:28.806252984
+@@ -356,7 +356,7 @@
+       value<std::string>(&hunspellDictionariesPath_)->default_value("resources/dictionaries"),
+       "Specifies the path to hunspell dictionaries.")
+       ("external-mathjax-path",
+-      value<std::string>(&mathjaxPath_)->default_value("resources/mathjax-27"),
++      value<std::string>(&mathjaxPath_)->default_value(RSTUDIO_DEPENDENCIES_MATHJAX_DIR),
+       "Specifies the path to the mathjax library.")
+       ("external-pandoc-path",
+       value<std::string>(&pandocPath_)->default_value(kDefaultPandocPath),
+diff -ruN rstudio-2022.02.0-443.orig/src/cpp/session/modules/presentation/SlideRequestHandler.cpp rstudio-2022.02.0-443/src/cpp/session/modules/presentation/SlideRequestHandler.cpp
+--- rstudio-2022.02.0-443.orig/src/cpp/session/modules/presentation/SlideRequestHandler.cpp	2022-02-16 14:26:03.000000000
++++ rstudio-2022.02.0-443/src/cpp/session/modules/presentation/SlideRequestHandler.cpp	2022-03-27 14:17:05.307296039
+@@ -150,7 +150,7 @@
+ 
+ std::string localMathjax()
+ {
+-   return alternateMathjax("mathjax-27");
++   return alternateMathjax("RSTUDIO_DEPENDENCIES_MATHJAX_DIR");
+ }
+ 
+ std::string copiedMathjax(const FilePath& targetFile)
+diff -ruN rstudio-2022.02.0-443.orig/src/cpp/session/modules/SessionHTMLPreview.cpp rstudio-2022.02.0-443/src/cpp/session/modules/SessionHTMLPreview.cpp
+--- rstudio-2022.02.0-443.orig/src/cpp/session/modules/SessionHTMLPreview.cpp	2022-02-16 14:26:03.000000000
++++ rstudio-2022.02.0-443/src/cpp/session/modules/SessionHTMLPreview.cpp	2022-03-27 14:15:04.748803227
+@@ -789,7 +789,7 @@
+    }
+ 
+    // serve mathjax locally from this directory
+-   std::string previewMathjax = "mathjax-27";
++   std::string previewMathjax = "RSTUDIO_DEPENDENCIES_MATHJAX_DIR";
+ 
+    // replace old mathjax CDN for compatibility with R packages that still use
+    // the deprecated URL
+@@ -960,7 +960,7 @@
+    }
+ 
+    // request for mathjax file
+-   else if (boost::algorithm::starts_with(path, "mathjax-27"))
++   else if (boost::algorithm::starts_with(path, "RSTUDIO_DEPENDENCIES_MATHJAX_DIR"))
+    {
+ 
+       FilePath filePath =

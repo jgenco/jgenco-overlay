@@ -1,0 +1,39 @@
+diff -ur rstudio-2022.02.0-443/CMakeGlobals.txt rstudio-2022.02.0-443_new/CMakeGlobals.txt
+--- rstudio-2022.02.0-443/CMakeGlobals.txt	2022-03-07 16:28:53.811775074
++++ rstudio-2022.02.0-443_new/CMakeGlobals.txt	2022-03-07 16:44:20.360191625
+@@ -222,8 +222,12 @@
+    # disabled on linux aarch64
+    message(STATUS "quarto does not yet support aarch64 builds of Linux; disabling quarto")
+    set(QUARTO_ENABLED FALSE CACHE INTERNAL "")
++elseif(DEFINED QUARTO_ENABLED AND NOT QUARTO_ENABLED)
++   message(STATUS "quarto disabled")
++   set(QUARTO_ENABLED FALSE CACHE INTERNAL "")
+ else()
+    # enable by default
++   message(STATUS "quarto enabled")
+    set(QUARTO_ENABLED TRUE CACHE INTERNAL "")
+    add_definitions(-DQUARTO_ENABLED)
+ endif()
+diff -ur rstudio-2022.02.0-443/src/cpp/session/CMakeLists.txt rstudio-2022.02.0-443_new/src/cpp/session/CMakeLists.txt
+--- rstudio-2022.02.0-443/src/cpp/session/CMakeLists.txt	2022-03-07 17:04:32.662035766
++++ rstudio-2022.02.0-443_new/src/cpp/session/CMakeLists.txt	2022-03-07 17:07:36.278740242
+@@ -66,7 +66,7 @@
+ 
+ # validate our dependencies exist
+ foreach(VAR RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR
+-            RSTUDIO_DEPENDENCIES_QUARTO_DIR)
++		)
+ 
+  
+    # skip quarto if not enabled
+@@ -677,10 +677,6 @@
+          install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}/share" 
+                DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/quarto"
+                USE_SOURCE_PERMISSIONS)
+-      else()
+-         install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}"
+-               DESTINATION "${RSTUDIO_INSTALL_BIN}"
+-               USE_SOURCE_PERMISSIONS)
+       endif()
+    else()
+    endif()

@@ -1,0 +1,36 @@
+#!/sbin/openrc-run
+# Copyright 1999-2022 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+
+pidfile="/var/run/rstudio-server.pid"
+command="/usr/bin/rserver"
+command_args=""
+extra_commands="checkconfig"
+#extra_started_commands="reload"
+
+export RSTUDIO_CONFIG_DIR=/etc/rstudio/
+depend() {
+	use net
+}
+
+reload() {
+	checkconfig || return $?
+	ebegin "Reloading ${RC_SVCNAME}"
+	start-stop-daemon --signal HUP --pidfile "${pidfile}"
+	eend $?
+}
+checkconfig() {
+	${command} --test-config ${command_args}|| return $?
+}
+
+start_pre() {
+	if [ "${RC_CMD}" != "restart" ] ; then
+		checkconfig || return $?
+	fi
+}
+
+stop_pre() {
+	if [ "${RC_CMD}" = "restart" ] ; then
+		checkconfig || return $?
+	fi
+}

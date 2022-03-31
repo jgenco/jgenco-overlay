@@ -1,0 +1,108 @@
+diff --git a/CMakeGlobals.txt b/CMakeGlobals.txt
+index aac4bea..4d2f40b 100644
+--- a/CMakeGlobals.txt
++++ b/CMakeGlobals.txt
+@@ -292,6 +292,10 @@ endif()
+ 
+ message(STATUS "Using RStudio tools root: ${RSTUDIO_TOOLS_ROOT}")
+ 
++if(RSTUDIO_INSTALL_SUPPORTING)
++   add_compile_definitions(RSTUDIO_RESOURCES_DIR="${RSTUDIO_INSTALL_SUPPORTING}")
++endif()
++
+ # special install directories for apple desktop
+ if (APPLE)
+    if (RSTUDIO_ELECTRON)
+@@ -316,7 +320,9 @@ else()
+       else()
+          set(RSTUDIO_INSTALL_BIN bin)
+       endif()
+-      set(RSTUDIO_INSTALL_SUPPORTING .)
++      if(NOT RSTUDIO_INSTALL_SUPPORTING)
++         set(RSTUDIO_INSTALL_SUPPORTING .)
++      endif()
+    endif()
+ endif()
+ 
+diff --git a/src/cpp/desktop/DesktopOptions.cpp b/src/cpp/desktop/DesktopOptions.cpp
+index 26b7c57..1ebb4f2 100644
+--- a/src/cpp/desktop/DesktopOptions.cpp
++++ b/src/cpp/desktop/DesktopOptions.cpp
+@@ -443,7 +443,11 @@ FilePath Options::supportingFilePath() const
+    if (supportingFilePath_.isEmpty())
+    {
+       // default to install path
++#ifdef RSTUDIO_RESOURCES_DIR
++      core::system::installPath(RSTUDIO_RESOURCES_DIR,
++#else
+       core::system::installPath("..",
++#endif
+                                 QApplication::arguments().at(0).toUtf8(),
+                                 &supportingFilePath_);
+ 
+diff --git a/src/cpp/server/ServerOptions.cpp b/src/cpp/server/ServerOptions.cpp
+index b235e29..5819ff8 100644
+--- a/src/cpp/server/ServerOptions.cpp
++++ b/src/cpp/server/ServerOptions.cpp
+@@ -161,6 +161,15 @@ ProgramStatus Options::read(int argc,
+    }
+ #endif
+ 
++#ifdef RSTUDIO_RESOURCES_DIR
++   error = core::system::realPath(RSTUDIO_RESOURCES_DIR, &resourcePath);
++   if (error)
++   {
++      LOG_ERROR_MESSAGE("Unable to determine resource path: "+error.getSummary());
++      return ProgramStatus::exitFailure();
++   }
++   
++#endif
+    // special program offline option (based on file existence at 
+    // startup for easy bash script enable/disable of offline state)
+    serverOffline_ = FilePath("/var/lib/rstudio-server/offline").exists();
+diff --git a/src/cpp/server_core/ServerDatabase.cpp b/src/cpp/server_core/ServerDatabase.cpp
+index 0adf589..a173654 100644
+--- a/src/cpp/server_core/ServerDatabase.cpp
++++ b/src/cpp/server_core/ServerDatabase.cpp
+@@ -258,8 +258,13 @@ Error readOptions(const std::string& databaseConfigFile,
+ 
+ Error migrationsDir(FilePath* pMigrationsDir)
+ {
++#ifdef RSTUDIO_RESOURCES_DIR
++   FilePath resourcePath;
++   Error error = core::system::realPath(RSTUDIO_RESOURCES_DIR, &resourcePath);
++#else
+    FilePath exePath;
+    Error error = core::system::executablePath(nullptr, &exePath);
++#endif
+    if (error)
+       return error;
+ 
+@@ -270,7 +275,11 @@ Error migrationsDir(FilePath* pMigrationsDir)
+    if (!migrationsPathEnv.empty())
+       *pMigrationsDir = FilePath(migrationsPathEnv);
+    else
++#ifdef RSTUDIO_RESOURCES_DIR
++      *pMigrationsDir = resourcePath.completeChildPath("db");
++#else
+       *pMigrationsDir = exePath.getParent().getParent().completeChildPath("db");
++#endif
+ 
+    return Success();
+ }
+diff --git a/src/cpp/session/SessionOptions.cpp b/src/cpp/session/SessionOptions.cpp
+index d799b1c..106d4e2 100644
+--- a/src/cpp/session/SessionOptions.cpp
++++ b/src/cpp/session/SessionOptions.cpp
+@@ -87,7 +87,11 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
+    core::system::unsetenv(kMonitorSharedSecretEnvVar);
+ 
+    // compute the resource path
++#ifdef RSTUDIO_RESOURCES_DIR
++   Error error = core::system::realPath(RSTUDIO_RESOURCES_DIR, &resourcePath_);
++#else
+    Error error = core::system::installPath("..", argv[0], &resourcePath_);
++#endif
+    if (error)
+    {
+       LOG_ERROR_MESSAGE("Unable to determine install path: "+error.getSummary());

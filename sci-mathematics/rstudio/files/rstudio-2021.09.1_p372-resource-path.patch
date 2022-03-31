@@ -1,0 +1,103 @@
+diff -ur rstudio-2021.09.1-372/CMakeGlobals.txt rstudio-2021.09.1-372_new/CMakeGlobals.txt
+--- rstudio-2021.09.1-372/CMakeGlobals.txt	2021-11-08 17:04:03.000000000
++++ rstudio-2021.09.1-372_new/CMakeGlobals.txt	2021-12-31 13:44:15.455093223
+@@ -247,6 +247,10 @@
+ 
+ message(STATUS "Using RStudio tools root: ${RSTUDIO_TOOLS_ROOT}")
+ 
++if(RSTUDIO_INSTALL_SUPPORTING)
++   add_compile_definitions(RSTUDIO_RESOURCES_DIR="${RSTUDIO_INSTALL_SUPPORTING}")
++endif()
++
+ # special install directories for apple desktop
+ if (APPLE AND RSTUDIO_DESKTOP)
+    set(RSTUDIO_INSTALL_BIN RStudio.app/Contents/MacOS)
+@@ -257,7 +261,9 @@
+    else()
+      set(RSTUDIO_INSTALL_BIN bin)
+    endif()
+-   set(RSTUDIO_INSTALL_SUPPORTING .)
++   if(NOT RSTUDIO_INSTALL_SUPPORTING)
++     set(RSTUDIO_INSTALL_SUPPORTING .)
++   endif()
+ endif()
+ 
+ # if the install prefix is /usr/local then tweak as appropriate
+diff -ur rstudio-2021.09.1-372/src/cpp/desktop/DesktopOptions.cpp rstudio-2021.09.1-372_new/src/cpp/desktop/DesktopOptions.cpp
+--- rstudio-2021.09.1-372/src/cpp/desktop/DesktopOptions.cpp	2021-11-08 17:04:03.000000000
++++ rstudio-2021.09.1-372_new/src/cpp/desktop/DesktopOptions.cpp	2021-12-31 13:46:55.206096060
+@@ -443,7 +443,11 @@
+    if (supportingFilePath_.isEmpty())
+    {
+       // default to install path
++#ifdef RSTUDIO_RESOURCES_DIR
++      core::system::installPath(RSTUDIO_RESOURCES_DIR,
++#else
+       core::system::installPath("..",
++#endif
+                                 QApplication::arguments().at(0).toUtf8(),
+                                 &supportingFilePath_);
+ 
+diff -ur rstudio-2021.09.1-372/src/cpp/server/ServerOptions.cpp rstudio-2021.09.1-372_new/src/cpp/server/ServerOptions.cpp
+--- rstudio-2021.09.1-372/src/cpp/server/ServerOptions.cpp	2021-11-08 17:04:03.000000000
++++ rstudio-2021.09.1-372_new/src/cpp/server/ServerOptions.cpp	2021-12-31 14:33:00.363526835
+@@ -161,6 +161,15 @@
+    }
+ #endif
+ 
++#ifdef RSTUDIO_RESOURCES_DIR
++   error = core::system::realPath(RSTUDIO_RESOURCES_DIR, &resourcePath);
++   if (error)
++   {
++      LOG_ERROR_MESSAGE("Unable to determine resource path: "+error.getSummary());
++      return ProgramStatus::exitFailure();
++   }
++   
++#endif
+    // special program offline option (based on file existence at 
+    // startup for easy bash script enable/disable of offline state)
+    serverOffline_ = FilePath("/var/lib/rstudio-server/offline").exists();
+diff -ur rstudio-2021.09.1-372/src/cpp/server_core/ServerDatabase.cpp rstudio-2021.09.1-372_new/src/cpp/server_core/ServerDatabase.cpp
+--- rstudio-2021.09.1-372/src/cpp/server_core/ServerDatabase.cpp	2021-11-08 17:04:03.000000000
++++ rstudio-2021.09.1-372_new/src/cpp/server_core/ServerDatabase.cpp	2021-12-31 14:34:38.178303982
+@@ -258,8 +258,13 @@
+ 
+ Error migrationsDir(FilePath* pMigrationsDir)
+ {
++#ifdef RSTUDIO_RESOURCES_DIR
++   FilePath resourcePath;
++   Error error = core::system::realPath(RSTUDIO_RESOURCES_DIR, &resourcePath);
++#else
+    FilePath exePath;
+    Error error = core::system::executablePath(nullptr, &exePath);
++#endif
+    if (error)
+       return error;
+ 
+@@ -270,7 +275,11 @@
+    if (!migrationsPathEnv.empty())
+       *pMigrationsDir = FilePath(migrationsPathEnv);
+    else
++#ifdef RSTUDIO_RESOURCES_DIR
++      *pMigrationsDir = resourcePath.completeChildPath("db");
++#else
+       *pMigrationsDir = exePath.getParent().getParent().completeChildPath("db");
++#endif
+ 
+    return Success();
+ }
+diff -ur rstudio-2021.09.1-372/src/cpp/session/SessionOptions.cpp rstudio-2021.09.1-372_new/src/cpp/session/SessionOptions.cpp
+--- rstudio-2021.09.1-372/src/cpp/session/SessionOptions.cpp	2021-11-08 17:04:03.000000000
++++ rstudio-2021.09.1-372_new/src/cpp/session/SessionOptions.cpp	2021-12-31 14:29:13.916357815
+@@ -87,7 +87,11 @@
+    core::system::unsetenv(kMonitorSharedSecretEnvVar);
+ 
+    // compute the resource path
++#ifdef RSTUDIO_RESOURCES_DIR
++   Error error = core::system::realPath(RSTUDIO_RESOURCES_DIR, &resourcePath_);
++#else
+    Error error = core::system::installPath("..", argv[0], &resourcePath_);
++#endif
+    if (error)
+    {
+       LOG_ERROR_MESSAGE("Unable to determine install path: "+error.getSummary());

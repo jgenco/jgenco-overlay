@@ -1,0 +1,73 @@
+diff -ruN quarto-cli-0.9.83/src/core/dart-sass.ts quarto-cli-0.9.83.gentoo/src/core/dart-sass.ts
+--- quarto-cli-0.9.83/src/core/dart-sass.ts	2022-03-11 10:51:40.000000000
++++ quarto-cli-0.9.83.gentoo/src/core/dart-sass.ts	2022-03-20 13:58:59.392408982
+@@ -12,7 +12,7 @@
+ import { lines } from "./text.ts";
+ 
+ export function dartSassInstallDir() {
+-  return binaryPath("dart-sass");
++  return binaryPath("");
+ }
+ 
+ export async function dartSassVersion() {
+@@ -51,7 +51,7 @@
+ 
+ async function dartCommand(args: string[]) {
+   const command = Deno.build.os === "windows" ? "sass.bat" : "sass";
+-  const sass = binaryPath(join("dart-sass", command));
++  const sass = binaryPath( command);
+   const cmd = [
+     sass,
+     ...args,
+diff -ruN quarto-cli-0.9.83/src/core/devconfig.ts quarto-cli-0.9.83.gentoo/src/core/devconfig.ts
+--- quarto-cli-0.9.83/src/core/devconfig.ts	2022-03-11 10:51:40.000000000
++++ quarto-cli-0.9.83.gentoo/src/core/devconfig.ts	2022-03-20 13:12:30.315277244
+@@ -54,8 +54,7 @@
+ }
+ 
+ export function readInstalledDevConfig(): DevConfig | null {
+-  const binPath = quartoConfig.binPath();
+-  const configPath = join(binPath, "..", "config", kDevConfig);
++  const configPath = join(quartoConfig.basePath(), "package","dist", "config", kDevConfig);
+   if (existsSync(configPath)) {
+     return JSON.parse(Deno.readTextFileSync(configPath)) as DevConfig;
+   } else {
+@@ -81,13 +80,7 @@
+     }
+   };
+ 
+-  const srcScriptPath = join(
+-    quartoConfig.binPath(),
+-    "..",
+-    "..",
+-    "scripts",
+-    isWindows() ? "windows" : "common",
+-  );
++  const srcScriptPath = quartoConfig.binPath();
+   return createDevConfig(
+     readConfig("DENO"),
+     readConfig("DENO_DOM"),
+diff -ruN quarto-cli-0.9.83/src/core/quarto.ts quarto-cli-0.9.83.gentoo/src/core/quarto.ts
+--- quarto-cli-0.9.83/src/core/quarto.ts	2022-03-11 10:51:40.000000000
++++ quarto-cli-0.9.83.gentoo/src/core/quarto.ts	2022-03-20 13:02:58.607424576
+@@ -18,6 +18,7 @@
+ }
+ 
+ export const quartoConfig = {
++  basePath: () => getenv("QUARTO_BASE_PATH"),
+   binPath: () => getenv("QUARTO_BIN_PATH"),
+   sharePath: () => getenv("QUARTO_SHARE_PATH"),
+   isDebug: () => getenv("QUARTO_DEBUG", "false") === "true",
+diff -ruN quarto-cli-0.9.83/src/quarto.ts quarto-cli-0.9.83.gentoo/src/quarto.ts
+--- quarto-cli-0.9.83/src/quarto.ts	2022-03-11 10:51:40.000000000
++++ quarto-cli-0.9.83.gentoo/src/quarto.ts	2022-03-20 14:01:02.111874777
+@@ -42,8 +42,7 @@
+     const installed = readInstalledDevConfig();
+     const source = readSourceDevConfig();
+     if (installed == null || !devConfigsEqual(installed, source)) {
+-      await reconfigureQuarto(installed, source);
+-      Deno.exit(1);
++      console.log("Quarto thinks it needs reconfigured");
+     }
+   }
+ 

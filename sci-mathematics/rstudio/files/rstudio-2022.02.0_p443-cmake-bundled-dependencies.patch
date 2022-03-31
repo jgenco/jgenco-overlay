@@ -1,0 +1,37 @@
+Upstream insists on installing mathjax and pandoc using the bundled scripts. An
+error is thrown during configuration if these dependencies are not found in the
+src directory. This patch removes those checks, since we can install the
+dependencies using other means.
+
+--- a/src/cpp/session/CMakeLists.txt	2022-02-16 14:26:03.000000000
++++ b/src/cpp/session/CMakeLists.txt	2022-02-27 21:01:18.418656853
+@@ -66,8 +66,6 @@
+ 
+ # validate our dependencies exist
+ foreach(VAR RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR
+-            RSTUDIO_DEPENDENCIES_MATHJAX_DIR
+-            RSTUDIO_DEPENDENCIES_PANDOC_DIR
+             RSTUDIO_DEPENDENCIES_QUARTO_DIR)
+ 
+  
+@@ -668,10 +666,6 @@
+    install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR}"
+            DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
+ 
+-   # install mathjax for local html preview
+-   install(DIRECTORY "${RSTUDIO_DEPENDENCIES_MATHJAX_DIR}"
+-           DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
+-
+    # install quarto (or pandoc if quarto disabled)
+    if(QUARTO_ENABLED)
+       # install some quarto folders into Resources, as needed
+@@ -689,9 +683,6 @@
+                USE_SOURCE_PERMISSIONS)
+       endif()
+    else()
+-      install(DIRECTORY "${RSTUDIO_DEPENDENCIES_PANDOC_DIR}/"
+-              DESTINATION "${RSTUDIO_INSTALL_BIN}/pandoc"
+-              USE_SOURCE_PERMISSIONS)
+    endif()
+ 
+    # install embedded packages

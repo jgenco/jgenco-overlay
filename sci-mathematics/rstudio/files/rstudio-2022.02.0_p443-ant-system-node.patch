@@ -1,0 +1,34 @@
+--- a/src/gwt/build.xml	2022-02-16 14:26:03.000000000
++++ b/src/gwt/build.xml	2022-02-27 18:50:27.193810671
+@@ -84,30 +84,12 @@
+    </target>
+ 
+    <!-- panmirror typescript library -->
+-   <!-- ensure version matches RSTUDIO_NODE_VERSION -->
+-   <property name="node.version" value="14.17.5"/>
+-   <property name="node.dir" value="../../dependencies/common/node/${node.version}"/>
+-   <condition property="node.bin" value="../../../${node.dir}/bin/node">
+-     <not>
+-        <os family="windows" />
+-     </not>
+-   </condition>
+-   <condition property="node.bin" value="${node.dir}/node.exe">
+-     <os family="windows" />
+-   </condition>
+-
+-   <!-- use node from /opt/rstudio-tools if installed (typical for Docker) -->
+-   <available
+-      property="node.bin"
+-      value="/opt/rstudio-tools/dependencies/common/node/${node.version}/bin/node"
+-      file="/opt/rstudio-tools/dependencies/common/node/${node.version}/bin/node"/>
+-
+    <property name="panmirror.dir" value="./panmirror/src/editor"/>
+    <property name="panmirror.build.dir" value="./www/js/panmirror"/>
+ 
+    <target name="panmirror" description="Compile panmirror library">
+       <mkdir dir="${panmirror.build.dir}"/>
+-      <exec executable="${node.bin}" dir="${panmirror.dir}" spawn="${panmirror.spawn}">
++      <exec executable="node" dir="${panmirror.dir}" spawn="${panmirror.spawn}">
+          <arg value="fuse"/>
+          <arg value="${panmirror.target}"/>
+          <env key="NODE_PATH" path="${env.NODE_PATH}:/opt/rstudio-tools/panmirror/node_modules"/>
