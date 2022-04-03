@@ -56,7 +56,7 @@ RDEPEND="
 	net-libs/nodejs
 	sys-process/lsof
 	>=virtual/jdk-1.8:=
-	<=dev-cpp/yaml-cpp-0.7.0-r2
+	=dev-cpp/yaml-cpp-0.7.0-r2
 	headless? (
 		acct-user/rstudio-server
 		acct-group/rstudio-server

@@ -1,15 +1,7 @@
 diff -ruN v8-0.40.2.orig/build.rs v8-0.40.2/build.rs
 --- v8-0.40.2.orig/build.rs	1973-11-29 16:33:09.000000000
-+++ v8-0.40.2/build.rs	2022-03-26 17:03:28.937650823
-@@ -27,6 +27,7 @@
-     "GN_ARGS",
-     "HOST",
-     "NINJA",
-+    "NINJA_JOBS",
-     "OUT_DIR",
-     "RUSTY_V8_ARCHIVE",
-     "RUSTY_V8_MIRROR",
-@@ -575,6 +576,8 @@
++++ v8-0.40.2/build.rs	2022-03-31 23:43:47.853114219
+@@ -575,6 +575,8 @@
  fn ninja(gn_out_dir: &Path, maybe_env: Option<NinjaEnv>) -> Command {
    let cmd_string = env::var("NINJA").unwrap_or_else(|_| "ninja".to_owned());
    let mut cmd = Command::new(cmd_string);

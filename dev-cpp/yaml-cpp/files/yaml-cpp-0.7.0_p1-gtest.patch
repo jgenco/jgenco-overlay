@@ -1,0 +1,11 @@
+--- a/test/CMakeLists.txt
++++ b/test/CMakeLists.txt
+@@ -38,7 +38,7 @@
+   PRIVATE
+     Threads::Threads
+     yaml-cpp
+-    gmock)
++    GTest::gmock)
+ 
+ set_property(TARGET yaml-cpp-tests PROPERTY CXX_STANDARD_REQUIRED ON)
+ if (NOT DEFINED CMAKE_CXX_STANDARD)

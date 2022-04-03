@@ -56,7 +56,7 @@ RDEPEND="
 	net-libs/nodejs
 	sys-process/lsof
 	>=virtual/jdk-1.8:=
-	<=dev-cpp/yaml-cpp-0.7.0-r2
+	>=dev-cpp/yaml-cpp-0.7.0_p1
 	headless? (
 		acct-user/rstudio-server
 		acct-group/rstudio-server
@@ -94,11 +94,10 @@ PATCHES=(
 	"${FILESDIR}/${PN}-1.4.1717-fix-boost-version-check.patch"
 	"${FILESDIR}/${PN}-2021.09.1_p372-resource-path.patch"
 	"${FILESDIR}/${PN}-1.4.1106-server-paths.patch"
-	#"${FILESDIR}/${PN}-1.4.1106-soci-cmake-find_library.patch"
+	"${FILESDIR}/${PN}-1.4.1106-soci-cmake-find_library.patch"
 	"${FILESDIR}/${PN}-2021.09.1_p372-package-build.patch"
 	"${FILESDIR}/${PN}-2022.02.0_p443-pandoc_path_fix.patch"
 	"${FILESDIR}/${PN}-2022.02.0_p443-toggle_quarto.patch"
-	"${FILESDIR}/${PN}-2022.02.0.443-cmake-find_library.patch"
 	"${FILESDIR}/${PN}-2022.02.0_p443-mathjaxfix.patch"
 )
 

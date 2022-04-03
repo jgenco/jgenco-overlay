@@ -1,0 +1,12 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -135,7 +135,7 @@
+ 
+ # FIXME(felix2012): A more common place for the cmake export would be
+ # `CMAKE_INSTALL_LIBDIR`, as e.g. done in ubuntu or in this project for GTest
+-set(CONFIG_EXPORT_DIR "${CMAKE_INSTALL_DATADIR}/cmake/yaml-cpp")
++set(CONFIG_EXPORT_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/yaml-cpp")
+ set(EXPORT_TARGETS yaml-cpp)
+ configure_package_config_file(
+   "${PROJECT_SOURCE_DIR}/yaml-cpp-config.cmake.in"
+
