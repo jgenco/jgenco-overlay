@@ -1,0 +1,32 @@
+#!/bin/bash
+export QUARTO_BASE_PATH="_EPREFIX_/usr/share/quarto-cli"
+source $QUARTO_BASE_PATH/configuration
+export SCRIPT_PATH="_EPREFIX_/usr/bin"
+export QUARTO_BIN_PATH=$SCRIPT_PATH
+export QUARTO_DEBUG=true
+export QUARTO_SHARE_PATH="${QUARTO_BASE_PATH}/src/resources"
+
+export DENO_DOM_PLUGIN="_EPREFIX_/usr/lib64/deno-dom.so"
+export DENO_DIR="${HOME}/.cache/deno"
+QUARTO_ACTION="run"
+QUARTO_DENO_OPTIONS="--unstable --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi"
+#Kept for future
+QUARTO_DENO_EXTRA_OPTIONS=""
+QUARTO_IMPORT_ARGMAP="--importmap=${QUARTO_BASE_PATH}/src/import_map.json"
+QUARTO_TARGET="${QUARTO_BASE_PATH}/src/quarto.ts"
+
+#RSTUDIO need --paths
+if [ "$1" == "--paths" ]; then
+	echo "$QUARTO_BIN_PATH"
+	echo "$QUARTO_SHARE_PATH"
+	exit 0
+fi
+#Added --version for completeness - might have to send 99.9.9
+if [ "$1" == "--version" ]; then
+	echo `cat "$QUARTO_SHARE_PATH/version"`
+	exit 0
+fi
+
+
+#echo "${SCRIPT_PATH}/deno ${QUARTO_ACTION} ${QUARTO_DENO_OPTIONS} ${QUARTO_DENO_EXTRA_OPTIONS} ${QUARTO_IMPORT_ARGMAP} ${QUARTO_TARGET} "
+${SCRIPT_PATH}/deno ${QUARTO_ACTION} ${QUARTO_DENO_OPTIONS} ${QUARTO_DENO_EXTRA_OPTIONS} ${QUARTO_IMPORT_ARGMAP} ${QUARTO_TARGET} "$@"
