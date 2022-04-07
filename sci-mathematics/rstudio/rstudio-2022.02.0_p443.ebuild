@@ -893,12 +893,8 @@ src_configure() {
 	if use headless; then
 		RSTUDIO_TARGET="Server"
 	else
-		if use server; then
-			# the "Development" target will install both
-			RSTUDIO_TARGET="Development"
-		else
-			RSTUDIO_TARGET="Desktop"
-		fi
+		# the "Development" target will install both
+		RSTUDIO_TARGET=$(usex server Development Desktop)
 	fi
 
 	# FIXME: GWT_COPY is helpful because it allows us to call ant ourselves
