@@ -60,13 +60,37 @@ SRC_URI="
 	bundle? ( $(build_deno_src_uri) )
 "
 
+#Quarto-cli has third party libraries bundled in their software
+#https://github.com/rstudio/bslib/tree/888fbe064491692deb56fd90dc23455052e31073 MIT BSD?
+#https://github.com/twbs/icons/tree/v1.8.1/ MIT
+#BOOTSWATCH=5.1.3
 
+#https://unpkg.com/anchor-js@4.3.1/anchor.min.js MIT
+#https://unpkg.com/@popperjs/core@2.11.4/dist/umd/popper.min.js MIT
+#https://github.com/zenorocha/clipboard.js/blob/v2.0.10/dist/clipboard.min.js MIT
+#https://unpkg.com/tippy.js@6.3.7/dist/tippy.umd.min.js MIT
+#https://github.com/mozilla/pdf.js/tree/v2.8.335 Apache 2.0
+#https://github.com/hakimel/reveal.js/tree/4.2.0 MIT
+#https://github.com/denehyg/reveal.js-menu/tree/2.1.0 MIT
+#https://github.com/rajgoel/reveal.js-plugins/tree/a88c134e2cf3c7780448db003e7329c3cbd8cfb4 MIT
+#https://github.com/McShelby/reveal-pdfexport/tree/2.0.1/ MIT
+#https://github.com/javve/list.js/tree/v2.3.1/ MIT
+#https://github.com/iamkun/dayjs/tree/v1.11.0/ MIT
+
+#https://unpkg.com/@algolia/autocomplete-js@1.5.3/dist/umd/index.production.js MIT
+#https://unpkg.com/@algolia/autocomplete-preset-algolia@1.5.3/dist/umd/index.production.js MIT
+#https://github.com/krisk/Fuse/tree/v6.5.3 Apache 2.0
+#ALGOLIA_SEARCH_JS=4.5.1
+#ALGOLIA_SEARCH_INSIGHTS_JS=2.0.3
+#https://www.cookieconsent.com/releases/4.0.0/cookie-consent.js UNKNOWN
+
+#"Downloaded" libs
 #MIT denos_std, acorn{,-walk}, blueimp-md5, lodash
 #BSD jsdiff 
 #ISC @observablehq/parser
 
 
-LICENSE="GPL-2+ MIT BSD ISC"
+LICENSE="GPL-2+ MIT BSD Apache-2.0 ISC"
 SLOT="0"
 KEYWORDS="~amd64"
 PATCHES="
