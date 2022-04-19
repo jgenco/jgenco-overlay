@@ -1,0 +1,28 @@
+diff -ur rstudio-2022.02.0-443/CMakeGlobals.txt rstudio-2022.02.0-443_new/CMakeGlobals.txt
+--- rstudio-2022.02.0-443/CMakeGlobals.txt	2022-03-07 16:13:47.589104417
++++ rstudio-2022.02.0-443_new/CMakeGlobals.txt	2022-03-07 16:15:09.124085089
+@@ -215,6 +215,7 @@
+ 
+ # pandoc version
+ set(PANDOC_VERSION "2.16.2" CACHE INTERNAL "Pandoc version")
++add_compile_definitions(RSTUDIO_PANDOC_PATH="${RSTUDIO_PANDOC_PATH}")
+ 
+ # quarto support
+ if(LINUX AND UNAME_M STREQUAL aarch64)
+diff --git a/src/cpp/session/include/session/SessionConstants.hpp b/src/cpp/session/include/session/SessionConstants.hpp
+--- a/src/cpp/session/include/session/SessionConstants.hpp
++++ b/src/cpp/session/include/session/SessionConstants.hpp
+@@ -137,11 +137,7 @@
+ #define kSessionTmpDirEnvVar       "RS_SESSION_TMP_DIR"
+ #define kSessionTmpDir             "rstudio-rsession"
+ 
+-#ifdef QUARTO_ENABLED
+-# define kDefaultPandocPath        "bin/quarto/bin/tools"
+-#else
+-# define kDefaultPandocPath        "bin/pandoc"
+-#endif
++#define kDefaultPandocPath         RSTUDIO_PANDOC_PATH
+ 
+ #define kDefaultQuartoPath         "bin/quarto"
+ #define kDefaultPostbackPath       "bin/postback/rpostback"
+

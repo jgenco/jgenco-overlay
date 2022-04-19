@@ -1,0 +1,13 @@
+DEFINED_PHASES=compile install unpack
+DEPEND=net-libs/deno >=app-text/pandoc-2.17.1.1 dev-lang/dart-sass dev-util/esbuild net-libs/deno-dom
+DESCRIPTION=Open-source scientific and technical publishing system built on Pandoc.
+EAPI=8
+HOMEPAGE=https://quarto.org/
+IUSE=bundle
+KEYWORDS=~amd64
+LICENSE=GPL-2+ MIT BSD Apache-2.0 ISC
+RDEPEND=net-libs/deno >=app-text/pandoc-2.17.1.1 dev-lang/dart-sass dev-util/esbuild net-libs/deno-dom
+RESTRICT=test mirror
+SLOT=0
+SRC_URI=https://github.com/quarto-dev/quarto-cli/archive/refs/tags/v0.9.256.tar.gz -> quarto-cli-0.9.256.tar.gz bundle? ( https://github.com/denoland/deno_std/archive/refs/tags/0.130.0.tar.gz -> std@0.130.0.tar.gz https://github.com/c4spar/deno-cliffy/archive/refs/tags/v0.19.3.tar.gz -> cliffy@v0.19.3.tar.gz https://github.com/b-fuze/deno-dom/archive/refs/tags/v0.1.20-alpha.tar.gz -> deno_dom@v0.1.20-alpha.tar.gz https://github.com/oakserver/media_types/archive/refs/tags/v2.10.1.tar.gz -> media_types@v2.10.1.tar.gz https://github.com/masataka/xmlp/archive/refs/tags/v0.2.8.tar.gz -> xmlp@v0.2.8.tar.gz https://github.com/lodash/lodash/archive/refs/tags/4.17.21.tar.gz -> lodash@4.17.21.tar.gz https://github.com/acornjs/acorn/archive/refs/tags/7.4.1.tar.gz -> acorn@7.4.1.tar.gz https://github.com/acornjs/acorn/archive/refs/tags/7.2.0.tar.gz -> acorn-walk@7.2.0.tar.gz https://github.com/kpdecker/jsdiff/archive/refs/tags/v5.0.0.tar.gz -> diff@5.0.0.tar.gz https://github.com/blueimp/JavaScript-MD5/archive/refs/tags/v2.19.0.tar.gz -> blueimp-md5@2.19.0.tar.gz https://github.com/observablehq/parser/archive/refs/tags/4.5.0.tar.gz -> observablehq_parser@4.5.0.tar.gz https://github.com/mikolalysenko/binary-search-bounds/archive/refs/heads/master.tar.gz -> binary-search-bounds@2.0.5.tar.gz https://github.com/apoorv-mishra/moment-guess/archive/refs/tags/v1.2.4.tar.gz -> moment-guess@1.2.4.tar.gz https://github.com/iamkun/dayjs/archive/refs/tags/v1.8.21.tar.gz -> dayjs@1.8.21.tar.gz )
+_md5_=b56691250d2af56cbc99b93601504842

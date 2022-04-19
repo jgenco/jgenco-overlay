@@ -716,7 +716,7 @@ QT_VER=5.12.8
 QT_SLOT=5
 
 SLOT="0"
-KEYWORDS=""
+KEYWORDS="~amd64"
 IUSE="headless server test debug quarto panmirror system_dictionaries"
 REQUIRED_USE="headless? ( server )"
 
@@ -741,7 +741,7 @@ SRC_URI="${SRC_URI} !system_dictionaries? ( https://s3.amazonaws.com/rstudio-dic
 #MIT ISC BSD-3-Clause Apache-2.0 BSD-2-Clause (MIT OR CC0-1.0) BSD (AFL-2.1 OR BSD-3-Clause) (WTFPL-2 OR MIT) CC-BY-3.0 CC0-1.0 0BSD Unlicense
 #panmirror and dependencies licenses
 #(MIT OR Apache-2.0) Apache 2.0 Apache-2.0 BSD BSD-2-Clause BSD-3-Clause BSD* ISC LGPL-3.0 MIT Python-2.0 UNKNOWN(MIT/X11) Unlicense
-#TODO fix BSD and LGPL-3.0 X11 licences
+#TODO fix BSD LGPL-3.0 X11 licences
 LICENSE="AGPL-3 MIT Apache-2.0 panmirror? ( AGPL-3 MIT ISC Apache-2.0 BSD Unlicense CC0-1.0  || ( AFL-2.1 BSD ) || ( WTFPL-2 MIT ) CC-BY-3.0 LGPL-3 PYTHON || ( MIT X11 ) )"
 
 unravel_skein(){
@@ -825,16 +825,16 @@ BDEPEND="
 "
 
 PATCHES=(
-	"${FILESDIR}/${PN}-9999-ant-system-node.patch"
+	"${FILESDIR}/${PN}-2022.02.0_p443-ant-system-node.patch"
 	"${FILESDIR}/${PN}-1.4.1717-boost-imports-and-namespaces.patch"
 	"${FILESDIR}/${PN}-2022.02.0_p443-cmake-bundled-dependencies.patch"
 	"${FILESDIR}/${PN}-1.4.1717-fix-boost-version-check.patch"
-	"${FILESDIR}/${PN}-9999-resource-path.patch"
+	"${FILESDIR}/${PN}-2021.09.1_p372-resource-path.patch"
 	"${FILESDIR}/${PN}-1.4.1106-server-paths.patch"
 	"${FILESDIR}/${PN}-1.4.1106-soci-cmake-find_library.patch"
-	"${FILESDIR}/${PN}-9999-package-build.patch"
-	"${FILESDIR}/${PN}-9999-pandoc_path_fix.patch"
-	"${FILESDIR}/${PN}-9999-toggle_quarto.patch"
+	"${FILESDIR}/${PN}-2021.09.1_p372-package-build.patch"
+	"${FILESDIR}/${PN}-2022.02.0_p443-pandoc_path_fix.patch"
+	"${FILESDIR}/${PN}-2022.02.0_p443-toggle_quarto.patch"
 	"${FILESDIR}/${PN}-2022.02.0_p443-mathjaxfix.patch"
 )
 

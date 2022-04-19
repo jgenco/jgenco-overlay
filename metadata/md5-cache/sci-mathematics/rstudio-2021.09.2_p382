@@ -1,0 +1,17 @@
+BDEPEND=app-arch/unzip dev-util/ninja >=dev-util/cmake-3.20.5
+DEFINED_PHASES=compile configure install postinst preinst prepare setup test unpack
+DEPEND=dev-db/postgresql:* dev-db/sqlite dev-java/aopalliance:1 dev-java/gin:2.1 dev-java/javax-inject =dev-java/validation-api-1.0*:1.0[source] >=dev-lang/R-3.0.1 >=dev-libs/boost-1.69:= >=dev-libs/mathjax-2.7 app-text/pandoc dev-libs/soci[postgres] net-libs/nodejs sys-process/lsof >=virtual/jdk-1.8:= =dev-cpp/yaml-cpp-0.7.0-r2 headless? ( acct-user/rstudio-server acct-group/rstudio-server ) server? ( acct-user/rstudio-server acct-group/rstudio-server ) !headless? ( >=dev-qt/qtcore-5.12.6:5 >=dev-qt/qtdbus-5.12.6:5 >=dev-qt/qtdeclarative-5.12.6:5 >=dev-qt/qtnetwork-5.12.6:5 >=dev-qt/qtopengl-5.12.6:5 >=dev-qt/qtpositioning-5.12.6:5 >=dev-qt/qtsensors-5.12.6:5 >=dev-qt/qtsql-5.12.6:5 >=dev-qt/qtsvg-5.12.6:5 >=dev-qt/qtwebchannel-5.12.6:5 >=dev-qt/qtwebengine-5.12.6:5 >=dev-qt/qtxml-5.12.6:5 >=dev-qt/qtxmlpatterns-5.12.6:5 ) >=dev-java/java-config-2.2.0-r3 >=dev-java/ant-core-1.8.2:0 dev-java/javatoolkit
+DESCRIPTION=IDE for the R language
+EAPI=7
+HOMEPAGE=https://rstudio.com https://github.com/rstudio/rstudio/
+INHERIT=cmake java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils
+IUSE=headless server test debug
+KEYWORDS=~amd64
+LICENSE=AGPL-3
+RDEPEND=dev-db/postgresql:* dev-db/sqlite dev-java/aopalliance:1 dev-java/gin:2.1 dev-java/javax-inject =dev-java/validation-api-1.0*:1.0[source] >=dev-lang/R-3.0.1 >=dev-libs/boost-1.69:= >=dev-libs/mathjax-2.7 app-text/pandoc dev-libs/soci[postgres] net-libs/nodejs sys-process/lsof >=virtual/jdk-1.8:= =dev-cpp/yaml-cpp-0.7.0-r2 headless? ( acct-user/rstudio-server acct-group/rstudio-server ) server? ( acct-user/rstudio-server acct-group/rstudio-server ) !headless? ( >=dev-qt/qtcore-5.12.6:5 >=dev-qt/qtdbus-5.12.6:5 >=dev-qt/qtdeclarative-5.12.6:5 >=dev-qt/qtnetwork-5.12.6:5 >=dev-qt/qtopengl-5.12.6:5 >=dev-qt/qtpositioning-5.12.6:5 >=dev-qt/qtsensors-5.12.6:5 >=dev-qt/qtsql-5.12.6:5 >=dev-qt/qtsvg-5.12.6:5 >=dev-qt/qtwebchannel-5.12.6:5 >=dev-qt/qtwebengine-5.12.6:5 >=dev-qt/qtxml-5.12.6:5 >=dev-qt/qtxmlpatterns-5.12.6:5 ) >=dev-java/java-config-2.2.0-r3
+REQUIRED_USE=headless? ( server )
+RESTRICT=test
+SLOT=0
+SRC_URI=https://github.com/rstudio/rstudio/archive/v2021.09.2+382.tar.gz -> rstudio-2021.09.2_p382.tar.gz https://s3.amazonaws.com/rstudio-dictionaries/core-dictionaries.zip -> rstudio-2021.09.2_p382-core-dictionaries.zip
+_eclasses_=toolchain-funcs	badd6e329e1f3e6bee99b35bf8763ce8	multilib	4a33c9008e5ee30cb8840a3fdc24df2b	edos2unix	33e347e171066657f91f8b0c72ec8773	strip-linguas	ac3ee41ee2d31d8c41a77c0838320cc7	wrapper	4a1902f969e5718126434fc35f3a0d9c	eutils	dab5d8ec471d025b79c9e6906bcf3bff	flag-o-matic	a500d7cc40da3de38c361e889153bdf7	multiprocessing	61c959fc55c15c00bbb1079d6a71370b	ninja-utils	fef481272d4a8e136a7d8a0fb1329384	xdg-utils	fffb53a53cf17c9c0c998a3c0a590c7e	cmake	3c38df051095289667b6f09ebd0cc149	java-utils-2	92b5a4d196abffe2dbe3bdc1cf4ef2ae	java-pkg-2	3b09e051fc2045a0f0b9471b87d4f8bd	java-ant-2	5cf479aa9e0ac9cc55899f2762c2aaa0	pam	e44a1dd98f13e1ad76de01e919bde1f1	qmake-utils	f5eb2f69fffe94292aaaf802fb21c8d1
+_md5_=32df66bbede9dc2335c29a4e2fbb26ce
