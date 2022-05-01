@@ -778,18 +778,16 @@ RESTRICT="test mirror"
 
 DEPEND=""
 RDEPEND="
-	dev-db/postgresql:*
-	dev-db/sqlite
 	dev-java/aopalliance:1
 	dev-java/gin:2.1
 	dev-java/javax-inject
 	=dev-java/validation-api-1.0*:1.0[source]
-	>=dev-lang/R-3.0.1
-	>=dev-libs/boost-1.69:=
+	>=dev-lang/R-3.3.0
+	>=dev-libs/boost-1.78:=
 	>=dev-libs/mathjax-2.7
-	app-text/pandoc
-	dev-libs/soci[postgres]
-	net-libs/nodejs
+	>=app-text/pandoc-2.16.2
+	>=dev-libs/soci-4.0.3[postgres,sqlite]
+	>=net-libs/nodejs-16.14.0
 	sys-process/lsof
 	>=virtual/jdk-1.8:=
 	>=dev-cpp/yaml-cpp-0.7.0_p1
@@ -816,7 +814,7 @@ RDEPEND="
 		>=dev-qt/qtxml-${QT_VER}:${QT_SLOT}
 		>=dev-qt/qtxmlpatterns-${QT_VER}:${QT_SLOT}
 	)
-	quarto? ( app-text/quarto-cli )
+	quarto? ( >=app-text/quarto-cli-0.9.230 )
 	panmirror? ( sys-apps/yarn )
 	"
 DEPEND="${RDEPEND}"
@@ -843,7 +841,6 @@ src_unpack(){
 		git-r3_src_unpack
 	fi
 	local ARCHIVE=""
-	mkdir -p ${S}/dependencies/dictionaries
 	mkdir ${WORKDIR}/.yarn_files
 	for ARCHIVE in ${A} ;do
 		case ${ARCHIVE} in
@@ -853,6 +850,7 @@ src_unpack(){
 				# rstudio's build-system expects these dictionary files to exist, but does
 				# not ship them in the release tarball. Therefore, they are fetched in
 				# `SRC_URI`, and here we unpack and move them to the correct place.
+				mkdir -p ${S}/dependencies/dictionaries
 				pushd "${S}/dependencies/dictionaries" > /dev/null
 				unpack ${ARCHIVE}
 				popd > /dev/null ;;
@@ -866,6 +864,9 @@ src_unpack(){
 			(*) die "No valid case for ${ARCHIVE}";;
 		esac
 	done
+	if use system_dictionaries;then
+		ln -s ${EPREFIX}/usr/share/hunspell ${S}/dependencies/dictionaries
+	fi
 }
 src_prepare(){
 	cmake_src_prepare
@@ -1020,7 +1021,6 @@ src_install() {
 
 	#linking the resources/dictionaries directory to the hunspell directory
 	if use system_dictionaries;then
-		ln -s /usr/share/hunspell "${ED}/usr/share/${PN}/resources/dictionaries"
 		for filename in /usr/share/hunspell/*.dic; do
 			if [ ! -f ${filename} ];then
 				ewarn "You need to install system dictionaries."
