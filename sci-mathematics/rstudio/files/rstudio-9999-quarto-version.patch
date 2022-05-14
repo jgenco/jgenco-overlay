@@ -1,0 +1,32 @@
+diff --git a/src/cpp/session/modules/quarto/SessionQuarto.cpp b/src/cpp/session/modules/quarto/SessionQuarto.cpp
+index b7b5469b93..eadf7d6677 100644
+--- a/src/cpp/session/modules/quarto/SessionQuarto.cpp
++++ b/src/cpp/session/modules/quarto/SessionQuarto.cpp
+@@ -96,6 +96,12 @@ Version readQuartoVersion(const core::FilePath& quartoBinPath)
+       .getParent()
+       .completeChildPath("share")
+       .completeChildPath("version");
++   FilePath versionFileAlt = quartoBinPath
++      .getParent()
++      .getParent()
++      .completeChildPath("share")
++      .completeChildPath("quarto-cli")
++      .completeChildPath("version");
+    std::string version;
+    if (versionFile.exists())
+    {
+@@ -106,6 +112,14 @@ Version readQuartoVersion(const core::FilePath& quartoBinPath)
+          return Version();
+       }
+       boost::algorithm::trim(version);
++   }else if(versionFileAlt.exists()){
++      Error error = core::readStringFromFile(versionFileAlt, &version);
++      if (error)
++      {
++         LOG_ERROR(error);
++         return Version();
++      }
++      boost::algorithm::trim(version);
+    }
+    else
+    {
