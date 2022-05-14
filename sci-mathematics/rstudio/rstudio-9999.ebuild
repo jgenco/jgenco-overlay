@@ -711,8 +711,10 @@ yargs@16.2.0
 yn@3.1.1
 zenscroll@4.0.2
 "
-
-QT_VER=5.12.8
+#RSudio requires 5.12.8 but when QT 5.12.x and glibc 2.34(clone3) is used it will cause a
+#sandbox violation in chromium. QT fixed this around 5.15.x(5?). Gentoo is at 5.15.3 and
+#it works. I assume it was back ported or I'm wrong about the timeline.
+QT_VER=5.15.3
 QT_SLOT=5
 
 SLOT="0"
@@ -785,7 +787,7 @@ RDEPEND="
 	>=dev-lang/R-3.3.0
 	>=dev-libs/boost-1.78:=
 	>=dev-libs/mathjax-2.7
-	>=app-text/pandoc-2.16.2
+	>=app-text/pandoc-2.18
 	>=dev-libs/soci-4.0.3[postgres,sqlite]
 	>=net-libs/nodejs-16.14.0
 	sys-process/lsof
@@ -825,7 +827,7 @@ BDEPEND="
 PATCHES=(
 	"${FILESDIR}/${PN}-9999-ant-system-node.patch"
 	"${FILESDIR}/${PN}-1.4.1717-boost-imports-and-namespaces.patch"
-	"${FILESDIR}/${PN}-2022.02.0_p443-cmake-bundled-dependencies.patch"
+	"${FILESDIR}/${PN}-9999-cmake-bundled-dependencies.patch"
 	"${FILESDIR}/${PN}-1.4.1717-fix-boost-version-check.patch"
 	"${FILESDIR}/${PN}-9999-resource-path.patch"
 	"${FILESDIR}/${PN}-1.4.1106-server-paths.patch"
@@ -833,7 +835,8 @@ PATCHES=(
 	"${FILESDIR}/${PN}-9999-package-build.patch"
 	"${FILESDIR}/${PN}-9999-pandoc_path_fix.patch"
 	"${FILESDIR}/${PN}-9999-toggle_quarto.patch"
-	"${FILESDIR}/${PN}-2022.02.0_p443-mathjaxfix.patch"
+	"${FILESDIR}/${PN}-9999-quarto-version.patch"
+	"${FILESDIR}/${PN}-9999-reenable-sandbox.patch"
 )
 
 src_unpack(){
@@ -871,6 +874,8 @@ src_unpack(){
 src_prepare(){
 	cmake_src_prepare
 	java-pkg-2_src_prepare
+
+	ln -s ${EPREFIX}/usr/share/mathjax ${S}/dependencies/mathjax-27
 
 	# make sure icons and mime stuff are with prefix
 	sed -i \
@@ -927,7 +932,6 @@ src_configure() {
 		-DRSTUDIO_PACKAGE_BUILD=1
 		-DRSTUDIO_PANDOC_PATH=${EPREFIX}/usr/bin
 		-DQUARTO_ENABLED=$(usex quarto TRUE FALSE)
-		-DRSTUDIO_DEPENDENCIES_MATHJAX_DIR=${EPREFIX}/usr/share/mathjax
 	)
 	if ! use headless; then
 		mycmakeargs+=( -DQT_QMAKE_EXECUTABLE="$(qt5_get_bindir)/qmake"
@@ -951,9 +955,8 @@ src_compile(){
 		einfo "Building node-gyp"
 		pushd ${NODE_GYP_DIR}
 		echo "yarn-offline-mirror \"${YARN_FILES_DIR}\"" > ${YARN_CONFIG}
-		local YARN_CMD_OPTIONS="--cache-folder ${YARN_CACHE_DIR} --use-yarnrc ${YARN_CONFIG}  --non-interactive --offline"
-		npm_config_build_from_source=true npm_config_nodedir=/usr/include/node yarn install ${YARN_CMD_OPTIONS}  < /dev/null 2>&1 |cat
-		assert "NODE_GYP failed"
+		local YARN_CMD_OPTIONS="--cache-folder ${YARN_CACHE_DIR} --use-yarnrc ${YARN_CONFIG}  --non-interactive --offline --no-pregess"
+		npm_config_build_from_source=true npm_config_nodedir=/usr/include/node yarn install ${YARN_CMD_OPTIONS}|| die "NODE_GYP failed"
 		popd > /dev/null
 		# Finished Building node-gyp
 
@@ -961,8 +964,7 @@ src_compile(){
 		einfo "Building PANMIRROR"
 		pushd ${S}/src/gwt/panmirror/src/editor > /dev/null
 		yarn config set ignore-engines true ${YARN_CMD_OPTIONS} < /dev/null 2>&1 |cat
-		npm_config_build_from_source=true npm_config_nodedir=/usr/include/node npm_config_node_gyp=${NODE_GYP_DIR}/bin/node-gyp.js yarn install ${YARN_CMD_OPTIONS} < /dev/null 2>&1 |cat
-		assert "Panmirror failed"
+		npm_config_build_from_source=true npm_config_nodedir=/usr/include/node npm_config_node_gyp=${NODE_GYP_DIR}/bin/node-gyp.js yarn install ${YARN_CMD_OPTIONS} || die "Panmirror failed"
 		popd > /dev/null
 		#Finished Building PANMIRROR
 	fi

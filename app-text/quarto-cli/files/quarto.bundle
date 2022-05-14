@@ -9,8 +9,7 @@ export DENO_DOM_PLUGIN="/usr/lib64/deno-dom.so"
 export DENO_DIR="${HOME}/.cache/deno"
 QUARTO_ACTION="run"
 QUARTO_DENO_OPTIONS="--unstable --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi"
-#Kept for future
-QUARTO_DENO_EXTRA_OPTIONS=""
+
 QUARTO_IMPORT_ARGMAP="--importmap=/${QUARTO_BASE_PATH}/deno_std/import_map.json"
 QUARTO_TARGET="${QUARTO_BASE_PATH}/bin/quarto.js"
 

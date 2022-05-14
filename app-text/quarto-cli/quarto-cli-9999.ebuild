@@ -10,7 +10,7 @@ RESTRICT="mirror"
 IUSE="bundle"
 
 DENO_LIBS="
-std@0.130.0 https://github.com/denoland/deno_std/archive/refs/tags/_VER_.tar.gz deno_std-_VER_ NA NA
+std@0.138.0 https://github.com/denoland/deno_std/archive/refs/tags/_VER_.tar.gz deno_std-_VER_ NA NA
 cliffy@v0.19.3 https://github.com/c4spar/deno-cliffy/archive/refs/tags/_VER_.tar.gz deno-cliffy-_VER_ NA NA
 deno_dom@v0.1.20-alpha https://github.com/b-fuze/deno-dom/archive/refs/tags/_VER_.tar.gz deno-dom-_VER_ NA NA
 media_types@v2.10.1 https://github.com/oakserver/media_types/archive/refs/tags/_VER_.tar.gz media_types-_VER_ NA NA
@@ -86,34 +86,42 @@ SRC_URI="${SRC_URI} bundle? ( $(build_deno_src_uri) )"
 #ALGOLIA_SEARCH_INSIGHTS_JS=2.0.3
 #https://www.cookieconsent.com/releases/4.0.0/cookie-consent.js UNKNOWN
 
+#in src/resources/vendor
+#Apache-2.0: (deno-)puppeteer
+#MIT: set-immediate-shim, lie, immediate
+#MIT and ZLIB: pako
+#MIT or GPLv3: jszip
+#Apache-2.0: jspm-core
+
 #"Downloaded" libs
 #MIT denos_std, acorn{,-walk}, blueimp-md5, lodash
 #BSD jsdiff
 #ISC @observablehq/parser
 
-LICENSE="GPL-2+ MIT BSD Apache-2.0 ISC"
+LICENSE="GPL-2+ MIT ZLIB BSD Apache-2.0 ISC || ( MIT GPL-3 )"
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS=""
 PATCHES="
-	${FILESDIR}/quarto-cli-9999-pathfixes.patch
+	${FILESDIR}/quarto-cli-0.9.363-pathfixes.patch
 	${FILESDIR}/quarto-cli-0.9.256-configuration.patch
 "
-#DENO 1.20.1
+#DENO 1.21.1
 #DART-sass 1.32.8
 
 DEPEND="
 	net-libs/deno
-	>=app-text/pandoc-2.17.1.1
+	>=app-text/pandoc-2.18
 	dev-lang/dart-sass
 	dev-util/esbuild
 	net-libs/deno-dom
+	dev-lang/lua
 "
 RDEPEND="${DEPEND}"
 BDEPEND=""
-RESTRICT="test mirror"
 
 DENO_SRC="${WORKDIR}/deno_src"
 DENO_CACHE="${WORKDIR}/deno_cache"
+DENO_IMPORT_LIST="${FILESDIR}/quarto-imports-0.9.398"
 src_unpack(){
 	if [[ "${PV}" == *9999 ]];then
 		git-r3_src_unpack
@@ -186,6 +194,7 @@ src_compile(){
 	einfo "Building Deno cache..."
 	# curl https://cdn.skypack.dev/moment-guess@1.2.4?meta | sed "s/,/\n,/g"|grep buildId
 	#NOTE: the key is the FOLDER
+	#      dashes instead of @
 	declare -A pkg_hash=(
 	["lodash-4.17.21"]="K6GEbP02mWFnLA45zAmi"
 	["blueimp-md5@2.19.0"]="FsBtHB6ITwdC3L5Giq4Q"
@@ -196,6 +205,7 @@ src_compile(){
 	["@observablehq/parser-4.5.0"]="rWZiNfab8flhVomtfVvr"
 	["moment-guess-1.2.4"]="bDXl7KQy0hLGNuGhyGb4"
 	["dayjs-1.8.21"]="6syVEc6qGP8frQXKlmJD"
+	["binary-search-bounds-2.0.5"]="c8IgO4OqUhed8ANHQXKv"
 	)
 	regex="(https?)://([^/]+)(/(./)?((@[^/]*/)?[^/]+)@([^/]+)(/.*)?)"
 	TIME=`date +%s`
@@ -214,7 +224,7 @@ src_compile(){
 		ADDR=${BASH_REMATCH[3]}
 
 		FPATH=${BASH_REMATCH[8]}
-		SHA256=`echo -n "${ADDR}"| sha256sum`
+		SHA256=$(echo -n "${ADDR}"| sha256sum)
 		SHA256=${SHA256%  -}
 
 		FILE_SOURCE=${DENO_SRC}/${ADDR}
@@ -264,7 +274,7 @@ src_compile(){
 				\"url\": \"${line}\",\"now\": {\"secs_since_epoch\": ${TIME},\"nanos_since_epoch\": 0}}" > ${FILE_META}
 		fi
 
-	done < <(cat "${FILESDIR}/quarto-imports-0.9.180")
+	done < <(cat "${DENO_IMPORT_LIST}")
 
 ###END BUILDING DENO CACHE###
 	fi
@@ -272,6 +282,7 @@ src_compile(){
 	#Configuration
 	einfo "Setting Configuration"
 	mkdir -p package/dist/config/
+	sed "s#_EPREFIX_#${EPREFIX}#" ${FILESDIR}/quarto.combined.eprefix > ${S}/quarto
 
 	if use bundle;then
 		#Setup package/bin dir
@@ -296,10 +307,11 @@ src_compile(){
 		export DENO_DIR=${DENO_CACHE}
 		./quarto-bld prepare-dist --log-level info || die
 		popd
-		sed "s#_EPREFIX_#${EPREFIX}#" ${FILESDIR}/quarto.bundle.eprefix > ${S}/quarto
-	else
-		sed "s#_EPREFIX_#${EPREFIX}#" ${FILESDIR}/quarto.eprefix > ${S}/quarto
+		echo -n "${PV}"  > ${S}/package/dist/share/version
+		rm tests/bin/python3
+		ln -s ${EPREFIX}/usr/bin/python tests/bin/python3
 
+	else
 		#deno -v |sed "s/deno //"
 		DENO=`grep     "export DENO="     configuration |sed "s/.*=//"`
 		#
@@ -317,8 +329,8 @@ src_compile(){
 		deno -V |sed "s/deno //" > package/dist/config/deno-version
 		echo -n "${PV}"  > src/resources/version
 		rm tests/bin/python3
-		ln -s ${EPREFIX}/usr/bin/python tests/bin/python3
 	fi
+
 }
 src_install(){
 	if use bundle;then
@@ -331,6 +343,29 @@ src_install(){
 		dobin ${S}/quarto
 		insinto /usr/share/${PN}/
 		doins -r *
+		dosym -r ${EPREFIX}/usr/share/${PN}/src/resources/version ${EPREFIX}/usr/share/${PN}/version
 	fi
 
+}
+src_test(){
+	#this only works with bundled libraries
+	if use bundle;then
+		pushd ${S}/tests > /dev/null
+		export DENO_DIR=${DENO_CACHE}
+		echo "${DENO_DIR}"
+		export QUARTO_BASE_PATH=${S}
+		export QUARTO_BIN_PATH=${QUARTO_BASE_PATH}/package/dist/bin/
+		export QUARTO_SHARE_PATH=${QUARTO_BASE_PATH}/src/resources/
+		export QUARTO_DEBUG=true
+		deno test --unstable --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/import_map.json test.ts unit
+		#This will run an extended test about half work now
+		#will need to install/setup
+		#* python libraries - see requirements.txt - not all in portage
+		#* a correct R enviroment - see renv.lock
+		#* install tinytex - not in portage
+		#* it uses a chrome(possibly ff if puppeteer is updated)
+		#  based browser to do screen shots - probably not possible
+		#deno test --unstable --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/import_map.json test.ts smoke
+		popd > /dev/null
+	fi
 }
