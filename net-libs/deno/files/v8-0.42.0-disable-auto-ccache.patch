@@ -1,0 +1,17 @@
+diff --git a/build.rs.orig b/build.rs
+index 459134d..53fd5ca 100644
+--- a/build.rs.orig
++++ b/build.rs
+@@ -157,12 +157,8 @@ fn build_v8() {
+ 
+   if let Some(p) = env::var_os("SCCACHE") {
+     cc_wrapper(&mut gn_args, Path::new(&p));
+-  } else if let Ok(p) = which("sccache") {
+-    cc_wrapper(&mut gn_args, &p);
+   } else if let Some(p) = env::var_os("CCACHE") {
+     cc_wrapper(&mut gn_args, Path::new(&p));
+-  } else if let Ok(p) = which("ccache") {
+-    cc_wrapper(&mut gn_args, &p);
+   } else {
+     println!("cargo:warning=Not using sccache or ccache");
+   }

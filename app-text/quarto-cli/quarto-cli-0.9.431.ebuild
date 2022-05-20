@@ -101,14 +101,13 @@ SRC_URI="${SRC_URI} bundle? ( $(build_deno_src_uri) )"
 
 LICENSE="GPL-2+ MIT ZLIB BSD Apache-2.0 ISC || ( MIT GPL-3 )"
 SLOT="0"
-KEYWORDS=""
+KEYWORDS="~amd64"
 PATCHES="
 	${FILESDIR}/quarto-cli-0.9.363-pathfixes.patch
 	${FILESDIR}/quarto-cli-0.9.256-configuration.patch
 "
 #DENO 1.22
 #DART-sass 1.32.8
-#esbuild 14.39
 
 DEPEND="
 	net-libs/deno
@@ -365,8 +364,8 @@ src_test(){
 		#* python libraries - see requirements.txt - not all in portage
 		#* a correct R enviroment - see renv.lock
 		#* install tinytex - not in portage
-		#* it uses a chrome (see if ff will work) based browser to do
-		#  screen shots - probably not possible
+		#* it uses a chrome(possibly ff if puppeteer is updated)
+		#  based browser to do screen shots - probably not possible
 		#deno test --unstable --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/import_map.json test.ts smoke
 		popd > /dev/null
 	fi

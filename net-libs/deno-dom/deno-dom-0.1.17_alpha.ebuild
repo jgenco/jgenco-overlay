@@ -61,14 +61,15 @@ DESCRIPTION="Deno-DOM Plugin"
 # Double check the homepage as the cargo_metadata crate
 # does not provide this value so instead repository is used
 HOMEPAGE="https://deno.land/x/deno_dom"
-SRC_URI="https://github.com/b-fuze/deno-dom/archive/refs/tags/v${PV/_/-}.tar.gz $(cargo_crate_uris)"
+SRC_URI="https://github.com/b-fuze/deno-dom/archive/refs/tags/v${PV/_/-}.tar.gz -> deno-dom-${PV}.tgz
+$(cargo_crate_uris)"
 S=${WORKDIR}/${P/_alpha/-alpha}
 #Apache-2.0 OR Apache-2.0 WITH LLVM-exception OR MIT (2): wasi, wasi
 #Apache-2.0 OR BSL-1.0 (1): ryu
 #Apache-2.0 OR MIT (43): bitflags, cfg-if, futf, getrandom, getrandom, html5ever, itoa, libc, lock_api, log, mac, markup5ever, once_cell, parking_lot, parking_lot_core, ppv-lite86, proc-macro2, quote, rand, rand, rand_chacha, rand_chacha, rand_core, rand_core, rand_hc, rand_pcg, scopeguard, serde, serde_json, siphasher, smallvec, string_cache, string_cache_codegen, syn, tendril, unicode-xid, utf-8, windows-sys, windows_aarch64_msvc, windows_i686_gnu, windows_i686_msvc, windows_x86_64_gnu, windows_x86_64_msvc
 #MIT (9): new_debug_unreachable, phf, phf_codegen, phf_generator, phf_generator, phf_shared, phf_shared, precomputed-hash, redox_syscall
 #N/A (2): core, plugin
-LICENSE="Apache-2.0 Apache-2.0-with-LLVM-exceptions BSD Boost-1.0 MIT"
+LICENSE="|| ( Apache-2.0 Apache-2.0-with-LLVM-exceptions MIT ) || ( Apache-2.0 Boost-1.0 ) || ( Apache-2.0 MIT ) MIT"
 SLOT="0"
 KEYWORDS="~amd64"
 src_compile(){
@@ -80,4 +81,27 @@ src_compile(){
 src_install(){
 	dolib.so ${PN}.so
 }
-
+#tests
+#NOTE: this will require the same cache building as quarto-cli
+#      they also need net access
+#deno test --allow-net --allow-read wasm.test.ts
+#export DENO_DOM_PLUGIN=/usr/lib64/deno-dom.so
+#version 0.1.17 fails hard
+#version 0.1.20 works (with 0.1.17)
+#deno test --unstable -A  native.test.ts
+#requires downloading of a submodule
+#deno test --allow-read --allow-net wasm.test.ts -- --wpt
+#failures:
+#
+#        nodes/ParentNode-replaceChildren
+#        nodes/ParentNode-prepend
+#        nodes/ParentNode-append
+#        nodes/Node-textContent
+#        nodes/Node-properties
+#        nodes/Node-lookupNamespaceURI
+#        nodes/Node-contains
+#        nodes/Node-compareDocumentPosition
+#        nodes/Element-classlist
+#        nodes/DOMImplementation-createDocument-with-null-browsing-context-crash
+#
+#test result: FAILED. 140 passed; 10 failed; 0 ignored; 0 measured; 0 filtered out (21s)

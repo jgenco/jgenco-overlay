@@ -3,8 +3,6 @@
 
 EAPI=8
 
-
-
 DESCRIPTION="The reference implementation of Sass, written in Dart. "
 HOMEPAGE="http://sass-lang.com/dart-sass"
 SRC_URI="
@@ -147,12 +145,18 @@ src_unpack() {
 		fi
 	done
 	mkdir ${S}/.dart_tool
-	sed ${FILESDIR}/${P}-package_config.json -e "s#_WORKDIR_#${WORKDIR}#" > ${S}/.dart_tool/package_config.json
 }
 src_compile(){
 	export HOME="${WORKDIR}"
-	dart --packages=${WORKDIR}/.pub-cache compile exe bin/sass.dart -o sass || die "Compile failed"
+	dart pub get --offline || die "Pub get failed"
+	dart compile exe bin/sass.dart -o sass || die "Compile failed"
 }
+src_test(){
+	#93 test failed mostly if not completly b/c lack of null support
+	#this is a new feature of the dart language.
+	export HOME="${WORKDIR}"
+	dart test
+	}
 src_install(){
 	dobin sass
 }

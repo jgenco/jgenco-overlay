@@ -9,7 +9,7 @@ inherit cmake-multilib
 GIT_COMMIT="4aad2b1666a4742743b04e765a34742512915674"
 DESCRIPTION="YAML parser and emitter in C++"
 HOMEPAGE="https://github.com/jbeder/yaml-cpp"
-SRC_URI="https://github.com/jbeder/yaml-cpp/archive/${GIT_COMMIT}.zip -> ${PN}-${GIT_COMMIT:0:10}.zip"
+SRC_URI="https://github.com/jbeder/yaml-cpp/archive/${GIT_COMMIT}.tar.gz -> ${P}-${GIT_COMMIT:0:10}.tar.gz"
 S="${WORKDIR}/yaml-cpp-${P}"
 
 LICENSE="MIT"

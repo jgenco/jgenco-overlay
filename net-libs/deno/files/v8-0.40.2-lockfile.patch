@@ -1,3 +1,7 @@
+There is a bug somewhere in Cargo/deno/rusty-v8 that causes
+build.rs to run twice.  This causes V8 to be build twice at the
+same time.  This is an extention of another cludge that stops
+this from happening.
 diff -ruN v8-0.40.2.orig/build.rs v8-0.40.2/build.rs
 --- v8-0.40.2.orig/build.rs	2022-03-31 23:47:04.516655587
 +++ v8-0.40.2/build.rs	2022-03-31 23:49:25.154897367
