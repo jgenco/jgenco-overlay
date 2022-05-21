@@ -25,6 +25,7 @@ blueimp-md5@2.19.0 https://github.com/blueimp/JavaScript-MD5/archive/refs/tags/v
 binary-search-bounds@2.0.5 https://github.com/mikolalysenko/binary-search-bounds/archive/refs/heads/master.tar.gz binary-search-bounds-master bundle /search-bounds.js
 moment-guess@1.2.4 https://github.com/apoorv-mishra/moment-guess/archive/refs/tags/v_VER_.tar.gz moment-guess-_VER_ bundle /src/index.js
 dayjs@1.8.21 https://github.com/iamkun/dayjs/archive/refs/tags/v_VER_.tar.gz dayjs-_VER_ bundle /src/index.js
+ansi_up@v5.1.0 https://github.com/drudru/ansi_up/archive/refs/tags/_VER_.tar.gz ansi_up-_VER_ bundle /ansi_up.js
 "
 
 build_deno_src_uri(){
@@ -123,7 +124,7 @@ BDEPEND=""
 
 DENO_SRC="${WORKDIR}/deno_src"
 DENO_CACHE="${WORKDIR}/deno_cache"
-DENO_IMPORT_LIST="${FILESDIR}/quarto-imports-0.9.431"
+DENO_IMPORT_LIST="${FILESDIR}/quarto-imports-0.9.434"
 src_unpack(){
 	if [[ "${PV}" == *9999 ]];then
 		git-r3_src_unpack
@@ -208,6 +209,7 @@ src_compile(){
 	["moment-guess-1.2.4"]="bDXl7KQy0hLGNuGhyGb4"
 	["dayjs-1.8.21"]="6syVEc6qGP8frQXKlmJD"
 	["binary-search-bounds-2.0.5"]="c8IgO4OqUhed8ANHQXKv"
+	["ansi_up-5.1.0"]="ifIRWFhqTFJbTEKi2tZH"
 	)
 	regex="(https?)://([^/]+)(/(./)?((@[^/]*/)?[^/]+)@([^/]+)(/.*)?)"
 	TIME=`date +%s`
@@ -244,7 +246,7 @@ src_compile(){
 		if [[ ${HOST} == "cdn.skypack.dev" ]]; then
 			if [[ ${FPATH} == ""  ]]; then
 				#This gets no {default} except blueimp posibly b/c it has export default ...
-				FILECONTENTS="/-/${PACKAGE}@v${VERSION}-${pkg_hash[${FOLDER}]}/dist=es2019,mode=imports/optimized/${PACKAGE}.js"
+				FILECONTENTS="/-/${PACKAGE}@v${VERSION#v}-${pkg_hash[${FOLDER}]}/dist=es2019,mode=imports/optimized/${PACKAGE}.js"
 				CHECKFILE="${DENO_SRC}/${FOLDER/\//_}/${PACKAGE/\//_}.js"
 			#Special case until more info
 			elif [[ ${FPATH} == "/dayjs.min.js" ]]; then
@@ -252,9 +254,9 @@ src_compile(){
 				CHECKFILE="${DENO_SRC}/${FOLDER/\//_}/${PACKAGE}.js"
 			elif [[ ${ADDR} =~ /-/.*optimized/(.*) ]]; then
 				VERSION="${VERSION:1:-21}"
-				FULLPATH="${DENO_SRC}/${PACKAGE/\//_}-${VERSION}/${BASH_REMATCH[1]/\//_}"
+				FULLPATH="${DENO_SRC}/${PACKAGE/\//_}-${VERSION#v}/${BASH_REMATCH[1]/\//_}"
 			else
-				FILECONTENTS="/-/${PACKAGE}@v${VERSION}-${pkg_hash[${FOLDER}]}/dist=es2019,mode=imports/unoptimized${FPATH}.js"
+				FILECONTENTS="/-/${PACKAGE}@v${VERSION#v}-${pkg_hash[${FOLDER}]}/dist=es2019,mode=imports/unoptimized${FPATH}.js"
 				CHECKFILE="${DENO_SRC}/${FOLDER/\//_}/${FPATH}.js"
 			fi
 		fi
@@ -310,9 +312,6 @@ src_compile(){
 		./quarto-bld prepare-dist --log-level info || die
 		popd
 		echo -n "${PV}"  > ${S}/package/dist/share/version
-		rm tests/bin/python3
-		ln -s ${EPREFIX}/usr/bin/python tests/bin/python3
-
 	else
 		#deno -v |sed "s/deno //"
 		DENO=`grep     "export DENO="     configuration |sed "s/.*=//"`
@@ -330,9 +329,9 @@ src_compile(){
 		echo -n "{\"deno\": \"${DENO}\",\"deno_dom\": \"${DENO_DOM}\",\"pandoc\": \"${PANDOC}\",\"dartsass\": \"${DARTSASS}\",\"esbuild\": \"${ESBUILD}\",\"script\": \"${QUARTO_MD5:0:32}\"}" > package/dist/config/dev-config
 		deno -V |sed "s/deno //" > package/dist/config/deno-version
 		echo -n "${PV}"  > src/resources/version
-		rm tests/bin/python3
 	fi
-
+	rm tests/bin/python3
+	ln -s ${EPREFIX}/usr/bin/python tests/bin/python3
 }
 src_install(){
 	if use bundle;then
@@ -341,6 +340,7 @@ src_install(){
 		doins -r ${S}/package/dist/share/*
 		insinto /usr/share/${PN}/bin
 		doins ${S}/package/dist/bin/quarto.js
+		doins -r ${S}/package/dist/bin/vendor
 	else
 		dobin ${S}/quarto
 		insinto /usr/share/${PN}/

@@ -309,9 +309,6 @@ src_compile(){
 		./quarto-bld prepare-dist --log-level info || die
 		popd
 		echo -n "${PV}"  > ${S}/package/dist/share/version
-		rm tests/bin/python3
-		ln -s ${EPREFIX}/usr/bin/python tests/bin/python3
-
 	else
 		#deno -v |sed "s/deno //"
 		DENO=`grep     "export DENO="     configuration |sed "s/.*=//"`
@@ -329,9 +326,9 @@ src_compile(){
 		echo -n "{\"deno\": \"${DENO}\",\"deno_dom\": \"${DENO_DOM}\",\"pandoc\": \"${PANDOC}\",\"dartsass\": \"${DARTSASS}\",\"esbuild\": \"${ESBUILD}\",\"script\": \"${QUARTO_MD5:0:32}\"}" > package/dist/config/dev-config
 		deno -V |sed "s/deno //" > package/dist/config/deno-version
 		echo -n "${PV}"  > src/resources/version
-		rm tests/bin/python3
 	fi
-
+	rm tests/bin/python3
+	ln -s ${EPREFIX}/usr/bin/python tests/bin/python3
 }
 src_install(){
 	if use bundle;then
@@ -340,6 +337,7 @@ src_install(){
 		doins -r ${S}/package/dist/share/*
 		insinto /usr/share/${PN}/bin
 		doins ${S}/package/dist/bin/quarto.js
+		doins -r ${S}/package/dist/bin/vendor
 	else
 		dobin ${S}/quarto
 		insinto /usr/share/${PN}/
