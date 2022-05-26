@@ -10,10 +10,10 @@ if [[ -f ${QUARTO_BASE_PATH}/configuration ]];then
 else
 	BUNDLED="TRUE"
 	export QUARTO_SHARE_PATH="${QUARTO_BASE_PATH}"
-  #NOTE bundled quarto gets the bin/vendor/import_map.json
+	#NOTE bundled quarto gets the bin/vendor/import_map.json
 	QUARTO_IMPORT_ARGMAP="--importmap=${QUARTO_BASE_PATH}/bin/vendor/import_map.json"
 	QUARTO_TARGET="${QUARTO_BASE_PATH}/bin/quarto.js"
-  QUARTO_DENO_OPTIONS=" --no-check"
+	QUARTO_DENO_OPTIONS=" --no-check"
 fi
 
 export SCRIPT_PATH="_EPREFIX_/usr/bin"

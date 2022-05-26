@@ -731,6 +731,7 @@ if [[ "${PV}" == *9999 ]];then
 	inherit git-r3
 	EGIT_REPO_URI="https://github.com/rstudio/${PN}"
 	EGIT_BRANCH="main"
+	#EGIT_COMMIT="106c88a04f890197dcb19013e31e5ddd51c82df7"
 else
 	RSTUDIO_SOURCE_FILENAME="v${PV/_p/+}.tar.gz"
 	S="${WORKDIR}/${P/_p/-}"
@@ -789,7 +790,7 @@ RDEPEND="
 	>=dev-libs/mathjax-2.7
 	>=app-text/pandoc-2.18
 	>=dev-libs/soci-4.0.3[postgres,sqlite]
-	>=net-libs/nodejs-16.14.0
+
 	sys-process/lsof
 	>=virtual/jdk-1.8:=
 	>=dev-cpp/yaml-cpp-0.7.0_p1
@@ -817,7 +818,10 @@ RDEPEND="
 		>=dev-qt/qtxmlpatterns-${QT_VER}:${QT_SLOT}
 	)
 	quarto? ( >=app-text/quarto-cli-0.9.230 )
-	panmirror? ( sys-apps/yarn )
+	panmirror? (
+		sys-apps/yarn
+		>=net-libs/nodejs-16.14.0
+		)
 	"
 DEPEND="${RDEPEND}"
 BDEPEND="
@@ -825,7 +829,7 @@ BDEPEND="
 "
 
 PATCHES=(
-	"${FILESDIR}/${PN}-9999-ant-system-node.patch"
+	"${FILESDIR}/${PN}-2022.06.0.node_path.patch"
 	"${FILESDIR}/${PN}-1.4.1717-boost-imports-and-namespaces.patch"
 	"${FILESDIR}/${PN}-9999-cmake-bundled-dependencies.patch"
 	"${FILESDIR}/${PN}-1.4.1717-fix-boost-version-check.patch"
@@ -956,7 +960,7 @@ src_compile(){
 		pushd ${NODE_GYP_DIR}
 		echo "yarn-offline-mirror \"${YARN_FILES_DIR}\"" > ${YARN_CONFIG}
 		local YARN_CMD_OPTIONS="--cache-folder ${YARN_CACHE_DIR} --use-yarnrc ${YARN_CONFIG}  --non-interactive --offline --no-pregess"
-		npm_config_build_from_source=true npm_config_nodedir=/usr/include/node yarn install ${YARN_CMD_OPTIONS}|| die "NODE_GYP failed"
+		npm_config_build_from_source=true npm_config_nodedir=/usr/include/node yarn install ${YARN_CMD_OPTIONS}|| die "Node GYP installation failed"
 		popd > /dev/null
 		# Finished Building node-gyp
 
@@ -964,9 +968,11 @@ src_compile(){
 		einfo "Building PANMIRROR"
 		pushd ${S}/src/gwt/panmirror/src/editor > /dev/null
 		yarn config set ignore-engines true ${YARN_CMD_OPTIONS} < /dev/null 2>&1 |cat
-		npm_config_build_from_source=true npm_config_nodedir=/usr/include/node npm_config_node_gyp=${NODE_GYP_DIR}/bin/node-gyp.js yarn install ${YARN_CMD_OPTIONS} || die "Panmirror failed"
+		npm_config_build_from_source=true npm_config_nodedir=/usr/include/node npm_config_node_gyp=${NODE_GYP_DIR}/bin/node-gyp.js yarn install ${YARN_CMD_OPTIONS} || die "Panmirror installation failed"
 		popd > /dev/null
 		#Finished Building PANMIRROR
+	else
+		patch -p1 < "${FILESDIR}/${PN}-2022.06.0.panmirror_disable.patch" || die "Couldn't apply panmirror disable patch"
 	fi
 
 	export EANT_BUILD_XML="src/gwt/build.xml"
@@ -1017,6 +1023,11 @@ src_install() {
 		insinto /etc/rstudio
 		doins "${FILESDIR}/rserver.conf" "${FILESDIR}/rsession.conf"
 	fi
+
+	#There linking to this libfmt but not installing.
+	#probably a temp build error
+	#commit: 0174aeb942fc446cd2fef58ab9bb1e9b5de1c862
+	dolib.so  ${S}_build/src/cpp/ext/fmt/libfmt.so*
 
 	# This binary name is much to generic, so we'll change it
 	mv "${ED}/usr/bin/diagnostics" "${ED}/usr/bin/${PN}-diagnostics"

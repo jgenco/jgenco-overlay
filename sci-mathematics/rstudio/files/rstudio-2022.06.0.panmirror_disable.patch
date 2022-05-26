@@ -1,0 +1,16 @@
+This should remove node requirement for panmirrorless install
+diff --git a/src/gwt/build.xml b/src/gwt/build.xml
+index 4e1ac4ee26..b17b51c1b7 100644
+--- a/src/gwt/build.xml
++++ b/src/gwt/build.xml
+@@ -143,10 +143,6 @@
+    </target>
+ 
+    <target name="gwtc" depends="ext,javac" description="GWT compile to JavaScript">
+-      <antcall target="panmirror">
+-         <param name="panmirror.target" value="ide-dist"/>
+-         <param name="panmirror.spawn" value="false"/>
+-      </antcall>
+       <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler">
+          <classpath>
+             <pathelement location="${src.dir}"/>

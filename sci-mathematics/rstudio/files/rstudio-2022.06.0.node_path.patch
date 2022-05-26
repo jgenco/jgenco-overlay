@@ -1,0 +1,14 @@
+Set node manually.
+diff --git a/src/gwt/build.xml b/src/gwt/build.xml
+index 4e1ac4ee26..11221eec25 100644
+--- a/src/gwt/build.xml
++++ b/src/gwt/build.xml
+@@ -107,7 +107,7 @@
+ 
+    <target name="panmirror" description="Compile panmirror library">
+       <mkdir dir="${panmirror.build.dir}"/>
+-      <exec executable="${node.bin}" dir="${panmirror.dir}" spawn="${panmirror.spawn}">
++      <exec executable="node" dir="${panmirror.dir}" spawn="${panmirror.spawn}">
+          <arg value="fuse"/>
+          <arg value="${panmirror.target}"/>
+          <env key="NODE_PATH" path="${env.NODE_PATH}:/opt/rstudio-tools/panmirror/node_modules"/>
