@@ -6,7 +6,7 @@ index 025efb6279..2e29dd12a9 100644
  
  # pandoc version
  set(PANDOC_VERSION "2.18" CACHE INTERNAL "Pandoc version")
-+add_compile_definitions(RSTUDIO_PANDOC_PATH="${RSTUDIO_PANDOC_PATH}")
++add_compile_definitions(RSTUDIO_BIN_PATH="${RSTUDIO_BIN_PATH}")
  
  # quarto support
  if(LINUX AND UNAME_M STREQUAL aarch64)
@@ -23,7 +23,7 @@ index ce49a90bcb..4b3b652f86 100644
 -#else
 -# define kDefaultPandocPath        "bin/pandoc"
 -#endif
-+#define kDefaultPandocPath         RSTUDIO_PANDOC_PATH
++#define kDefaultPandocPath         RSTUDIO_BIN_PATH
  
  #define kDefaultQuartoPath         "bin/quarto"
  #define kDefaultPostbackPath       "bin/postback/rpostback"

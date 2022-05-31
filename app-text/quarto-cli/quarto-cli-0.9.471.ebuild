@@ -23,7 +23,6 @@ DENO_LIBS=(
 "acorn@7.4.1 https://github.com/acornjs/acorn/archive/refs/tags/_VER_.tar.gz acorn-_VER_ bundle /acorn/src/index.js"
 "acorn-walk@7.2.0 https://github.com/acornjs/acorn/archive/refs/tags/_VER_.tar.gz acorn-_VER_ bundle /acorn-walk/src/index.js"
 "ansi_up@v5.1.0 https://github.com/drudru/ansi_up/archive/refs/tags/_VER_.tar.gz ansi_up-_VER_ bundle /ansi_up.js"
-"binary-search-bounds@2.0.5 https://github.com/mikolalysenko/binary-search-bounds/archive/refs/heads/master.tar.gz binary-search-bounds-master bundle /search-bounds.js"
 "blueimp-md5@2.19.0 https://github.com/blueimp/JavaScript-MD5/archive/refs/tags/v_VER_.tar.gz JavaScript-MD5-_VER_ bundle /js/md5.js"
 "dayjs@1.8.21 https://github.com/iamkun/dayjs/archive/refs/tags/v_VER_.tar.gz dayjs-_VER_ bundle /src/index.js"
 "diff@5.0.0 https://github.com/kpdecker/jsdiff/archive/refs/tags/v_VER_.tar.gz jsdiff-_VER_ bundle /src/index.js"
@@ -105,9 +104,9 @@ SRC_URI="${SRC_URI} bundle? ( $(build_deno_src_uri) )"
 
 LICENSE="GPL-2+ MIT ZLIB BSD Apache-2.0 ISC || ( MIT GPL-3 )"
 SLOT="0"
-KEYWORDS=""
+KEYWORDS="~amd64"
 PATCHES="
-	${FILESDIR}/quarto-cli-9999-pathfixes.patch
+	${FILESDIR}/quarto-cli-0.9.471-pathfixes.patch
 	${FILESDIR}/quarto-cli-0.9.256-configuration.patch
 "
 #DENO 1.22
@@ -201,7 +200,6 @@ src_compile(){
 	["acorn-7.4.1"]="aIeX4aKa0RO2JeS9dtPa"
 	["acorn-walk-7.2.0"]="HE7wS37ePcNncqJvsD8k"
 	["ansi_up-5.1.0"]="ifIRWFhqTFJbTEKi2tZH"
-	["binary-search-bounds-2.0.5"]="c8IgO4OqUhed8ANHQXKv"
 	["blueimp-md5-2.19.0"]="FsBtHB6ITwdC3L5Giq4Q"
 	["dayjs-1.8.21"]="6syVEc6qGP8frQXKlmJD"
 	["diff-5.0.0"]="cU62LaUh1QZHrLzL9VHS"
