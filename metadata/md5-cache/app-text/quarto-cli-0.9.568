@@ -1,15 +1,15 @@
-BDEPEND=>=dev-vcs/git-1.8.2.1[curl]
 DEFINED_PHASES=compile install test unpack
 DEPEND=net-libs/deno >=app-text/pandoc-2.18 dev-lang/dart-sass dev-util/esbuild net-libs/deno-dom dev-lang/lua
 DESCRIPTION=Open-source scientific and technical publishing system built on Pandoc.
 EAPI=8
 HOMEPAGE=https://quarto.org/
-INHERIT=bash-completion-r1 git-r3
+INHERIT=bash-completion-r1
 IUSE=bundle
+KEYWORDS=~amd64
 LICENSE=GPL-2+ MIT ZLIB BSD Apache-2.0 ISC || ( MIT GPL-3 )
-PROPERTIES=live
 RDEPEND=net-libs/deno >=app-text/pandoc-2.18 dev-lang/dart-sass dev-util/esbuild net-libs/deno-dom dev-lang/lua
 RESTRICT=mirror
 SLOT=0
-_eclasses_=toolchain-funcs	fd9cde67030b26e479eeadaced488253	multilib	4fbbbc98f236f1b43acd99476bc3cd85	bash-completion-r1	f5e7a020fd9c741740756aac61bf75ff	git-r3	b9ac6f96d2a88edb5b351df634dc5e53
-_md5_=3d9741db1ea961d40c74a4ee6db2be3a
+SRC_URI=https://github.com/quarto-dev/quarto-cli/archive/refs/tags/v0.9.568.tar.gz -> quarto-cli-0.9.568.tar.gz
+_eclasses_=toolchain-funcs	fd9cde67030b26e479eeadaced488253	multilib	4fbbbc98f236f1b43acd99476bc3cd85	bash-completion-r1	f5e7a020fd9c741740756aac61bf75ff
+_md5_=ab414b315a16c47a2d98b30a7d1b5e7a

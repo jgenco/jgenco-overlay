@@ -1,0 +1,23 @@
+diff --git a/src/cpp/CMakeLists.txt b/src/cpp/CMakeLists.txt
+index 73ffc3a1c8..417f7b40bc 100644
+--- a/src/cpp/CMakeLists.txt
++++ b/src/cpp/CMakeLists.txt
+@@ -495,6 +495,8 @@ endif()
+ message(STATUS "SOCI libraries found under ${SOCI_LIBRARY_DIR}")
+ set(RSTUDIO_HAS_SOCI 1)
+ 
++find_package(fmt REQUIRED)
++
+ if(UNIX)
+ 
+    find_package(OpenSSL REQUIRED)
+diff --git a/src/cpp/ext/CMakeLists.txt b/src/cpp/ext/CMakeLists.txt
+index 697a3ec9cd..7eaf040213 100644
+--- a/src/cpp/ext/CMakeLists.txt
++++ b/src/cpp/ext/CMakeLists.txt
+@@ -15,5 +15,4 @@
+ 
+ project (EXT)
+ 
+-add_subdirectory(fmt)
+ 

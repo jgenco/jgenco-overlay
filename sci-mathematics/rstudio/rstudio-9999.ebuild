@@ -686,8 +686,6 @@ zenscroll@4.0.2
 "
 #####End   of PANMIRROR package list#####
 
-
-
 #####Start of NODEJS package list#####
 RELECTRON_PACKAGE_HASH="e93f7e196f2d4ccae9bcd352ff04ce547cab65ab"
 ELECTRON_VERSION="19.0.0"
@@ -1653,14 +1651,11 @@ else
 fi
 
 SRC_URI="${SRC_URI} !system_dictionaries? ( https://s3.amazonaws.com/rstudio-dictionaries/core-dictionaries.zip -> ${PN}-core-dictionaries.zip ) "
-
-#node-gyp and dependencies licenses
-#MIT ISC BSD-3-Clause Apache-2.0 BSD-2-Clause (MIT OR CC0-1.0) BSD (AFL-2.1 OR BSD-3-Clause) (WTFPL-2 OR MIT) CC-BY-3.0 CC0-1.0 0BSD Unlicense
-#panmirror and dependencies licenses
-#(MIT OR Apache-2.0) Apache 2.0 Apache-2.0 BSD BSD-2-Clause BSD-3-Clause BSD* ISC LGPL-3.0 MIT Python-2.0 UNKNOWN(MIT/X11) Unlicense
-#TODO fix BSD and LGPL-3.0 X11 licences
-LICENSE="AGPL-3 MIT Apache-2.0 panmirror? ( AGPL-3 MIT ISC Apache-2.0 BSD Unlicense CC0-1.0  || ( AFL-2.1 BSD ) || ( WTFPL-2 MIT ) CC-BY-3.0 LGPL-3 PYTHON || ( MIT X11 ) )"
-
+#node_gyp and panmirror are seperate lines
+#buffers@0.1.1 = MIT/X11
+LICENSE="AGPL-3 BSD MIT Apache-2.0 Boost-1.0 CC-BY-4.0
+panmirror? ( BSD-2 ISC MIT )
+panmirror? ( || ( AFL-2.1 BSD ) || ( MIT Apache-2.0 ) 0BSD Apache-2.0 BSD BSD-2 ISC LGPL-3 MIT PYTHON Unlicense )"
 unravel_nodejs_deps(){
 	local SKEIN=$@
 	local regex='((.*\/)?(.*))@(.*)'
@@ -1712,7 +1707,7 @@ RDEPEND="
 	>=dev-libs/mathjax-2.7
 	>=app-text/pandoc-2.18
 	>=dev-libs/soci-4.0.3[postgres,sqlite]
-
+	>=dev-libs/libfmt-8.1.1
 	sys-process/lsof
 	>=virtual/jdk-1.8:=
 	>=dev-cpp/yaml-cpp-0.7.0_p1
@@ -1767,17 +1762,18 @@ PATCHES=(
 	"${FILESDIR}/${PN}-9999-quarto-version.patch"
 	"${FILESDIR}/${PN}-9999-electron_path.patch"
 	"${FILESDIR}/${PN}-9999-reenable-sandbox.patch"
+	"${FILESDIR}/${PN}-9999-libfmt.patch"
 )
 
 src_unpack(){
 	if [[ "${PV}" == *9999 ]];then
 	if use electron; then
 		#Electron package.json changes alot. This is a known good version
-		EGIT_COMMIT=${ELECTRON_EGIT_COMMIT}
+		EGIT_COMMIT=${ELECTRON_EGIT_COMMIT} # 2022-05-30
 		:
 	else
-		#A good last commit when testing a patch - May 30 2022
-		#EGIT_COMMIT="a2fdbe6bf19c58b76875f1cf6da2057db0e9616b"
+		#A good last commit when testing a patch
+		#EGIT_COMMIT="74481cc1505c3298ed792b58d6505bf99348f994" # 2022-06-10
 		:
 	fi
 		git-r3_src_unpack
@@ -1860,6 +1856,22 @@ src_prepare(){
 	java-pkg-2_src_prepare
 
 	ln -s ${EPREFIX}/usr/share/mathjax ${S}/dependencies/mathjax-27
+
+	#Remove Bundled deps ln -s to system libraries - see /src/gwt/.classpath
+	#gin and aopalliance
+	rm ${S}/src/gwt/lib/gin/2.1.2/* -R
+	ln -s ${EPREFIX}/usr/share/aopalliance-1/lib/aopalliance.jar ${S}/src/gwt/lib/gin/2.1.2/aopalliance.jar || die "linking to aopalliance.jar failed"
+	ln -s ${EPREFIX}/usr/share/javax-inject/lib/javax-inject.jar ${S}/src/gwt/lib/gin/2.1.2/javax-inject.jar || die "linking to javax-inject.jar failed"
+	for JAR in gin guice-assistedinject-3.0 guice-3.0 ;do
+		ln -s ${EPREFIX}/usr/share/gin-2.1/lib/${JAR}.jar ${S}/src/gwt/lib/gin/2.1.2/${JAR}.jar || die "linking to ${JAR} failed"
+	done
+	#gwt - they bundle a custom gwt build @github rstudio/gwt tree v1.4
+	#validation-api
+	rm ${S}/src/gwt/lib/gwt/gwt-rstudio/validation-api-*.jar
+	ln -s ${EPREFIX}/usr/share/validation-api-1.0/lib/validation-api.jar ${S}/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA.jar || die "linking to validation-api.jar"
+	ln -s ${EPREFIX}/usr/share/validation-api-1.0/sources/validation-api-src.zip ${S}/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA-sources.jar || die "linking to validation-api-src.zip"
+	#todo lib/junit-4.9b3.jar dev-java/junit
+	#todo create elemental2
 
 	# make sure icons and mime stuff are with prefix
 	sed -i \
@@ -1950,12 +1962,10 @@ src_configure() {
 		-DQUARTO_ENABLED=$(usex quarto TRUE FALSE)
 	)
 	if use electron; then
-			mycmakeargs+=( -DRSTUDIO_INSTALL_FREEDESKTOP="$(usex !headless "ON" "OFF")")
-	else
-		if ! use headless ; then
-			mycmakeargs+=( -DQT_QMAKE_EXECUTABLE="$(qt5_get_bindir)/qmake"
-						   -DRSTUDIO_INSTALL_FREEDESKTOP="$(usex !headless "ON" "OFF")")
-		fi
+		mycmakeargs+=( -DRSTUDIO_INSTALL_FREEDESKTOP="$(usex !headless "ON" "OFF")")
+	elif ! use headless ; then
+		mycmakeargs+=( -DQT_QMAKE_EXECUTABLE="$(qt5_get_bindir)/qmake"
+					   -DRSTUDIO_INSTALL_FREEDESKTOP="$(usex !headless "ON" "OFF")")
 	fi
 	# It looks like eant takes care of this for us during src_compile
 	# TODO: verify with someone who knows better
@@ -2033,7 +2043,7 @@ src_compile(){
 src_install() {
 	cmake_src_install
 
-	if use server;then
+	if use server || use headless;then
 		dopamd src/cpp/server/extras/pam/rstudio
 		newinitd "${FILESDIR}/rstudio-server" rstudio-server
 		insinto /etc/rstudio
@@ -2042,7 +2052,9 @@ src_install() {
 	if use electron;then
 		mkdir -p "${ED}/usr/bin"
 		dosym -r /usr/share/${PN}/rstudio /usr/bin/rstudio
-		dosym -r /usr/share/${PN}/resources/app/bin/rserver /usr/bin/rserver
+		if use server; then
+			dosym -r /usr/share/${PN}/resources/app/bin/rserver /usr/bin/rserver
+		fi
 		#see src_prepare for more info
 #		cat << _EOF_ | sed 's/ARGS/$@/' > ${PN}
 #!/bin/bash
@@ -2054,11 +2066,6 @@ src_install() {
 		# This binary name is much to generic, so we'll change it
 		mv "${ED}/usr/bin/diagnostics" "${ED}/usr/bin/${PN}-diagnostics"
 	fi
-
-	#There linking to this libfmt but not installing.
-	#probably a temp build error
-	#commit: 0174aeb942fc446cd2fef58ab9bb1e9b5de1c862
-	dolib.so  ${S}_build/src/cpp/ext/fmt/libfmt.so*
 
 	#linking the resources/dictionaries directory to the hunspell directory
 	if use system_dictionaries;then

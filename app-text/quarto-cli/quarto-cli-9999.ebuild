@@ -9,6 +9,8 @@ HOMEPAGE="https://quarto.org/"
 RESTRICT="mirror"
 IUSE="bundle"
 
+inherit bash-completion-r1
+
 #package@version url unpack_folder action from
 LINE_REGEX="((@.*/)?[^@]*)@(([^@ ]*))? +(.*) +(.*) +(.*) +(.*)"
 DENO_LIBS=(
@@ -65,43 +67,33 @@ else
 	SRC_URI="https://github.com/quarto-dev/quarto-cli/archive/refs/tags/v${PV}.tar.gz   -> ${P}.tar.gz"
 fi
 
-SRC_URI="${SRC_URI} bundle? ( $(build_deno_src_uri) )"
+#SRC_URI="${SRC_URI} bundle? ( $(build_deno_src_uri) )"
 
 #Quarto-cli has third party libraries bundled in their software
-#https://github.com/rstudio/bslib/tree/888fbe064491692deb56fd90dc23455052e31073 MIT BSD?
-#https://github.com/twbs/icons/tree/v1.8.1/ MIT
 #BOOTSWATCH=5.1.3
-
-#https://unpkg.com/anchor-js@4.3.1/anchor.min.js MIT
-#https://unpkg.com/@popperjs/core@2.11.4/dist/umd/popper.min.js MIT
-#https://github.com/zenorocha/clipboard.js/blob/v2.0.10/dist/clipboard.min.js MIT
-#https://unpkg.com/tippy.js@6.3.7/dist/tippy.umd.min.js MIT
-#https://github.com/mozilla/pdf.js/tree/v2.8.335 Apache 2.0
-#https://github.com/hakimel/reveal.js/tree/4.2.0 MIT
-#https://github.com/denehyg/reveal.js-menu/tree/2.1.0 MIT
-#https://github.com/rajgoel/reveal.js-plugins/tree/a88c134e2cf3c7780448db003e7329c3cbd8cfb4 MIT
-#https://github.com/McShelby/reveal-pdfexport/tree/2.0.1/ MIT
-#https://github.com/javve/list.js/tree/v2.3.1/ MIT
-#https://github.com/iamkun/dayjs/tree/v1.11.0/ MIT
-
-#https://unpkg.com/@algolia/autocomplete-js@1.5.3/dist/umd/index.production.js MIT
-#https://unpkg.com/@algolia/autocomplete-preset-algolia@1.5.3/dist/umd/index.production.js MIT
-#https://github.com/krisk/Fuse/tree/v6.5.3 Apache 2.0
+#MIT & BSD: rstudio/bslib
+#MIT: twbs/icons Anchor-js poppperjs clipboard.js tippy.js
+#     hakimel/reveal.js denehyg/reveal.js-menu rajgoel/reveal.js-plugins
+#     McShelby/reveal-pdfexport javve/list.js iamkun/dayjs
+#     @algolia/autocomplete-js @algolia/autocomplete-preset-algolia
+#Apache-2.0 mozilla/pdf.js krisk/Fuse
 #ALGOLIA_SEARCH_JS=4.5.1
 #ALGOLIA_SEARCH_INSIGHTS_JS=2.0.3
 #https://www.cookieconsent.com/releases/4.0.0/cookie-consent.js UNKNOWN
 
-#in src/resources/vendor
-#Apache-2.0: (deno-)puppeteer
-#MIT: set-immediate-shim, lie, immediate
-#MIT and ZLIB: pako
-#MIT or GPLv3: jszip
-#Apache-2.0: jspm-core
-
 #"Downloaded" libs
-#MIT denos_std, acorn{,-walk}, blueimp-md5, lodash
-#BSD jsdiff
-#ISC @observablehq/parser
+#MIT: denos_std, events, cache, cliffy, dayjs, moment-guess, deno_dom, media_types,
+#     xmlp, another_cookiejar, ansi_up. lodash, acorn{,-walk}, binary-search-bounds,
+#     blueimp-md5, js-yaml
+#BSD: diff(jsdiff)
+#ISC: semver, @observablehq/parser
+#MIT or GPLv3: jszip
+#Apache-2.0: puppeteer
+
+#"Scopes" - src/resources/vendor
+#MIT: immediate, lie, set-immediate-shim
+#MIT and ZLIB: pako
+#Apache-2.0: jspm-core
 
 LICENSE="GPL-2+ MIT ZLIB BSD Apache-2.0 ISC || ( MIT GPL-3 )"
 SLOT="0"
@@ -112,7 +104,7 @@ PATCHES="
 "
 #DENO 1.22
 #DART-sass 1.32.8
-#esbuild 14.39
+#esbuild 0.14.39
 
 DEPEND="
 	net-libs/deno
@@ -133,7 +125,7 @@ src_unpack(){
 		git-r3_src_unpack
 	fi
 	default
-	if use bundle; then
+	if false && use bundle; then
 ###Setting up DENO_CACHE/DENO_SRC###
 	einfo "Setting up DENO_SRC/DENO_CACHE"
 	mkdir ${DENO_CACHE}
@@ -161,7 +153,7 @@ src_unpack(){
 	fi
 }
 src_compile(){
-	if use bundle;then
+	if false use bundle;then
 	#Building Source Files
 	einfo "Building Source Files..."
 
@@ -191,7 +183,7 @@ src_compile(){
 		| sed "s#\"acorn-walk\"#\"https://cdn.skypack.dev/acorn-walk@7.2.0\"#" > ${DENO_SRC}/@observablehq_parser-4.5.0/@observablehq_parser.js
 ###End Building Source Files###
 	fi
-	if use bundle;then
+	if false && use bundle;then
 ###BUILD DENO CACHE###
 	einfo "Building Deno cache..."
 	# curl https://cdn.skypack.dev/moment-guess@1.2.4?meta | sed "s/,/\n,/g"|grep buildId
@@ -284,7 +276,7 @@ src_compile(){
 	#Configuration
 	einfo "Setting Configuration"
 	mkdir -p package/dist/config/
-	sed "s#_EPREFIX_#${EPREFIX}#" ${FILESDIR}/quarto.combined.eprefix > ${S}/quarto
+	sed "s#_EPREFIX_#${EPREFIX}#" ${FILESDIR}/quarto.combined.eprefix |sed "s#src/import_map.json#src/dev_import_map.json#" > ${S}/quarto
 
 	if use bundle;then
 		#Setup package/bin dir
@@ -312,19 +304,23 @@ src_compile(){
 		echo -n "${PV}"  > ${S}/package/dist/share/version
 	else
 		#deno -v |sed "s/deno //"
-		DENO=`grep     "export DENO="     configuration |sed "s/.*=//"`
+		DENO=$(grep     "export DENO="     configuration |sed "s/.*=//")
 		#
-		DENO_DOM=`grep "export DENO_DOM=" configuration |sed "s/.*=//"`
+		DENO_DOM=$(grep "export DENO_DOM=" configuration |sed "s/.*=//")
 		#pandoc -v|grep "pandoc "|sed "s/pandoc //"
-		PANDOC=`grep   "export PANDOC="   configuration |sed "s/.*=//"`
+		PANDOC=$(grep   "export PANDOC="   configuration |sed "s/.*=//")
 		#sass --version
-		DARTSASS=`grep "export DARTSASS=" configuration |sed "s/.*=//"`
+		DARTSASS=$(grep "export DARTSASS=" configuration |sed "s/.*=//")
 		#esbuild --version
-		ESBUILD=`grep  "export ESBUILD="  configuration |sed "s/.*=//"`
-		QUARTO_MD5=`md5sum ${S}/quarto`
+		ESBUILD=$(grep  "export ESBUILD="  configuration |sed "s/.*=//")
+		QUARTO_MD5=$(md5sum ${S}/quarto)
 		#QUARTO_MD5=`grep  "export QUARTO_MD5="  configuration |sed "s/.*=//"`
+		importMap=$(md5sum       ${S}/src/import_map.json)
+		bundleImportMap=$(md5sum ${S}/src/resources/vendor/import_map.json)
 
-		echo -n "{\"deno\": \"${DENO}\",\"deno_dom\": \"${DENO_DOM}\",\"pandoc\": \"${PANDOC}\",\"dartsass\": \"${DARTSASS}\",\"esbuild\": \"${ESBUILD}\",\"script\": \"${QUARTO_MD5:0:32}\"}" > package/dist/config/dev-config
+		echo -n "{\"deno\": \"${DENO}\",\"deno_dom\": \"${DENO_DOM}\",\"pandoc\": \"${PANDOC}\",\"dartsass\": \"${DARTSASS}\",\"esbuild\": \"${ESBUILD}\",
+		\"script\": \"${QUARTO_MD5:0:32}\",\"importMap\":\"${importMap:0:32}\",\"bundleImportMap\":\"${bundleImportMap:0:32}\"}" > package/dist/config/dev-config
+
 		deno -V |sed "s/deno //" > package/dist/config/deno-version
 		echo -n "${PV}"  > src/resources/version
 	fi
@@ -345,7 +341,7 @@ src_install(){
 		doins -r *
 		dosym -r ${EPREFIX}/usr/share/${PN}/src/resources/version ${EPREFIX}/usr/share/${PN}/version
 	fi
-
+	newbashcomp ${FILESDIR}/quarto-bash-completion.sh quarto
 }
 src_test(){
 	#this only works with bundled libraries
