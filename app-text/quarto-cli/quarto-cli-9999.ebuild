@@ -107,15 +107,16 @@ PATCHES="
 #esbuild 0.14.39
 
 DEPEND="
-	net-libs/deno
+	<=net-libs/deno-1.23.0
 	>=app-text/pandoc-2.18
 	dev-lang/dart-sass
-	dev-util/esbuild
 	net-libs/deno-dom
 	dev-lang/lua
 "
 RDEPEND="${DEPEND}"
-BDEPEND=""
+BDEPEND="
+	bundle? ( dev-util/esbuild )
+"
 
 DENO_SRC="${WORKDIR}/deno_src"
 DENO_CACHE="${WORKDIR}/deno_cache"

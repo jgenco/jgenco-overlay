@@ -33,6 +33,7 @@ SRC_URI={%- block src_uri -%}{% raw -%}"$(cargo_crate_uris)"{%- endraw %}{%- end
 
 #Note webkit = 0BSD and a Chromium License
 #     ring   = openssl SSLeay ISC MIT
+#     webpki = ISC
 LICENSE={%- block license -%}"{{ license }}"{%- endblock %}
 SLOT={%- block slot -%}"0"{%- endblock %}
 KEYWORDS={%- block keyword -%}"~amd64"{%- endblock %}
@@ -68,7 +69,7 @@ src_prepare() {
 		fi
 	done
 	pushd "${WORKDIR}/cargo_home/gentoo/${V8_DIR}" > /dev/null || die "V8 crate not found"
-	patch -p1 < ${FILESDIR}/v8-0.40.2-lockfile.patch || die
+	patch -p1 < ${FILESDIR}/v8-0.43.1-lockfile.patch || die
 	patch -p1 < ${FILESDIR}/v8-0.42.0-disable-auto-ccache.patch || die
 	patch -p1 < ${FILESDIR}/v8-0.40.2-jobfix.patch   || die
 	popd > /dev/null
@@ -91,6 +92,6 @@ src_install() {
 	newbashcomp deno_bash_comp deno
 	}
 pkg_postinst(){
-	default
+	:
 	}
 
