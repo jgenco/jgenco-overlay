@@ -177,6 +177,7 @@ _quarto()
 	cmd_publish="--token --server --id --no-render --no-prompt --no-browser"
 	tools="tinytex chromium"
 
+#TODO: add {install,update,remove} extension --embed tools?
 	if (( ${#COMP_WORDS[*]} == 2  )); then
 		COMPREPLY=( $(compgen -W "${infocommands} ${subcommands} ${subcommands_hidden}" -- $cur) )
 		return

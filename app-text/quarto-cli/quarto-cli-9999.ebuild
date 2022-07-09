@@ -326,6 +326,7 @@ src_compile(){
 		echo -n "${PV}"  > src/resources/version
 	fi
 	rm tests/bin/python3
+
 	ln -s ${EPREFIX}/usr/bin/python tests/bin/python3
 }
 src_install(){
@@ -342,6 +343,13 @@ src_install(){
 		doins -r *
 		dosym -r ${EPREFIX}/usr/share/${PN}/src/resources/version ${EPREFIX}/usr/share/${PN}/version
 	fi
+	#quarto completions bash > _quarto.sh
+	#>=app-shells/zsh-4.3.5 is what app-shells/gentoo-zsh-completions depends on
+	#if has_version  ">=app-shells/zsh-4.3.5";then
+	#	quarto completions zsh
+	#	insinto /usr/share/zsh/site-functions
+	#	doins _quarto
+	#fi
 	newbashcomp ${FILESDIR}/quarto-bash-completion.sh quarto
 }
 src_test(){

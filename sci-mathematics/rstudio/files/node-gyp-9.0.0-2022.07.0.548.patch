@@ -1,0 +1,24 @@
+diff --git a/package.json.bak b/package.json
+index e795db1..be3221a 100644
+--- a/package.json.bak
++++ b/package.json
+@@ -8,7 +8,6 @@
+     "module",
+     "c",
+     "c++",
+-    "bindings",
+     "gyp"
+   ],
+   "version": "9.0.0",
+@@ -37,11 +36,6 @@
+     "node": "^12.22 || ^14.13 || >=16"
+   },
+   "devDependencies": {
+-    "bindings": "^1.5.0",
+-    "nan": "^2.14.2",
+-    "require-inject": "^1.4.4",
+-    "standard": "^14.3.4",
+-    "tap": "^12.7.0"
+   },
+   "scripts": {
+     "lint": "standard */*.js test/**/*.js",

@@ -1,0 +1,407 @@
+@byteit101 reported a security bug in RStudio https://github.com/rstudio/rstudio/issues/10632
+Pull requests https://github.com/rstudio/rstudio/pull/11368 and
+https://github.com/rstudio/rstudio/pull/11495 mentioned this bug.
+#11495 was eventually merged.  I don't know what the bug is but it seems
+RStudio is not counting  BMP characters length correctly.  I assume it
+is a C buffer bug.  @byteit101 has not responded if this fixes
+the problem or not.  I'm including this on the assumption this fixes
+the bug.
+NOTE: 3/3 was this NEWS update:
+- Fixed an issue where chunks containing multibyte characters was not executed correctly (#10632)
+
+From 71bf14e0a6c4bd6642f53cfe8a6c3891209f2943 Mon Sep 17 00:00:00 2001
+From: Kevin Ushey <kevinushey@gmail.com>
+Date: Fri, 24 Jun 2022 12:07:36 -0700
+Subject: [PATCH 1/3] start using std::string for code
+
+
+
+---
+ .../modules/rmarkdown/NotebookQueue.cpp       |  3 +-
+ .../modules/rmarkdown/NotebookQueueUnit.cpp   | 29 +++++++++----------
+ .../modules/rmarkdown/NotebookQueueUnit.hpp   |  4 +--
+ 3 files changed, 17 insertions(+), 19 deletions(-)
+
+diff --git a/src/cpp/session/modules/rmarkdown/NotebookQueue.cpp b/src/cpp/session/modules/rmarkdown/NotebookQueue.cpp
+index 9ac1d2de115..e3bdfd7f5f4 100644
+--- a/src/cpp/session/modules/rmarkdown/NotebookQueue.cpp
++++ b/src/cpp/session/modules/rmarkdown/NotebookQueue.cpp
+@@ -441,9 +441,8 @@ class NotebookQueue : boost::noncopyable
+             if (label != "setup")
+                workingDir = docQueue->workingDir();
+ 
+-            std::string codeString = string_utils::wideToUtf8(unit->code());
+             execContext_ = boost::make_shared<ChunkExecContext>(
+-               unit->docId(), unit->chunkId(), codeString, label, ctx, engine,
++               unit->docId(), unit->chunkId(), unit->code(), label, ctx, engine,
+                unit->execScope(), workingDir, options,
+                docQueue->pixelWidth(), docQueue->charWidth());
+             execContext_->connect();
+diff --git a/src/cpp/session/modules/rmarkdown/NotebookQueueUnit.cpp b/src/cpp/session/modules/rmarkdown/NotebookQueueUnit.cpp
+index 2c223c5a9c5..03b2f07de8d 100644
+--- a/src/cpp/session/modules/rmarkdown/NotebookQueueUnit.cpp
++++ b/src/cpp/session/modules/rmarkdown/NotebookQueueUnit.cpp
+@@ -128,17 +128,16 @@ Error NotebookQueueUnit::fromJson(const json::Object& source,
+    // convert enums
+    unit.execMode_ = static_cast<ExecMode>(execMode);
+    unit.execScope_ = static_cast<ExecScope>(execScope);
+-
+-   // convert code to wide chars (so we don't have to do UTF-8 math when
+-   // processing execution ranges)
+-   unit.code_ = string_utils::utf8ToWide(code);
++   unit.code_ = code;
+ 
+    error = fillExecRange(completed, &unit.completed_);
+    if (error)
+       LOG_ERROR(error);
++
+    error = fillExecRange(pending, &unit.pending_);
+    if (error)
+       LOG_ERROR(error);
++
+    return Success();
+ }
+ 
+@@ -155,8 +154,9 @@ Error NotebookQueueUnit::parseOptions(json::Object* pOptions)
+    r::sexp::Protect protect;
+    SEXP sexpOptions = R_NilValue;
+    Error error = r::exec::RFunction(".rs.evaluateChunkOptions")
+-         .addUtf8Param(string_utils::wideToUtf8(code_))
++         .addUtf8Param(code_)
+          .call(&sexpOptions, &protect);
++
+    if (error)
+       return error;
+ 
+@@ -184,7 +184,7 @@ Error NotebookQueueUnit::parseOptions(json::Object* pOptions)
+ Error NotebookQueueUnit::innerCode(std::string* pCode)
+ {
+    return r::exec::RFunction(".rs.extractChunkInnerCode")
+-       .addUtf8Param(string_utils::wideToUtf8(code_))
++       .addUtf8Param(code_)
+        .callUtf8(pCode);
+ }
+ 
+@@ -227,7 +227,7 @@ json::Object NotebookQueueUnit::toJson() const
+ 
+    // emit top-level values
+    json::Object unit;
+-   unit[kQueueUnitCode]      = string_utils::wideToUtf8(code_);
++   unit[kQueueUnitCode]      = code_;
+    unit[kQueueUnitDocId]     = docId_;
+    unit[kQueueUnitChunkId]   = chunkId_;
+    unit[kQueueUnitCompleted] = completed;
+@@ -240,7 +240,7 @@ json::Object NotebookQueueUnit::toJson() const
+ }
+ 
+ std::string NotebookQueueUnit::popExecRange(ExecRange* pRange, 
+-      ExpressionMode mode)
++                                            ExpressionMode mode)
+ {
+    // do we have any unevaluated code in this execution unit?
+    if (pending_.empty())
+@@ -250,7 +250,7 @@ std::string NotebookQueueUnit::popExecRange(ExecRange* pRange,
+    if (execScope_ == ExecScopeInline)
+    {
+       pending_.clear();
+-      return string_utils::wideToUtf8(code_);
++      return code_;
+    }
+ 
+    // extract next range to execute
+@@ -280,13 +280,13 @@ std::string NotebookQueueUnit::popExecRange(ExecRange* pRange,
+       executing_.extendTo(ExecRange(start, stop));
+ 
+    completed_.push_back(executing_);
+-   std::wstring code = code_.substr(start, stop - start);
+    
+    // return values to caller
+    if (pRange)
+       *pRange = executing_;
+ 
+-   return string_utils::wideToUtf8(code);
++   std::string code = code_.substr(start, stop - start);
++   return code;
+ }
+ 
+ std::string NotebookQueueUnit::docId() const
+@@ -299,7 +299,7 @@ std::string NotebookQueueUnit::chunkId() const
+    return chunkId_;
+ }
+ 
+-std::wstring NotebookQueueUnit::code() const
++std::string NotebookQueueUnit::code() const
+ {
+    return code_;
+ }
+@@ -321,14 +321,13 @@ ExecMode NotebookQueueUnit::execMode() const
+ 
+ std::string NotebookQueueUnit::executingCode() const
+ {
+-   return string_utils::wideToUtf8(code_.substr(
+-            executing_.start, executing_.stop - executing_.start));
++   return code_.substr(executing_.start, executing_.stop - executing_.start);
+ }
+ 
+ void NotebookQueueUnit::replaceCode(const std::string& code)
+ {
+    // replace the entire body of the code
+-   code_ = string_utils::utf8ToWide(code);
++   code_ = code;
+ 
+    // replace the pending queue with one that executes exactly the code given
+    pending_.clear();
+diff --git a/src/cpp/session/modules/rmarkdown/NotebookQueueUnit.hpp b/src/cpp/session/modules/rmarkdown/NotebookQueueUnit.hpp
+index 6b678249bd2..5fa88605fd9 100644
+--- a/src/cpp/session/modules/rmarkdown/NotebookQueueUnit.hpp
++++ b/src/cpp/session/modules/rmarkdown/NotebookQueueUnit.hpp
+@@ -76,7 +76,7 @@ class NotebookQueueUnit : boost::noncopyable
+    std::string chunkId() const;
+    ExecMode execMode() const;
+    ExecScope execScope() const;
+-   std::wstring code() const;
++   std::string code() const;
+    std::string executingCode() const;
+ 
+ private:
+@@ -84,7 +84,7 @@ class NotebookQueueUnit : boost::noncopyable
+    std::string chunkId_;
+    ExecMode execMode_;
+    ExecScope execScope_;
+-   std::wstring code_;
++   std::string code_;
+    std::list<ExecRange> completed_;
+    std::list<ExecRange> pending_;
+    ExecRange executing_;
+
+From db7d9f6ce99dfc424e185babd9b298dec9399217 Mon Sep 17 00:00:00 2001
+From: Kevin Ushey <kevinushey@gmail.com>
+Date: Fri, 24 Jun 2022 13:38:50 -0700
+Subject: [PATCH 2/3] compute byte offsets into UTF-8 contents
+
+---
+ .../src/org/rstudio/core/client/JsVector.java | 12 ++---
+ .../rstudio/core/client/JsVectorBoolean.java  | 12 ++---
+ .../rstudio/core/client/JsVectorInteger.java  | 12 ++---
+ .../rstudio/core/client/JsVectorNumber.java   | 12 ++---
+ .../rstudio/core/client/JsVectorString.java   | 12 ++---
+ .../editors/text/rmd/NotebookQueueState.java  | 44 ++++++-------------
+ 6 files changed, 49 insertions(+), 55 deletions(-)
+
+diff --git a/src/gwt/src/org/rstudio/core/client/JsVector.java b/src/gwt/src/org/rstudio/core/client/JsVector.java
+index 50ef6388de3..34c08795751 100644
+--- a/src/gwt/src/org/rstudio/core/client/JsVector.java
++++ b/src/gwt/src/org/rstudio/core/client/JsVector.java
+@@ -75,10 +75,12 @@ public final native T get(int index, T defaultValue)
+ 
+    public final native int indexOf(T value)
+    /*-{
+-      for (var i = 0, n = this.length; i < n; i++)
+-         if (this[i] === value)
+-           return i;
+-      return -1;
++      return this.indexOf(value);
++   }-*/;
++   
++   public final native int indexOf(T value, int offset)
++   /*-{
++      return this.indexOf(value, offset);
+    }-*/;
+ 
+    public final native boolean isEmpty()
+@@ -225,4 +227,4 @@ private final native T defaultValue()
+    /*-{
+       return null;
+    }-*/;
+-}
+\ No newline at end of file
++}
+diff --git a/src/gwt/src/org/rstudio/core/client/JsVectorBoolean.java b/src/gwt/src/org/rstudio/core/client/JsVectorBoolean.java
+index ff36de5b1bf..b48a72f974b 100644
+--- a/src/gwt/src/org/rstudio/core/client/JsVectorBoolean.java
++++ b/src/gwt/src/org/rstudio/core/client/JsVectorBoolean.java
+@@ -75,10 +75,12 @@ public final native boolean get(int index, boolean defaultValue)
+ 
+    public final native int indexOf(boolean value)
+    /*-{
+-      for (var i = 0, n = this.length; i < n; i++)
+-         if (this[i] === value)
+-           return i;
+-      return -1;
++      return this.indexOf(value);
++   }-*/;
++   
++   public final native int indexOf(boolean value, int offset)
++   /*-{
++      return this.indexOf(value, offset);
+    }-*/;
+ 
+    public final native boolean isEmpty()
+@@ -225,4 +227,4 @@ private final native boolean defaultValue()
+    /*-{
+       return false;
+    }-*/;
+-}
+\ No newline at end of file
++}
+diff --git a/src/gwt/src/org/rstudio/core/client/JsVectorInteger.java b/src/gwt/src/org/rstudio/core/client/JsVectorInteger.java
+index 7c3f65625bc..dea5ae9ce07 100644
+--- a/src/gwt/src/org/rstudio/core/client/JsVectorInteger.java
++++ b/src/gwt/src/org/rstudio/core/client/JsVectorInteger.java
+@@ -75,10 +75,12 @@ public final native int get(int index, int defaultValue)
+ 
+    public final native int indexOf(int value)
+    /*-{
+-      for (var i = 0, n = this.length; i < n; i++)
+-         if (this[i] === value)
+-           return i;
+-      return -1;
++      return this.indexOf(value);
++   }-*/;
++   
++   public final native int indexOf(int value, int offset)
++   /*-{
++      return this.indexOf(value, offset);
+    }-*/;
+ 
+    public final native boolean isEmpty()
+@@ -225,4 +227,4 @@ private final native int defaultValue()
+    /*-{
+       return 0;
+    }-*/;
+-}
+\ No newline at end of file
++}
+diff --git a/src/gwt/src/org/rstudio/core/client/JsVectorNumber.java b/src/gwt/src/org/rstudio/core/client/JsVectorNumber.java
+index 1cbb5148b95..f6c829d8e02 100644
+--- a/src/gwt/src/org/rstudio/core/client/JsVectorNumber.java
++++ b/src/gwt/src/org/rstudio/core/client/JsVectorNumber.java
+@@ -75,10 +75,12 @@ public final native double get(int index, double defaultValue)
+ 
+    public final native int indexOf(double value)
+    /*-{
+-      for (var i = 0, n = this.length; i < n; i++)
+-         if (this[i] === value)
+-           return i;
+-      return -1;
++      return this.indexOf(value);
++   }-*/;
++   
++   public final native int indexOf(double value, int offset)
++   /*-{
++      return this.indexOf(value, offset);
+    }-*/;
+ 
+    public final native boolean isEmpty()
+@@ -225,4 +227,4 @@ private final native double defaultValue()
+    /*-{
+       return 0;
+    }-*/;
+-}
+\ No newline at end of file
++}
+diff --git a/src/gwt/src/org/rstudio/core/client/JsVectorString.java b/src/gwt/src/org/rstudio/core/client/JsVectorString.java
+index 86198fa66b3..a1724ff18c4 100644
+--- a/src/gwt/src/org/rstudio/core/client/JsVectorString.java
++++ b/src/gwt/src/org/rstudio/core/client/JsVectorString.java
+@@ -75,10 +75,12 @@ public final native String get(int index, String defaultValue)
+ 
+    public final native int indexOf(String value)
+    /*-{
+-      for (var i = 0, n = this.length; i < n; i++)
+-         if (this[i] === value)
+-           return i;
+-      return -1;
++      return this.indexOf(value);
++   }-*/;
++   
++   public final native int indexOf(String value, int offset)
++   /*-{
++      return this.indexOf(value, offset);
+    }-*/;
+ 
+    public final native boolean isEmpty()
+@@ -225,4 +227,4 @@ private final native String defaultValue()
+    /*-{
+       return null;
+    }-*/;
+-}
+\ No newline at end of file
++}
+diff --git a/src/gwt/src/org/rstudio/studio/client/workbench/views/source/editors/text/rmd/NotebookQueueState.java b/src/gwt/src/org/rstudio/studio/client/workbench/views/source/editors/text/rmd/NotebookQueueState.java
+index 7694258e9df..005c5e3a3c1 100644
+--- a/src/gwt/src/org/rstudio/studio/client/workbench/views/source/editors/text/rmd/NotebookQueueState.java
++++ b/src/gwt/src/org/rstudio/studio/client/workbench/views/source/editors/text/rmd/NotebookQueueState.java
+@@ -20,6 +20,8 @@
+ 
+ import com.google.gwt.core.client.GWT;
+ import org.rstudio.core.client.Debug;
++import org.rstudio.core.client.JsVector;
++import org.rstudio.core.client.JsVectorInteger;
+ import org.rstudio.core.client.StringUtil;
+ import org.rstudio.core.client.dom.DomUtils;
+ import org.rstudio.core.client.js.JsUtil;
+@@ -56,6 +58,7 @@
+ import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
+ 
+ import com.google.gwt.core.client.JsArray;
++import com.google.gwt.core.client.JsArrayInteger;
+ import com.google.gwt.user.client.Command;
+ 
+ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
+@@ -456,43 +459,24 @@ private NotebookQueueUnit unitFromScope(ChunkExecUnit chunk)
+       return unit;
+    }
+    
++   private static final native JsVectorInteger asUtf8ByteArray(String code)
++   /*-{
++      return new $wnd.TextEncoder("utf-8").encode(code);
++   }-*/;
++   
+    private NotebookExecRange getNotebookExecRange(Scope scope, Range range)
+    {
+-      // convert range into character offsets
+-      Position startPos = range.getStart();
+-      Position endPos = range.getEnd();
+-      int start = 0;
+-      int end = 0;
+-      int pos = 0;
++      Position chunkStartPos = Position.create(scope.getPreamble().getRow(), 0);
+       
+-      for (int row = scope.getPreamble().getRow();
+-           row < scope.getEnd().getRow();
+-           row++)
+-      {
+-         String line = docDisplay_.getLine(row);
+-         for (int col = 0; col <= line.length(); col++)
+-         {
+-            if (startPos.getRow() == row && startPos.getColumn() == col)
+-            {
+-               start = pos;
+-            }
+-            else if (endPos.getRow() == row && endPos.getColumn() == col)
+-            {
+-               end = pos;
+-               break;
+-            }
+-            pos++;
+-         }
+-      }
++      String startCode = docDisplay_.getCode(chunkStartPos, range.getStart());
++      int start = asUtf8ByteArray(startCode).length();
+       
+-      // if we never found the end, just use the last character (less one for 
+-      // the newline)
+-      if (end == 0)
+-         end = pos - 1;
++      String endCode = docDisplay_.getCode(chunkStartPos, range.getEnd());
++      int end = asUtf8ByteArray(endCode).length();
+       
+       return NotebookExecRange.create(start, end);
+    }
+-   
++      
+    private NotebookQueueUnit getUnit(String chunkId)
+    {
+       JsArray<NotebookQueueUnit> units = queue_.getUnits();
+
