@@ -106,9 +106,6 @@ yallist@4.0.0
 "
 #####End   of GYP package list#####
 
-
-#####End   of GYP package list#####
-
 #####Start of Panmirror package list#####
 PANMIRROR_PACKAGE_HASH="01870a825d8ff1afede4893aec445ee5fa254314"
 PANMIRROR_SKEIN="
@@ -1628,7 +1625,6 @@ yocto-queue@0.1.0
 "
 #####End   of ELECTRON package list#####
 
-
 #RSudio requires 5.12.8 but when QT 5.12.x and glibc 2.34(clone3) is used it will cause a
 #sandbox violation in chromium. QT fixed this around 5.15.x(5?). Gentoo is at 5.15.3 and
 #it works. I assume it was back ported or I'm wrong about the timeline.
@@ -1636,8 +1632,8 @@ QT_VER=5.15.3
 QT_SLOT=5
 
 SLOT="0"
-KEYWORDS=""
-IUSE="server electron qt5 test debug quarto panmirror system_dictionaries"
+KEYWORDS="~amd64"
+IUSE="server electron +qt5 test debug quarto panmirror system_dictionaries"
 REQUIRED_USE="!server? ( ^^ ( electron qt5 ) )"
 
 DESCRIPTION="IDE for the R language"
@@ -1740,7 +1736,7 @@ RDEPEND="
 		>=net-libs/nodejs-16.14.0
 	)
 	electron? (
-		>=net-libs/nodejs-16.14.0
+		>=net-libs/nodejs-16.14.0[npm]
 	)
 	"
 
@@ -2098,7 +2094,7 @@ pkg_preinst() {
 }
 
 pkg_postinst() {
-	if use electron || use qt5;then 
+	if use electron || use qt5;then
 		xdg_desktop_database_update
 		xdg_mimeinfo_database_update
 		xdg_icon_cache_update
