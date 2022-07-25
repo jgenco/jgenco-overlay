@@ -1749,6 +1749,7 @@ BDEPEND="
 	<=virtual/jdk-11:=
 	!system_dictionaries? ( app-arch/unzip )
 "
+PV_RELEASE="2022.07.0.548"
 PATCHES=(
 	"${FILESDIR}/${PN}-1.4.1717-boost-imports-and-namespaces.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-cmake-bundled-dependencies.patch"
@@ -1884,12 +1885,12 @@ src_prepare(){
 		if [[ ${PANMIRROR_PACKAGE_HASH} != ${PANMIRROR_SRC_HASH:0:40} ]];then
 			die "Panmirror Hash doesn't match"
 		else
-			patch -d ${WORKDIR}/node_gyp -p1 < ${FILESDIR}/node-gyp-${NODE_GYP_VER}-${PV}.patch || die "Node-gyp patch failed"
-			sed  "s#__GENTOO_PATH__#${WORKDIR}/.nodejs_files#" "${FILESDIR}/node-gyp-${NODE_GYP_VER}-${PV}-yarn.lock" > "${WORKDIR}/node_gyp/yarn.lock" \
+			patch -d ${WORKDIR}/node_gyp -p1 < ${FILESDIR}/node-gyp-${NODE_GYP_VER}-${PV_RELEASE}.patch || die "Node-gyp patch failed"
+			sed  "s#__GENTOO_PATH__#${WORKDIR}/.nodejs_files#" "${FILESDIR}/node-gyp-${NODE_GYP_VER}-${PV_RELEASE}-yarn.lock" > "${WORKDIR}/node_gyp/yarn.lock" \
 			|| die "Building Node GYP's lockfile failed"
 
-			patch                        -p1 < ${FILESDIR}/${P}-panmirror-package.patch || die "Panmirror patch failed"
-			sed  "s#__GENTOO_PATH__#${WORKDIR}/.nodejs_files#" "${FILESDIR}/${P}-panmirror-yarn.lock" >  "${S}/src/gwt/panmirror/src/editor/yarn.lock" \
+			patch                        -p1 < ${FILESDIR}/${PN}-${PV_RELEASE}-panmirror-package.patch || die "Panmirror patch failed"
+			sed  "s#__GENTOO_PATH__#${WORKDIR}/.nodejs_files#" "${FILESDIR}/${PN}-${PV_RELEASE}-panmirror-yarn.lock" >  "${S}/src/gwt/panmirror/src/editor/yarn.lock" \
 			|| die "Building Panmirror's lockfile failed"
 		fi
 	fi
@@ -1899,8 +1900,8 @@ src_prepare(){
 		if [[ ${ELECTRON_PACKAGE_HASH} != ${ELECTRON_SRC_HASH:0:40} ]];then
 			die "Electron Hash doesn't match"
 		else
-			patch -p1 < "${FILESDIR}/${P}-electron-package.patch" || die "Electron patch failed"
-			sed  "s#__GENTOO_PATH__#${WORKDIR}/.nodejs_files#" "${FILESDIR}/${P}-electron-package.lock" > "${S}/src/node/desktop/package-lock.json" \
+			patch -p1 < "${FILESDIR}/${PN}-${PV_RELEASE}-electron-package.patch" || die "Electron patch failed"
+			sed  "s#__GENTOO_PATH__#${WORKDIR}/.nodejs_files#" "${FILESDIR}/${PN}-${PV_RELEASE}-electron-package.lock" > "${S}/src/node/desktop/package-lock.json" \
 			|| die "Building electron's lockfile failed"
 		fi
 	fi
