@@ -63,7 +63,7 @@ DEPEND="
 	<=net-libs/deno-1.22.0
 	>=app-text/pandoc-2.18
 	dev-lang/dart-sass
-	net-libs/deno-dom
+	=net-libs/deno-dom-0.1.17_alpha
 	dev-lang/lua
 "
 RDEPEND="${DEPEND}"

@@ -23,7 +23,7 @@ are-we-there-yet@3.0.0
 balanced-match@1.0.2
 brace-expansion@1.1.11
 brace-expansion@2.0.1
-cacache@16.1.0
+cacache@16.1.1
 chownr@2.0.0
 clean-stack@2.2.0
 color-support@1.1.3
@@ -58,8 +58,8 @@ is-fullwidth-code-point@3.0.0
 is-lambda@1.0.1
 isexe@2.0.0
 lru-cache@6.0.0
-lru-cache@7.10.1
-make-fetch-happen@10.1.6
+lru-cache@7.12.0
+make-fetch-happen@10.1.8
 minimatch@3.1.2
 minimatch@5.1.0
 minipass-collect@1.0.2
@@ -67,7 +67,7 @@ minipass-fetch@2.1.0
 minipass-flush@1.0.5
 minipass-pipeline@1.2.4
 minipass-sized@1.0.3
-minipass@3.1.6
+minipass@3.3.4
 minizlib@2.1.2
 mkdirp@1.0.4
 ms@2.1.2
@@ -89,7 +89,7 @@ semver@7.3.7
 set-blocking@2.0.0
 signal-exit@3.0.7
 smart-buffer@4.2.0
-socks-proxy-agent@6.2.0
+socks-proxy-agent@7.0.0
 socks@2.6.2
 ssri@9.0.1
 string-width@4.2.3
@@ -109,12 +109,12 @@ yallist@4.0.0
 #####Start of Panmirror package list#####
 PANMIRROR_PACKAGE_HASH="01870a825d8ff1afede4893aec445ee5fa254314"
 PANMIRROR_SKEIN="
-@babel/code-frame@7.16.7
-@babel/helper-module-imports@7.16.7
-@babel/helper-validator-identifier@7.16.7
-@babel/highlight@7.17.12
-@babel/runtime@7.18.3
-@babel/types@7.18.4
+@babel/code-frame@7.18.6
+@babel/helper-module-imports@7.18.6
+@babel/helper-validator-identifier@7.18.6
+@babel/highlight@7.18.6
+@babel/runtime@7.18.6
+@babel/types@7.18.7
 @emotion/babel-utils@0.6.10
 @emotion/hash@0.6.6
 @emotion/is-prop-valid@0.6.8
@@ -132,8 +132,8 @@ PANMIRROR_SKEIN="
 @types/lodash.orderby@4.6.7
 @types/lodash.uniqby@4.7.7
 @types/lodash@4.14.182
-@types/node@17.0.36
-@types/node@14.18.18
+@types/node@18.0.0
+@types/node@14.18.21
 @types/orderedmap@1.0.0
 @types/parse-json@4.0.0
 @types/pinyin@2.10.0
@@ -147,12 +147,12 @@ PANMIRROR_SKEIN="
 @types/prosemirror-model@1.16.2
 @types/prosemirror-schema-list@1.0.3
 @types/prosemirror-state@1.3.0
-@types/prosemirror-transform@1.4.1
+@types/prosemirror-transform@1.4.2
 @types/prosemirror-view@1.23.3
 @types/react-dom@17.0.17
 @types/react-window@1.8.5
-@types/react@18.0.9
-@types/react@17.0.45
+@types/react@18.0.14
+@types/react@17.0.47
 @types/scheduler@0.16.2
 @types/unzip@0.1.1
 @types/zenscroll@4.0.1
@@ -336,7 +336,7 @@ fuse-concat-with-sourcemaps@1.0.5
 fuse.js@6.6.2
 gauge@3.0.2
 get-caller-file@2.0.5
-get-intrinsic@1.1.1
+get-intrinsic@1.1.2
 get-value@2.0.6
 getopts@2.3.0
 getpass@0.1.7
@@ -447,7 +447,7 @@ mime@1.6.0
 mimic-fn@1.2.0
 minimatch@3.1.2
 minimist@1.2.6
-minipass@3.1.6
+minipass@3.3.4
 minizlib@2.1.2
 mixin-deep@1.3.2
 mkdirp@0.5.6
@@ -483,7 +483,8 @@ onetime@2.0.1
 optionator@0.8.3
 options@0.0.6
 orderedmap@1.1.1
-orderedmap@1.1.7
+orderedmap@1.1.8
+orderedmap@2.0.0
 os-tmpdir@1.0.2
 over@0.0.5
 parent-module@1.0.1
@@ -515,16 +516,16 @@ prosemirror-inputrules@1.1.3
 prosemirror-keymap@1.1.4
 prosemirror-keymap@1.2.0
 prosemirror-model@1.14.3
-prosemirror-model@1.17.0
+prosemirror-model@1.18.1
 prosemirror-schema-list@1.1.5
 prosemirror-state@1.3.4
-prosemirror-state@1.4.0
+prosemirror-state@1.4.1
 prosemirror-tables@1.1.1
 prosemirror-transform@1.3.2
-prosemirror-transform@1.5.0
+prosemirror-transform@1.6.0
 prosemirror-utils@0.9.6
 prosemirror-view@1.20.1
-prosemirror-view@1.24.1
+prosemirror-view@1.26.3
 proxy-addr@2.0.7
 psl@1.8.0
 pullstream@0.4.1
@@ -564,7 +565,7 @@ request@2.88.2
 require-directory@2.1.1
 resolve-from@4.0.0
 resolve-url@0.2.1
-resolve@1.22.0
+resolve@1.22.1
 restore-cursor@2.0.0
 ret@0.1.15
 rimraf@2.7.1
@@ -600,7 +601,7 @@ source-map-support@0.5.21
 source-map-url@0.4.1
 source-map@0.5.7
 source-map@0.6.1
-source-map@0.7.3
+source-map@0.7.4
 sourcemap-blender@1.0.5
 split-string@3.1.0
 sshpk@1.17.0
@@ -645,7 +646,7 @@ type-check@0.3.2
 type-is@1.6.18
 typedarray@0.0.6
 typescript@3.8.3
-uglify-js@3.15.5
+uglify-js@3.16.1
 ultron@1.0.2
 unicode-canonical-property-names-ecmascript@2.0.0
 unicode-match-property-ecmascript@2.0.0
@@ -687,10 +688,10 @@ zenscroll@4.0.2
 #####End   of PANMIRROR package list#####
 
 #####Start of NODEJS package list#####
-RELECTRON_PACKAGE_HASH="e93f7e196f2d4ccae9bcd352ff04ce547cab65ab"
-ELECTRON_VERSION="19.0.0"
+ELECTRON_PACKAGE_HASH="c5bc999ca8881892d7d0031f9d5c39254dcbf519"
+ELECTRON_VERSION="19.0.4"
 ELECTRON_VERSION_MAJ="19"
-ELECTRON_EGIT_COMMIT="b6736bd88eb7eeb3a317b5e5a4bbfb31d048a92f"
+ELECTRON_EGIT_COMMIT="e80e1a57761c4f52eb9aa72b3ca3f60b82037efc"
 RELECTRON_NODEJS_DEPS="
 abbrev@1.1.1
 accepts@1.3.8
@@ -732,17 +733,17 @@ asar@3.1.0
 asn1@0.2.6
 assertion-error@1.1.0
 assert-plus@1.0.0
-async@3.2.3
+async@3.2.4
 asynckit@0.4.0
 at-least-node@1.0.0
 atomically@1.7.0
 author-regex@1.0.0
 aws4@1.11.0
 aws-sign2@0.7.0
-@babel/code-frame@7.16.7
-@babel/helper-validator-identifier@7.16.7
-@babel/highlight@7.17.12
-@babel/runtime@7.18.3
+@babel/code-frame@7.18.6
+@babel/helper-validator-identifier@7.18.6
+@babel/highlight@7.18.6
+@babel/runtime@7.18.6
 balanced-match@1.0.2
 base64-js@1.5.1
 batch@0.6.1
@@ -753,12 +754,12 @@ bindings@1.5.0
 bl@4.1.0
 bluebird@3.7.2
 body-parser@1.20.0
-bonjour-service@1.0.12
+bonjour-service@1.0.13
 boolbase@1.0.0
 boolean@3.2.0
 brace-expansion@1.1.11
 braces@3.0.2
-browserslist@4.20.3
+browserslist@4.21.1
 browser-stdout@1.3.1
 buffer@5.7.1
 buffer-alloc@1.2.0
@@ -778,7 +779,7 @@ call-me-maybe@1.0.1
 callsites@3.1.0
 camel-case@4.1.2
 camelcase@6.3.0
-caniuse-lite@1.0.30001344
+caniuse-lite@1.0.30001361
 caseless@0.12.0
 chai@4.3.6
 chalk@2.4.2
@@ -803,7 +804,7 @@ code-point-at@1.1.0
 color@3.2.1
 color-convert@1.9.3
 color-convert@2.0.1
-colorette@2.0.16
+colorette@2.0.19
 color-name@1.1.3
 color-name@1.1.4
 colors@1.0.3
@@ -825,7 +826,7 @@ concat-map@0.0.1
 concat-stream@1.6.2
 conf@10.1.2
 config-chain@1.1.13
-connect-history-api-fallback@1.6.0
+connect-history-api-fallback@2.0.0
 console-control-strings@1.1.0
 content-disposition@0.5.4
 content-type@1.0.4
@@ -878,7 +879,7 @@ diff@5.0.0
 dir-compare@2.4.0
 dir-glob@3.0.1
 dns-equal@1.0.0
-dns-packet@5.3.1
+dns-packet@5.4.0
 dom-converter@0.2.0
 domelementtype@2.3.0
 domhandler@4.3.1
@@ -890,7 +891,7 @@ dot-prop@6.0.1
 duplexer3@0.1.4
 ecc-jsbn@0.1.2
 ee-first@1.1.1
-electron@19.0.0
+electron@19.0.4
 @electron-forge/async-ora@6.0.0-beta.63
 @electron-forge/cli@6.0.0-beta.63
 @electron-forge/core@6.0.0-beta.63
@@ -920,8 +921,8 @@ electron-packager@15.5.1
 electron-rebuild@3.2.7
 electron-squirrel-startup@1.0.0
 electron-store@8.0.1
-electron-to-chromium@1.4.141
-@electron/universal@1.2.1
+electron-to-chromium@1.4.174
+@electron/universal@1.3.0
 electron-window@0.8.1
 emoji-regex@8.0.0
 emojis-list@3.0.0
@@ -929,7 +930,7 @@ enabled@2.0.0
 encodeurl@1.0.2
 encoding@0.1.13
 end-of-stream@1.4.4
-enhanced-resolve@5.9.3
+enhanced-resolve@5.10.0
 entities@2.2.0
 env-paths@2.2.1
 err-code@2.0.3
@@ -1007,7 +1008,7 @@ gauge@4.0.4
 get-caller-file@2.0.5
 get-func-name@2.0.0
 get-installed-path@2.1.1
-get-intrinsic@1.1.1
+get-intrinsic@1.1.2
 get-package-info@1.0.0
 getpass@0.1.7
 get-stdin@8.0.0
@@ -1055,7 +1056,7 @@ http-cache-semantics@4.1.0
 http-deceiver@1.2.7
 http-errors@1.6.3
 http-errors@2.0.0
-http-parser-js@0.5.6
+http-parser-js@0.5.8
 http-proxy@1.18.1
 http-proxy-agent@4.0.1
 http-proxy-middleware@2.0.6
@@ -1115,12 +1116,12 @@ is-unicode-supported@0.1.0
 is-windows@1.0.2
 is-wsl@2.2.0
 jest-worker@27.5.1
-@jridgewell/gen-mapping@0.3.1
-@jridgewell/resolve-uri@3.0.7
-@jridgewell/set-array@1.1.1
+@jridgewell/gen-mapping@0.3.2
+@jridgewell/resolve-uri@3.0.8
+@jridgewell/set-array@1.1.2
 @jridgewell/source-map@0.3.2
-@jridgewell/sourcemap-codec@1.4.13
-@jridgewell/trace-mapping@0.3.13
+@jridgewell/sourcemap-codec@1.4.14
+@jridgewell/trace-mapping@0.3.14
 jsbn@0.1.1
 @jsdevtools/ono@7.1.3
 json@11.0.0
@@ -1144,7 +1145,7 @@ junk@1.0.3
 junk@3.1.0
 just-extend@4.2.1
 keyv@3.1.0
-keyv@4.3.0
+keyv@4.3.2
 kind-of@6.0.3
 kuler@2.0.0
 @leichtgewicht/ip-codec@2.0.4
@@ -1160,7 +1161,7 @@ locate-path@6.0.0
 lodash@4.17.21
 lodash.debounce@4.0.8
 lodash.get@4.4.2
-logform@2.4.0
+logform@2.4.1
 log-symbols@4.1.0
 loupe@2.3.4
 lower-case@2.0.2
@@ -1178,7 +1179,7 @@ matcher@3.0.0
 maximatch@0.1.0
 media-typer@0.3.0
 mem@4.3.0
-memfs@3.4.4
+memfs@3.4.7
 memoizee@0.4.15
 merge2@1.4.1
 merge-descriptors@1.0.1
@@ -1198,7 +1199,7 @@ minimatch@3.0.4
 minimatch@3.1.2
 minimatch@4.2.1
 minimist@1.2.6
-minipass@3.1.6
+minipass@3.3.4
 minipass-collect@1.0.2
 minipass-fetch@1.4.1
 minipass-flush@1.0.5
@@ -1321,7 +1322,7 @@ postcss-selector-parser@6.0.10
 postcss-value-parser@4.2.0
 prepend-http@2.0.0
 p-retry@4.6.2
-prettier@2.6.2
+prettier@2.7.1
 pretty-bytes@4.0.2
 pretty-error@4.0.0
 pretty-ms@7.0.1
@@ -1363,7 +1364,7 @@ request@2.88.2
 require-directory@2.1.1
 require-from-string@2.0.2
 requires-port@1.0.0
-resolve@1.22.0
+resolve@1.22.1
 resolve-alpn@1.2.1
 resolve-dir@1.0.1
 resolve-from@4.0.0
@@ -1422,7 +1423,7 @@ slash@4.0.0
 smart-buffer@4.2.0
 sockjs@0.3.24
 socks@2.6.2
-socks-proxy-agent@6.2.0
+socks-proxy-agent@6.2.1
 source-map@0.6.1
 source-map-js@1.0.2
 source-map-support@0.5.21
@@ -1462,8 +1463,8 @@ supports-preserve-symlinks-flag@1.0.0
 tapable@1.1.3
 tapable@2.2.1
 tar@6.1.11
-terser@5.14.0
-terser-webpack-plugin@5.3.1
+terser@5.14.1
+terser-webpack-plugin@5.3.3
 text-hex@1.0.0
 thenify@3.3.1
 thenify-all@1.6.0
@@ -1481,10 +1482,10 @@ tough-cookie@2.5.0
 tr46@0.0.3
 trim-repeated@1.0.0
 triple-beam@1.3.0
-@tsconfig/node10@1.0.8
-@tsconfig/node12@1.0.9
-@tsconfig/node14@1.0.1
-@tsconfig/node16@1.0.2
+@tsconfig/node10@1.0.9
+@tsconfig/node12@1.0.11
+@tsconfig/node14@1.0.3
+@tsconfig/node16@1.0.3
 tslib@2.4.0
 ts-loader@9.2.6
 ts-node@10.4.0
@@ -1507,11 +1508,11 @@ type-is@1.6.18
 @types/connect-history-api-fallback@1.3.5
 @types/crc@3.4.0
 typescript@4.5.2
-@types/eslint@8.4.2
+@types/eslint@8.4.3
 @types/eslint-scope@3.7.3
 @types/estree@0.0.51
 @types/express@4.17.13
-@types/express-serve-static-core@4.17.28
+@types/express-serve-static-core@4.17.29
 @types/glob@7.2.0
 @types/html-minifier-terser@6.1.0
 @types/http-cache-semantics@4.0.1
@@ -1526,7 +1527,7 @@ typescript@4.5.2
 @types/mime@1.3.2
 @types/minimatch@3.0.5
 @types/mocha@9.1.0
-@types/node@16.11.36
+@types/node@16.11.42
 @types/node@16.11.7
 @types/parse-json@4.0.0
 @types/prettier@2.6.3
@@ -1549,6 +1550,7 @@ unique-slug@2.0.2
 universalify@0.1.2
 universalify@2.0.0
 unpipe@1.0.0
+update-browserslist-db@1.0.4
 uri-js@4.4.1
 url-parse-lax@3.0.0
 username@5.1.0
@@ -1561,7 +1563,7 @@ validate-npm-package-license@3.0.4
 vary@1.1.2
 @vercel/webpack-asset-relocator-loader@1.7.0
 verror@1.10.0
-watchpack@2.3.1
+watchpack@2.4.0
 wbuf@1.7.3
 wcwidth@1.0.1
 @webassemblyjs/ast@1.11.1
@@ -1580,9 +1582,9 @@ wcwidth@1.0.1
 @webassemblyjs/wasm-parser@1.11.1
 @webassemblyjs/wast-printer@1.11.1
 webidl-conversions@3.0.1
-webpack@5.72.1
+webpack@5.73.0
 webpack-dev-middleware@5.3.3
-webpack-dev-server@4.9.0
+webpack-dev-server@4.9.3
 webpack-merge@5.8.0
 webpack-sources@3.2.3
 websocket-driver@0.7.4
@@ -1599,10 +1601,10 @@ workerpool@6.2.0
 wrap-ansi@7.0.0
 wrappy@1.0.2
 ws@7.5.8
-ws@8.7.0
+ws@8.8.0
 xmlbuilder@9.0.7
 xtend@2.1.2
-xterm@4.18.0
+xterm@4.19.0
 xterm-addon-fit@0.5.0
 xterm-addon-search@0.8.2
 @xtuc/ieee754@1.2.0
@@ -1621,7 +1623,7 @@ yauzl@2.10.0
 yn@3.1.1
 yocto-queue@0.1.0
 "
-#####End   of NODEJS package list#####
+#####End   of ELECTRON package list#####
 
 #RSudio requires 5.12.8 but when QT 5.12.x and glibc 2.34(clone3) is used it will cause a
 #sandbox violation in chromium. QT fixed this around 5.15.x(5?). Gentoo is at 5.15.3 and
@@ -1630,9 +1632,9 @@ QT_VER=5.15.3
 QT_SLOT=5
 
 SLOT="0"
-KEYWORDS=""
-IUSE="headless server electron test debug quarto panmirror system_dictionaries"
-REQUIRED_USE="headless? ( server )"
+KEYWORDS="~amd64"
+IUSE="server electron +qt5 test debug quarto panmirror system_dictionaries"
+REQUIRED_USE="!server? ( ^^ ( electron qt5 ) )"
 
 DESCRIPTION="IDE for the R language"
 HOMEPAGE="
@@ -1645,8 +1647,8 @@ if [[ "${PV}" == *9999 ]];then
 	EGIT_BRANCH="main"
 
 else
-	RSTUDIO_SOURCE_FILENAME="v${PV/_p/+}.tar.gz"
-	S="${WORKDIR}/${P/_p/-}"
+	RSTUDIO_SOURCE_FILENAME="v$(ver_rs 3 "+").tar.gz"
+	S="${WORKDIR}/${PN}-$(ver_rs 3 "-")"
 	SRC_URI="https://github.com/rstudio/rstudio/archive/${RSTUDIO_SOURCE_FILENAME} -> ${P}.tar.gz"
 fi
 
@@ -1698,10 +1700,6 @@ RESTRICT="test mirror"
 
 DEPEND=""
 RDEPEND="
-	dev-java/aopalliance:1
-	dev-java/gin:2.1
-	dev-java/javax-inject
-	=dev-java/validation-api-1.0*:1.0[source]
 	>=dev-lang/R-3.3.0
 	>=dev-libs/boost-1.78:=
 	>=dev-libs/mathjax-2.7
@@ -1709,18 +1707,14 @@ RDEPEND="
 	>=dev-libs/soci-4.0.3[postgres,sqlite]
 	>=dev-libs/libfmt-8.1.1
 	sys-process/lsof
-	>=virtual/jdk-1.8:=
 	>=dev-cpp/yaml-cpp-0.7.0_p1
-	headless? (
-		acct-user/rstudio-server
-		acct-group/rstudio-server
-	)
+	<=virtual/jdk-11:=
 	server? (
 		acct-user/rstudio-server
 		acct-group/rstudio-server
 	)
-	!headless? (
-		!electron? (
+	!electron? (
+		qt5? (
 			>=dev-qt/qtcore-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtdbus-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtdeclarative-${QT_VER}:${QT_SLOT}
@@ -1740,31 +1734,38 @@ RDEPEND="
 	panmirror? (
 		sys-apps/yarn
 		>=net-libs/nodejs-16.14.0
-		)
+	)
+	electron? (
+		>=net-libs/nodejs-16.14.0[npm]
+	)
 	"
 
 DEPEND="${RDEPEND}"
 BDEPEND="
-	app-arch/unzip
+	dev-java/aopalliance:1
+	dev-java/gin:2.1
+	dev-java/javax-inject
+	=dev-java/validation-api-1.0*:1.0[source]
+	<=virtual/jdk-11:=
+	!system_dictionaries? ( app-arch/unzip )
 "
-
+PV_RELEASE="2022.07.0.548"
 PATCHES=(
 	"${FILESDIR}/${PN}-1.4.1717-boost-imports-and-namespaces.patch"
-	"${FILESDIR}/${PN}-9999-cmake-bundled-dependencies.patch"
+	"${FILESDIR}/${PN}-2022.07.0.548-cmake-bundled-dependencies.patch"
 	"${FILESDIR}/${PN}-1.4.1717-fix-boost-version-check.patch"
-	"${FILESDIR}/${PN}-9999-resource-path.patch"
+	"${FILESDIR}/${PN}-2022.07.0.548-resource-path.patch"
 	"${FILESDIR}/${PN}-1.4.1106-server-paths.patch"
 	"${FILESDIR}/${PN}-1.4.1106-soci-cmake-find_library.patch"
-	"${FILESDIR}/${PN}-9999-package-build.patch"
-	"${FILESDIR}/${PN}-9999-pandoc_path_fix.patch"
-	"${FILESDIR}/${PN}-9999-toggle_quarto.patch"
-	"${FILESDIR}/${PN}-9999-node_path.patch"
-	"${FILESDIR}/${PN}-9999-quarto-version.patch"
-	"${FILESDIR}/${PN}-9999-electron_path.patch"
-	"${FILESDIR}/${PN}-9999-reenable-sandbox.patch"
-	"${FILESDIR}/${PN}-9999-libfmt.patch"
+	"${FILESDIR}/${PN}-2022.07.0.548-package-build.patch"
+	"${FILESDIR}/${PN}-2022.07.0.548-pandoc_path_fix.patch"
+	"${FILESDIR}/${PN}-2022.07.0.548-toggle_quarto.patch"
+	"${FILESDIR}/${PN}-2022.07.0.548-node_path.patch"
+	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
+	"${FILESDIR}/${PN}-2022.07.0.548-electron_path.patch"
+	"${FILESDIR}/${PN}-2022.07.0.548-reenable-sandbox.patch"
+	"${FILESDIR}/${PN}-2022.07.0.548-libfmt.patch"
 )
-
 src_unpack(){
 	if [[ "${PV}" == *9999 ]];then
 	if use electron; then
@@ -1848,7 +1849,7 @@ src_unpack(){
 	fi
 
 	if use system_dictionaries;then
-		ln -s ${EPREFIX}/usr/share/hunspell ${S}/dependencies/dictionaries
+		ln -s ${EPREFIX}/usr/share/hunspell ${S}/dependencies/dictionaries || die "Failed to link dictionaries"
 	fi
 }
 src_prepare(){
@@ -1870,7 +1871,7 @@ src_prepare(){
 	rm ${S}/src/gwt/lib/gwt/gwt-rstudio/validation-api-*.jar
 	ln -s ${EPREFIX}/usr/share/validation-api-1.0/lib/validation-api.jar ${S}/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA.jar || die "linking to validation-api.jar"
 	ln -s ${EPREFIX}/usr/share/validation-api-1.0/sources/validation-api-src.zip ${S}/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA-sources.jar || die "linking to validation-api-src.zip"
-	#todo lib/junit-4.9b3.jar dev-java/junit
+	#todo lib/junit-4.9b3.jar dev-java/junit - only for testing
 	#todo create elemental2
 
 	# make sure icons and mime stuff are with prefix
@@ -1883,23 +1884,23 @@ src_prepare(){
 		if [[ ${PANMIRROR_PACKAGE_HASH} != ${PANMIRROR_SRC_HASH:0:40} ]];then
 			die "Panmirror Hash doesn't match"
 		else
-			patch -d ${WORKDIR}/node_gyp -p1 < ${FILESDIR}/node-gyp-${NODE_GYP_VER}-${PV}.patch || die "Node-gyp patch failed"
-			sed  "s#__GENTOO_PATH__#${WORKDIR}/.nodejs_files#" "${FILESDIR}/node-gyp-${NODE_GYP_VER}-${PV}-yarn.lock" > "${WORKDIR}/node_gyp/yarn.lock" \
+			patch -d ${WORKDIR}/node_gyp -p1 < ${FILESDIR}/node-gyp-${NODE_GYP_VER}-${PV_RELEASE}.patch || die "Node-gyp patch failed"
+			sed  "s#__GENTOO_PATH__#${WORKDIR}/.nodejs_files#" "${FILESDIR}/node-gyp-${NODE_GYP_VER}-${PV_RELEASE}-yarn.lock" > "${WORKDIR}/node_gyp/yarn.lock" \
 			|| die "Building Node GYP's lockfile failed"
 
-			patch -d ${S}                -p1 < ${FILESDIR}/${P}-panmirror-package.patch || die "Panmirror patch failed"
-			sed  "s#__GENTOO_PATH__#${WORKDIR}/.nodejs_files#" "${FILESDIR}/${P}-panmirror-yarn.lock" >  "${S}/src/gwt/panmirror/src/editor/yarn.lock" \
+			patch                        -p1 < ${FILESDIR}/${PN}-${PV_RELEASE}-panmirror-package.patch || die "Panmirror patch failed"
+			sed  "s#__GENTOO_PATH__#${WORKDIR}/.nodejs_files#" "${FILESDIR}/${PN}-${PV_RELEASE}-panmirror-yarn.lock" >  "${S}/src/gwt/panmirror/src/editor/yarn.lock" \
 			|| die "Building Panmirror's lockfile failed"
 		fi
 	fi
 
 	if  use electron;then
-		RELECTRON_SRC_HASH=$(sha1sum ${S}/src/node/desktop/package.json)
-		if [[ ${RELECTRON_PACKAGE_HASH} != ${RELECTRON_SRC_HASH:0:40} ]];then
+		ELECTRON_SRC_HASH=$(sha1sum ${S}/src/node/desktop/package.json)
+		if [[ ${ELECTRON_PACKAGE_HASH} != ${ELECTRON_SRC_HASH:0:40} ]];then
 			die "Electron Hash doesn't match"
 		else
-			patch -d ${S} -p1 < "${FILESDIR}/${P}-electron-package.patch" || die "Electron patch failed"
-			sed  "s#__GENTOO_PATH__#${WORKDIR}/.nodejs_files#" "${FILESDIR}/${P}-electron-package.lock" > "${S}/src/node/desktop/package-lock.json" \
+			patch -p1 < "${FILESDIR}/${PN}-${PV_RELEASE}-electron-package.patch" || die "Electron patch failed"
+			sed  "s#__GENTOO_PATH__#${WORKDIR}/.nodejs_files#" "${FILESDIR}/${PN}-${PV_RELEASE}-electron-package.lock" > "${S}/src/node/desktop/package-lock.json" \
 			|| die "Building electron's lockfile failed"
 		fi
 	fi
@@ -1916,7 +1917,7 @@ src_configure() {
 		export RSTUDIO_VERSION_MAJOR=$(ver_cut 1)
 		export RSTUDIO_VERSION_MINOR=$(ver_cut 2)
 		export RSTUDIO_VERSION_PATCH=$(ver_cut 3)
-		export RSTUDIO_VERSION_SUFFIX="+$(ver_cut 5)"
+		export RSTUDIO_VERSION_SUFFIX="+$(ver_cut 4)"
 	fi
 
 	CMAKE_BUILD_TYPE=$(usex debug Debug Release) #RelWithDebInfo Release
@@ -1929,15 +1930,13 @@ src_configure() {
 	RSTUDIO_SERVER=FALSE
 	RSTUDIO_DESKTOP=FALSE
 	RSTUDIO_ELECTRON=FALSE
-	if use headless || use server; then
+	if use server; then
 		RSTUDIO_SERVER=TRUE
 	fi
-	if ! use headless;then
-		if use electron; then
-			RSTUDIO_ELECTRON=TRUE
-		else
-			RSTUDIO_DESKTOP=TRUE
-		fi
+	if use electron; then
+		RSTUDIO_ELECTRON=TRUE
+	elif use qt5; then
+		RSTUDIO_DESKTOP=TRUE
 	fi
 	# FIXME: GWT_COPY is helpful because it allows us to call ant ourselves
 	# (rather than using the custom_target defined in src/gwt/CMakeLists.txt),
@@ -1962,10 +1961,10 @@ src_configure() {
 		-DQUARTO_ENABLED=$(usex quarto TRUE FALSE)
 	)
 	if use electron; then
-		mycmakeargs+=( -DRSTUDIO_INSTALL_FREEDESKTOP="$(usex !headless "ON" "OFF")")
-	elif ! use headless ; then
+		mycmakeargs+=( -DRSTUDIO_INSTALL_FREEDESKTOP="ON" )
+	elif use qt5 ; then
 		mycmakeargs+=( -DQT_QMAKE_EXECUTABLE="$(qt5_get_bindir)/qmake"
-					   -DRSTUDIO_INSTALL_FREEDESKTOP="$(usex !headless "ON" "OFF")")
+						-DRSTUDIO_INSTALL_FREEDESKTOP="ON" )
 	fi
 	# It looks like eant takes care of this for us during src_compile
 	# TODO: verify with someone who knows better
@@ -1998,7 +1997,7 @@ src_compile(){
 		popd > /dev/null
 		#Finished Building PANMIRROR
 	else
-		patch -p1 < "${FILESDIR}/${PN}-9999.panmirror_disable.patch" || die "Couldn't apply panmirror disable patch"
+		patch -p1 < "${FILESDIR}/${PN}-2022.07.0.548.panmirror_disable.patch" || die "Couldn't apply panmirror disable patch"
 	fi
 
 	export EANT_BUILD_XML="src/gwt/build.xml"
@@ -2006,12 +2005,14 @@ src_compile(){
 	export ANT_OPTS="-Duser.home=${T} -Djava.util.prefs.userRoot=${T}"
 
 	local GWT_MAIN_MODULE="RStudio"
-	if use headless; then
-		GWT_MAIN_MODULE="RStudioServer"
+	if use electron || use qt5; then
+		if ! use server;then
+			GWT_MAIN_MODULE="RStudioDesktop"
+		fi
 	else
-		#The DevSuperMode appears to be a gwt feature.
-		#Falling back to the default RStudio for desktop and server mode
-		GWT_MAIN_MODULE=$(usex server RStudio RStudioDesktop)
+		if  use server;then
+			GWT_MAIN_MODULE="RStudioServer"
+		fi
 	fi
 
 	# FIXME: isn't there a variable we can use in one of the java eclasses that
@@ -2043,7 +2044,7 @@ src_compile(){
 src_install() {
 	cmake_src_install
 
-	if use server || use headless;then
+	if use server ;then
 		dopamd src/cpp/server/extras/pam/rstudio
 		newinitd "${FILESDIR}/rstudio-server" rstudio-server
 		insinto /etc/rstudio
@@ -2052,6 +2053,7 @@ src_install() {
 	if use electron;then
 		mkdir -p "${ED}/usr/bin"
 		dosym -r /usr/share/${PN}/rstudio /usr/bin/rstudio
+		sed -i "s#/usr/#/usr/bin/#" "${ED}/usr/share/applications/rstudio.desktop"
 		if use server; then
 			dosym -r /usr/share/${PN}/resources/app/bin/rserver /usr/bin/rserver
 		fi
@@ -2092,7 +2094,9 @@ pkg_preinst() {
 }
 
 pkg_postinst() {
-	use headless || { xdg_desktop_database_update
+	if use electron || use qt5;then
+		xdg_desktop_database_update
 		xdg_mimeinfo_database_update
-		xdg_icon_cache_update ;}
+		xdg_icon_cache_update
+	fi
 }
