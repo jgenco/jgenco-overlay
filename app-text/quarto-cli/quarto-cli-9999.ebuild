@@ -10,55 +10,8 @@ RESTRICT="mirror"
 IUSE="bundle"
 
 inherit bash-completion-r1
-
-#package@version url unpack_folder action from
-LINE_REGEX="((@.*/)?[^@]*)@(([^@ ]*))? +(.*) +(.*) +(.*) +(.*)"
-DENO_LIBS=(
-"std@0.138.0 https://github.com/denoland/deno_std/archive/refs/tags/_VER_.tar.gz deno_std-_VER_ NA NA"
-"cliffy@v0.24.2 https://github.com/c4spar/deno-cliffy/archive/refs/tags/_VER_.tar.gz deno-cliffy-_VER_ NA NA"
-"deno_dom@v0.1.20-alpha https://github.com/b-fuze/deno-dom/archive/refs/tags/_VER_.tar.gz deno-dom-_VER_ NA NA"
-"events@v1.0.0 https://github.com/deno-library/events/archive/refs/tags/_VER_.tar.gz events-_VER_ NA NA"
-"media_types@v2.10.1 https://github.com/oakserver/media_types/archive/refs/tags/_VER_.tar.gz media_types-_VER_ NA NA"
-"semver@v1.4.0 https://github.com/justjavac/deno-semver/archive/refs/tags/_VER_.tar.gz deno-semver-_VER_ NA NA"
-"xmlp@v0.2.8 https://github.com/masataka/xmlp/archive/refs/tags/_VER_.tar.gz xmlp-_VER_ NA NA"
-
-"acorn@7.4.1 https://github.com/acornjs/acorn/archive/refs/tags/_VER_.tar.gz acorn-_VER_ bundle /acorn/src/index.js"
-"acorn-walk@7.2.0 https://github.com/acornjs/acorn/archive/refs/tags/_VER_.tar.gz acorn-_VER_ bundle /acorn-walk/src/index.js"
-"ansi_up@v5.1.0 https://github.com/drudru/ansi_up/archive/refs/tags/_VER_.tar.gz ansi_up-_VER_ bundle /ansi_up.js"
-"binary-search-bounds@2.0.5 https://github.com/mikolalysenko/binary-search-bounds/archive/refs/heads/master.tar.gz binary-search-bounds-master bundle /search-bounds.js"
-"blueimp-md5@2.19.0 https://github.com/blueimp/JavaScript-MD5/archive/refs/tags/v_VER_.tar.gz JavaScript-MD5-_VER_ bundle /js/md5.js"
-"dayjs@1.8.21 https://github.com/iamkun/dayjs/archive/refs/tags/v_VER_.tar.gz dayjs-_VER_ bundle /src/index.js"
-"diff@5.0.0 https://github.com/kpdecker/jsdiff/archive/refs/tags/v_VER_.tar.gz jsdiff-_VER_ bundle /src/index.js"
-"lodash@4.17.21 https://github.com/lodash/lodash/archive/refs/tags/_VER_.tar.gz lodash-_VER_-es build /*.js"
-"moment-guess@1.2.4 https://github.com/apoorv-mishra/moment-guess/archive/refs/tags/v_VER_.tar.gz moment-guess-_VER_ bundle /src/index.js"
-"@observablehq/parser@4.5.0 https://github.com/observablehq/parser/archive/refs/tags/_VER_.tar.gz parser-_VER_ special_bundle special"
-)
-DENO_IMPORT_LIST="${FILESDIR}/quarto-imports-0.9.471"
-
-build_deno_src_uri(){
-
-	for (( i = 0; i < ${#DENO_LIBS[@]}; i++ ));do
-		[[ ${DENO_LIBS[$i]} =~ ${LINE_REGEX} ]]
-		PACKAGE=${BASH_REMATCH[1]}
-		VERSION=${BASH_REMATCH[4]}
-		URL="${BASH_REMATCH[5]/_VER_/${VERSION}}"
-		START_FOLDER=${BASH_REMATCH[6]/_VER_/${VERSION}}
-		ACTION=${BASH_REMATCH[7]}
-		SOURCE=${BASH_REMATCH[8]}
-		FILENAME="${PACKAGE/\//_}@${VERSION}.tar.gz"
-
-		if [[ ${URL} =~ "https://" ]];then
-			echo "${URL} -> ${FILENAME#@}"
-	#	else
-	#		echo "${PACKAGE}@@@${VERSION} links to ${URL}"
-		fi
-	#	echo "${START_FOLDER} -> ${PACKAGE/\//_}-${VERSION}"
-	#	echo "$START_FOLDER $ACTION $SOURCE"
-	#	echo ""
-	#done
-	done
-}
-
+#NOTE previews for version x.y are simply x.y.[1..n]
+#     releases simply bump to x.y.n+1  no need to be fancy
 if [[ "${PV}" == *9999 ]];then
 	inherit git-r3
 	EGIT_REPO_URI="https://github.com/quarto-dev/${PN}"
@@ -126,154 +79,8 @@ src_unpack(){
 		git-r3_src_unpack
 	fi
 	default
-	if false && use bundle; then
-###Setting up DENO_CACHE/DENO_SRC###
-	einfo "Setting up DENO_SRC/DENO_CACHE"
-	mkdir ${DENO_CACHE}
-	mkdir ${DENO_SRC}
-	for (( i = 0; i < ${#DENO_LIBS[@]}; i++ ));do
-		if [[ ${DENO_LIBS[$i]} == "" ]];then continue; fi;
-		[[ ${DENO_LIBS[$i]} =~ ${LINE_REGEX} ]]
-		PACKAGE=${BASH_REMATCH[1]}
-		VERSION=${BASH_REMATCH[4]}
-		START_FOLDER=${BASH_REMATCH[6]/_VER_/${VERSION#v}}
-		ACTION=${BASH_REMATCH[7]}
-		case ${ACTION} in
-		"build")
-		ln -s "${WORKDIR}/${START_FOLDER}" "${DENO_SRC}/${PACKAGE/\//_}-${VERSION#v}.orig"
-		mkdir ${DENO_SRC}/${PACKAGE/\//_}-${VERSION};;
-		"bundle"|"special_bundle")
-		ln -s "${WORKDIR}/${START_FOLDER}" "${DENO_SRC}/${PACKAGE/\//_}-${VERSION#v}.orig"
-		mkdir ${DENO_SRC}/${PACKAGE/\//_}-${VERSION};;
-		"NA")
-		ln -s "${WORKDIR}/${START_FOLDER}" "${DENO_SRC}/${PACKAGE/\//_}-${VERSION#v}";;
-		*) die "Unknown action - ${ACTION} for package ${PACKAGE}";;
-		esac
-	done
-###End setting up DENO_CACHE/DENO_SRC###
-	fi
 }
 src_compile(){
-	if false use bundle;then
-	#Building Source Files
-	einfo "Building Source Files..."
-
-	for (( i = 0; i < ${#DENO_LIBS[@]}; i++ ));do
-		if [[ ${DENO_LIBS[$i]} == "" ]];then continue; fi;
-		[[ ${DENO_LIBS[$i]} =~ ${LINE_REGEX} ]]
-		PACKAGE=${BASH_REMATCH[1]}
-		VERSION=${BASH_REMATCH[4]}
-		START_FOLDER=${BASH_REMATCH[6]/_VER_/${VERSION#v}}
-		ACTION=${BASH_REMATCH[7]}
-		SOURCE=${BASH_REMATCH[8]}
-		case ${ACTION} in
-		"build")
-		esbuild ${DENO_SRC}/${PACKAGE/\//_}-${VERSION#v}.orig${SOURCE} --format=esm --outdir=${DENO_SRC}/${PACKAGE/\//_}-${VERSION#v}||die;;
-
-		"bundle")
-		esbuild ${DENO_SRC}/${PACKAGE/\//_}-${VERSION#v}.orig${SOURCE}  --format=esm --bundle --outfile=${DENO_SRC}/${PACKAGE/\//_}-${VERSION#v}/${PACKAGE}.js || die;;
-
-		"NA"|"special_bundle");;
-
-		*) die "Unknown action - ${ACTION} for package ${PACKAGE}";;
-		esac
-	done
-
-	esbuild ${DENO_SRC}/@observablehq_parser-4.5.0.orig/src/index.js  --format=esm --bundle --external:acorn* \
-		| sed "s#\"acorn\"#\"https://cdn.skypack.dev/acorn@7.4.1\"#" \
-		| sed "s#\"acorn-walk\"#\"https://cdn.skypack.dev/acorn-walk@7.2.0\"#" > ${DENO_SRC}/@observablehq_parser-4.5.0/@observablehq_parser.js
-###End Building Source Files###
-	fi
-	if false && use bundle;then
-###BUILD DENO CACHE###
-	einfo "Building Deno cache..."
-	# curl https://cdn.skypack.dev/moment-guess@1.2.4?meta | sed "s/,/\n,/g"|grep buildId
-	#NOTE: the key is the FOLDER
-	#      dashes instead of @
-	declare -A pkg_hash=(
-	["acorn-7.4.1"]="aIeX4aKa0RO2JeS9dtPa"
-	["acorn-walk-7.2.0"]="HE7wS37ePcNncqJvsD8k"
-	["ansi_up-5.1.0"]="ifIRWFhqTFJbTEKi2tZH"
-	["binary-search-bounds-2.0.5"]="c8IgO4OqUhed8ANHQXKv"
-	["blueimp-md5-2.19.0"]="FsBtHB6ITwdC3L5Giq4Q"
-	["dayjs-1.8.21"]="6syVEc6qGP8frQXKlmJD"
-	["diff-5.0.0"]="cU62LaUh1QZHrLzL9VHS"
-	["lodash-4.17.21"]="K6GEbP02mWFnLA45zAmi"
-	["moment-guess-1.2.4"]="bDXl7KQy0hLGNuGhyGb4"
-	["@observablehq/parser-4.5.0"]="rWZiNfab8flhVomtfVvr"
-	)
-	regex="(https?)://([^/]+)(/(./)?((@[^/]*/)?[^/]+)@([^/]+)(/.*)?)"
-	TIME=`date +%s`
-	compute_folder(){
-		PACKAGE=${1}
-		echo "${PACKAGE}"
-	}
-	while read -r line
-	do
-		[[ ${line} =~ ${regex} ]]
-		PROTOCOL=${BASH_REMATCH[1]}
-		HOST=${BASH_REMATCH[2]}
-
-		PACKAGE=${BASH_REMATCH[5]}
-		VERSION=${BASH_REMATCH[7]}
-		ADDR=${BASH_REMATCH[3]}
-
-		FPATH=${BASH_REMATCH[8]}
-		SHA256=$(echo -n "${ADDR}"| sha256sum)
-		SHA256=${SHA256%  -}
-
-		FILE_SOURCE=${DENO_SRC}/${ADDR}
-
-		mkdir -p ${DENO_CACHE}/deps/${PROTOCOL}/${HOST}
-
-		FILE="${DENO_CACHE}/deps/${PROTOCOL}/${HOST}/${SHA256}"
-		FILE_META="${FILE}.metadata.json"
-		FOLDER="${PACKAGE}-${VERSION#v}"
-		FULLPATH="${DENO_SRC}/${FOLDER/\//_}${FPATH}"
-		FILECONTENTS=""
-		CHECKFILE=""
-		#https://cdn.skypack.dev/dayjs@1.8.21/dayjs.min.js
-		#https://cdn.skypack.dev/-/dayjs@v1.8.21-6syVEc6qGP8frQXKlmJD/dist=es2019,mode=imports/optimized/dayjs.js
-		if [[ ${HOST} == "cdn.skypack.dev" ]]; then
-			if [[ ${FPATH} == ""  ]]; then
-				#This gets no {default} except blueimp posibly b/c it has export default ...
-				FILECONTENTS="/-/${PACKAGE}@v${VERSION#v}-${pkg_hash[${FOLDER}]}/dist=es2019,mode=imports/optimized/${PACKAGE}.js"
-				CHECKFILE="${DENO_SRC}/${FOLDER/\//_}/${PACKAGE/\//_}.js"
-			#Special case until more info
-			elif [[ ${FPATH} == "/dayjs.min.js" ]]; then
-				FILECONTENTS="/-/${PACKAGE}@v${VERSION}-${pkg_hash[${FOLDER}]}/dist=es2019,mode=imports/optimized/${PACKAGE}.js"
-				CHECKFILE="${DENO_SRC}/${FOLDER/\//_}/${PACKAGE}.js"
-			elif [[ ${ADDR} =~ /-/.*optimized/(.*) ]]; then
-				VERSION="${VERSION:1:-21}"
-				FULLPATH="${DENO_SRC}/${PACKAGE/\//_}-${VERSION#v}/${BASH_REMATCH[1]/\//_}"
-			else
-				FILECONTENTS="/-/${PACKAGE}@v${VERSION#v}-${pkg_hash[${FOLDER}]}/dist=es2019,mode=imports/unoptimized${FPATH}.js"
-				CHECKFILE="${DENO_SRC}/${FOLDER/\//_}/${FPATH}.js"
-			fi
-		fi
-
-		if [[ ${HOST} == "deno.land" ]]; then
-			#Populate Data
-			cp ${FULLPATH} ${FILE}
-			echo -n "{\"headers\": {},\"url\": \"${line}\",\"now\": {\"secs_since_epoch\": ${TIME},\"nanos_since_epoch\": 0}}" > ${FILE_META}
-		elif [[ ${HOST} == "cdn.skypack.dev" ]]; then
-			if [[ ${FILECONTENTS} == "" ]];then
-				cp ${FULLPATH} ${FILE}
-			else
-				echo "export * from '${FILECONTENTS}';" > ${FILE}
-				if grep -E "(export|as) default" ${CHECKFILE} > /dev/null; then
-					echo  "export {default} from '${FILECONTENTS}';" >> ${FILE}
-				fi
-			fi
-			echo -n "{\"headers\": {\"content-type\":\"application/javascript; charset=utf-8\"},
-				\"url\": \"${line}\",\"now\": {\"secs_since_epoch\": ${TIME},\"nanos_since_epoch\": 0}}" > ${FILE_META}
-		fi
-
-	done < <(cat "${DENO_IMPORT_LIST}")
-
-###END BUILDING DENO CACHE###
-	fi
-
 	#Configuration
 	einfo "Setting Configuration"
 	mkdir -p package/dist/config/
@@ -321,16 +128,21 @@ src_compile(){
 
 		echo -n "{\"deno\": \"${DENO}\",\"deno_dom\": \"${DENO_DOM}\",\"pandoc\": \"${PANDOC}\",\"dartsass\": \"${DARTSASS}\",\"esbuild\": \"${ESBUILD}\",
 		\"script\": \"${QUARTO_MD5:0:32}\",\"importMap\":\"${importMap:0:32}\",\"bundleImportMap\":\"${bundleImportMap:0:32}\"}" > package/dist/config/dev-config
-
 		deno -V |sed "s/deno //" > package/dist/config/deno-version
 		echo -n "${PV}"  > src/resources/version
 	fi
 	rm tests/bin/python3
-
 	ln -s ${EPREFIX}/usr/bin/python tests/bin/python3
 }
 src_install(){
+	#DENO_DIR, QUARTO_* sets vars for quarto to run to build
+	#shell completion file(s)
+	export DENO_DIR=${DENO_CACHE}
 	if use bundle;then
+		export QUARTO_BASE_PATH=${S}
+		export QUARTO_BIN_PATH="${QUARTO_BASE_PATH}/package/dist/bin"
+		export QUARTO_SHARE_PATH="${QUARTO_BASE_PATH}/package/dist/share"
+		QUARTO_TARGET="${QUARTO_BIN_PATH}/quarto.js"
 		dobin ${S}/quarto
 		insinto /usr/share/${PN}/
 		doins -r ${S}/package/dist/share/*
@@ -338,31 +150,39 @@ src_install(){
 		doins ${S}/package/dist/bin/quarto.js
 		doins -r ${S}/package/dist/bin/vendor
 	else
+		export QUARTO_BASE_PATH=${S}
+		export QUARTO_BIN_PATH=${S}
+		QUARTO_TARGET="${QUARTO_BASE_PATH}/src/quarto.ts"
+		export QUARTO_SHARE_PATH="${QUARTO_BASE_PATH}/src/resources/"
 		dobin ${S}/quarto
 		insinto /usr/share/${PN}/
 		doins -r *
 		dosym -r ${EPREFIX}/usr/share/${PN}/src/resources/version ${EPREFIX}/usr/share/${PN}/version
+
 	fi
-	#quarto completions bash > _quarto.sh
-	#>=app-shells/zsh-4.3.5 is what app-shells/gentoo-zsh-completions depends on
-	#if has_version  ">=app-shells/zsh-4.3.5";then
-	#	quarto completions zsh
-	#	insinto /usr/share/zsh/site-functions
-	#	doins _quarto
-	#fi
-	newbashcomp ${FILESDIR}/quarto-bash-completion.sh quarto
+	#This builds the shell completion files
+	DENO_OPTS="run --unstable --no-config --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/dev_import_map.json"
+	deno ${DENO_OPTS} ${QUARTO_TARGET} completions bash > _quarto.sh || die "Failed to build bash completion"
+	newbashcomp _quarto.sh quarto
+
+	#>=app-shells/zsh-4.3.5 is what app-shells/gentoo-zsh-completions depends on NOT tested
+	if has_version  ">=app-shells/zsh-4.3.5";then
+		deno ${DENO_OPTS} ${QUARTO_TARGET} completions zsh > _quarto || die "Failed to build zsh  comletion"
+		insinto /usr/share/zsh/site-functions
+		doins _quarto
+	fi
 }
 src_test(){
 	#this only works with bundled libraries
+	#TODO: with deno versioning can be done w/o bundling
 	if use bundle;then
 		pushd ${S}/tests > /dev/null
 		export DENO_DIR=${DENO_CACHE}
-		echo "${DENO_DIR}"
 		export QUARTO_BASE_PATH=${S}
 		export QUARTO_BIN_PATH=${QUARTO_BASE_PATH}/package/dist/bin/
 		export QUARTO_SHARE_PATH=${QUARTO_BASE_PATH}/src/resources/
 		export QUARTO_DEBUG=true
-		deno test --unstable --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/import_map.json test.ts unit
+		deno test --unstable --no-config --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/import_map.json test.ts unit
 		#This will run an extended test about half work now
 		#will need to install/setup
 		#* python libraries - see requirements.txt - not all in portage
@@ -370,7 +190,7 @@ src_test(){
 		#* install tinytex - not in portage
 		#* it uses a chrome (see if ff will work) based browser to do
 		#  screen shots - probably not possible
-		#deno test --unstable --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/import_map.json test.ts smoke
+		#deno test --unstable --no-config --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/import_map.json test.ts smoke
 		popd > /dev/null
 	fi
 }
