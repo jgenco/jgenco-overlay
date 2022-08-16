@@ -1632,7 +1632,7 @@ QT_VER=5.15.3
 QT_SLOT=5
 
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS=""
 IUSE="server electron +qt5 test debug quarto panmirror system_dictionaries"
 REQUIRED_USE="!server? ( ^^ ( electron qt5 ) )"
 
@@ -1756,7 +1756,6 @@ PATCHES=(
 	"${FILESDIR}/${PN}-1.4.1717-fix-boost-version-check.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-resource-path.patch"
 	"${FILESDIR}/${PN}-1.4.1106-server-paths.patch"
-	"${FILESDIR}/${PN}-1.4.1106-soci-cmake-find_library.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-package-build.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-pandoc_path_fix.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-toggle_quarto.patch"
@@ -1959,6 +1958,7 @@ src_configure() {
 		-DRSTUDIO_PACKAGE_BUILD=1
 		-DRSTUDIO_BIN_PATH=${EPREFIX}/usr/bin
 		-DQUARTO_ENABLED=$(usex quarto TRUE FALSE)
+		-DRSTUDIO_USE_SYSTEM_SOCI=TRUE
 	)
 	if use electron; then
 		mycmakeargs+=( -DRSTUDIO_INSTALL_FREEDESKTOP="ON" )
