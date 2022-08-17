@@ -3,15 +3,15 @@
 
 EAPI=8
 
-inherit cmake java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils
+inherit cmake java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm yarn
 
 #####Start of GYP package list#####
-NODE_GYP_VER="9.0.0"
+NODE_GYP_VER="9.1.0"
 NODE_GYP_SKEIN="
-node-gyp@9.0.0
+node-gyp@9.1.0
 @gar/promisify@1.1.3
-@npmcli/fs@2.1.0
-@npmcli/move-file@2.0.0
+@npmcli/fs@2.1.2
+@npmcli/move-file@2.0.1
 @tootallnate/once@2.0.0
 abbrev@1.1.1
 agent-base@6.0.2
@@ -19,11 +19,11 @@ agentkeepalive@4.2.1
 aggregate-error@3.1.0
 ansi-regex@5.0.1
 aproba@2.0.0
-are-we-there-yet@3.0.0
+are-we-there-yet@3.0.1
 balanced-match@1.0.2
 brace-expansion@1.1.11
 brace-expansion@2.0.1
-cacache@16.1.1
+cacache@16.1.2
 chownr@2.0.0
 clean-stack@2.2.0
 color-support@1.1.3
@@ -53,13 +53,13 @@ indent-string@4.0.0
 infer-owner@1.0.4
 inflight@1.0.6
 inherits@2.0.4
-ip@1.1.8
+ip@2.0.0
 is-fullwidth-code-point@3.0.0
 is-lambda@1.0.1
 isexe@2.0.0
 lru-cache@6.0.0
-lru-cache@7.12.0
-make-fetch-happen@10.1.8
+lru-cache@7.13.2
+make-fetch-happen@10.2.1
 minimatch@3.1.2
 minimatch@5.1.0
 minipass-collect@1.0.2
@@ -90,7 +90,7 @@ set-blocking@2.0.0
 signal-exit@3.0.7
 smart-buffer@4.2.0
 socks-proxy-agent@7.0.0
-socks@2.6.2
+socks@2.7.0
 ssri@9.0.1
 string-width@4.2.3
 string_decoder@1.3.0
@@ -1658,25 +1658,8 @@ SRC_URI="${SRC_URI} !system_dictionaries? ( https://s3.amazonaws.com/rstudio-dic
 LICENSE="AGPL-3 BSD MIT Apache-2.0 Boost-1.0 CC-BY-4.0
 panmirror? ( BSD-2 ISC MIT )
 panmirror? ( || ( AFL-2.1 BSD ) || ( MIT Apache-2.0 ) 0BSD Apache-2.0 BSD BSD-2 ISC LGPL-3 MIT PYTHON Unlicense )"
-unravel_nodejs_deps(){
-	local SKEIN=$@
-	local regex='((.*\/)?(.*))@(.*)'
-	for YARN in ${SKEIN}
-	do
-		[[ ${YARN} =~ ${regex} ]]
-		YARN_NAME_FULL=${BASH_REMATCH[1]}
-		YARN_NAME=${BASH_REMATCH[3]}
-		YARN_VER=${BASH_REMATCH[4]}
-		FILE_EXT="tgz"
-		YARN_FILENAME="${YARN_NAME}-${YARN_VER}.${FILE_EXT}"
-		#add node_ change / to + b/c + is an invalid nodejs package char
-		YARN_FILENAME_SAVE="node_${YARN_NAME_FULL/\//+}@${YARN_VER}.${FILE_EXT}"
-		#echo "https://registry.yarnpkg.com/${YARN_NAME_FULL}/-/${YARN_FILENAME} -> ${YARN_FILENAME_SAVE/\//-}"
-		echo "https://registry.npmjs.org/${YARN_NAME_FULL}/-/${YARN_FILENAME} -> ${YARN_FILENAME_SAVE/\//-}"
-	done
-}
-SRC_URI="${SRC_URI} panmirror? ( $(unravel_nodejs_deps ${NODE_GYP_SKEIN}) $(unravel_nodejs_deps ${PANMIRROR_SKEIN}) )"
-SRC_URI="${SRC_URI} electron?  ( $(unravel_nodejs_deps ${RELECTRON_NODEJS_DEPS}) )"
+SRC_URI="${SRC_URI} panmirror? ( $(npm_build_src_uri ${NODE_GYP_SKEIN}) $(npm_build_src_uri ${PANMIRROR_SKEIN}) )"
+SRC_URI="${SRC_URI} electron?  ( $(npm_build_src_uri ${RELECTRON_NODEJS_DEPS}) )"
 
 #If not using system electron modify unpack also
 SRC_URI="${SRC_URI} electron?  (
@@ -1773,13 +1756,14 @@ src_unpack(){
 		:
 	else
 		#A good last commit when testing a patch
-		#EGIT_COMMIT="74481cc1505c3298ed792b58d6505bf99348f994" # 2022-06-10
+		#EGIT_COMMIT="b44036f75972f7c0c0929718ca40f7ca6bce3155" # 2022-07-29
 		:
 	fi
 		git-r3_src_unpack
 	fi
+	npm_src_unpack
+	use panmirror && yarn_build_cache ${NODE_GYP_SKEIN}
 	local ARCHIVE=""
-	mkdir ${WORKDIR}/.nodejs_files
 	for ARCHIVE in ${A} ;do
 		case ${ARCHIVE} in
 			(${P}.tar.gz)
@@ -1793,11 +1777,9 @@ src_unpack(){
 				unpack ${ARCHIVE}
 				popd > /dev/null ;;
 			(node_node-gyp@${NODE_GYP_VER}*)
-				unpack ${ARCHIVE}
-				mv package node_gyp
-				ln -s ${DISTDIR}/${ARCHIVE} ${WORKDIR}/.nodejs_files/${ARCHIVE#node_};;
+				:;;
 			(node_*)
-				ln -s ${DISTDIR}/${ARCHIVE} ${WORKDIR}/.nodejs_files/${ARCHIVE#node_};;
+				:;;
 			(electron-v${ELECTRON_VERSION}-headers*)
 				#IF bundling electron
 				mkdir -p ${WORKDIR}/.electron-gyp
@@ -1883,13 +1865,10 @@ src_prepare(){
 		if [[ ${PANMIRROR_PACKAGE_HASH} != ${PANMIRROR_SRC_HASH:0:40} ]];then
 			die "Panmirror Hash doesn't match"
 		else
-			patch -d ${WORKDIR}/node_gyp -p1 < ${FILESDIR}/node-gyp-${NODE_GYP_VER}-${PV_RELEASE}.patch || die "Node-gyp patch failed"
-			sed  "s#__GENTOO_PATH__#${WORKDIR}/.nodejs_files#" "${FILESDIR}/node-gyp-${NODE_GYP_VER}-${PV_RELEASE}-yarn.lock" > "${WORKDIR}/node_gyp/yarn.lock" \
-			|| die "Building Node GYP's lockfile failed"
+			yarn_src_prepare_gyp ${FILESDIR}/node-gyp-${NODE_GYP_VER}-9999-yarn.lock
 
 			patch                        -p1 < ${FILESDIR}/${PN}-${PV_RELEASE}-panmirror-package.patch || die "Panmirror patch failed"
-			sed  "s#__GENTOO_PATH__#${WORKDIR}/.nodejs_files#" "${FILESDIR}/${PN}-${PV_RELEASE}-panmirror-yarn.lock" >  "${S}/src/gwt/panmirror/src/editor/yarn.lock" \
-			|| die "Building Panmirror's lockfile failed"
+			npm_fix_lock_path  "${FILESDIR}/${PN}-${PV_RELEASE}-panmirror-yarn.lock" "${S}/src/gwt/panmirror/src/editor/yarn.lock" "Panmirror's"
 		fi
 	fi
 
@@ -1899,8 +1878,7 @@ src_prepare(){
 			die "Electron Hash doesn't match"
 		else
 			patch -p1 < "${FILESDIR}/${PN}-${PV_RELEASE}-electron-package.patch" || die "Electron patch failed"
-			sed  "s#__GENTOO_PATH__#${WORKDIR}/.nodejs_files#" "${FILESDIR}/${PN}-${PV_RELEASE}-electron-package.lock" > "${S}/src/node/desktop/package-lock.json" \
-			|| die "Building electron's lockfile failed"
+			npm_fix_lock_path "${FILESDIR}/${PN}-${PV_RELEASE}-electron-package.lock" "${S}/src/node/desktop/package-lock.json"
 		fi
 	fi
 }
@@ -1973,27 +1951,15 @@ src_configure() {
 }
 src_compile(){
 	if use panmirror;then
-		# Building node-gyp
-		# Setting up variables
-		local NODE_GYP_DIR=${WORKDIR}/node_gyp
-		local YARN_FILES_DIR=${WORKDIR}/.nodejs_files
-		local YARN_CACHE_DIR=${WORKDIR}/.yarn_cache
-		local YARN_CONFIG=${WORKDIR}/.yarnrc
-
 		# Building NODE-GYP
-		einfo "Building node-gyp"
-		pushd ${NODE_GYP_DIR}
-		echo "yarn-offline-mirror \"${YARN_FILES_DIR}\"" > ${YARN_CONFIG}
-		local YARN_CMD_OPTIONS="--cache-folder ${YARN_CACHE_DIR} --use-yarnrc ${YARN_CONFIG}  --non-interactive --offline --no-pregess"
-		npm_config_build_from_source=true npm_config_nodedir=/usr/include/node yarn install ${YARN_CMD_OPTIONS}|| die "Node GYP installation failed"
-		popd > /dev/null
+		yarn_src_compile_gyp
 		# Finished Building node-gyp
 
 		# Building PANMIRROR
 		einfo "Building PANMIRROR"
 		pushd ${S}/src/gwt/panmirror/src/editor > /dev/null
-		yarn config set ignore-engines true ${YARN_CMD_OPTIONS} < /dev/null 2>&1 |cat
-		npm_config_build_from_source=true npm_config_nodedir=/usr/include/node npm_config_node_gyp=${NODE_GYP_DIR}/bin/node-gyp.js yarn install ${YARN_CMD_OPTIONS} || die "Panmirror installation failed"
+		yarn_set_config ignore-engines true
+		yarn_src_compile
 		popd > /dev/null
 		#Finished Building PANMIRROR
 	else
