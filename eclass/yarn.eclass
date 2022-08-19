@@ -20,18 +20,11 @@ esac
 if [[ ! ${_YARN_ECLASS} ]]; then
 _YARN_ECLASS=1
 
-NODEJS_FILES_PATH="${WORKDIR}/.nodejs_files"
 yarn_build_cache(){
 	YARN_CACHE_DIR="${WORKDIR}/yarn_cache"
-	NODE_CACHE_DIR="${WORKDIR}/node_cache"
-	DISTPATH="/usr/portage/distfiles"
-	DISTPATH2="${WORKDIR}"
 	#PACKAGES=$(cat packages)
 	CUR_TIME=$(date +%s)
 	mkdir -p ${YARN_CACHE_DIR}
-	mkdir -p ${NODE_CACHE_DIR}
-	mkdir -p ${NODE_CACHE_DIR}/_cacache
-	echo "${CUR_TIME}" > ${NODE_CACHE_DIR}/_cacache/_lastverified
 	for PKG in ${@};do
 		regex='((.*\/)?(.*))@(.*)'
 		[[ ${PKG} =~ ${regex} ]]
@@ -44,10 +37,8 @@ yarn_build_cache(){
 			YARN_FILENAME_SAVE="node_${YARN_NAME_FULL/\//+}@${YARN_VER}.${FILE_EXT}"
 			
 			PKG_PATH=""
-			if [[ -f "${DISTPATH}/${YARN_FILENAME_SAVE}" ]];then
-				PKG_PATH="${DISTPATH}/${YARN_FILENAME_SAVE}"
-			elif [[ -f "${DISTPATH2}/${YARN_FILENAME_SAVE}" ]];then
-				PKG_PATH="${DISTPATH2}/${YARN_FILENAME_SAVE}"
+			if [[ -f "${DISTDIR}/${YARN_FILENAME_SAVE}" ]];then
+				PKG_PATH="${DISTDIR}/${YARN_FILENAME_SAVE}"
 			else
 				echo "${YARN_FILENAME_SAVE}"
 				echo "Not Found"
@@ -59,20 +50,39 @@ yarn_build_cache(){
 			#PKG_SHA512_B64=$(sha512sum $PKG_PATH |sed "s/ .*//"|xxd -r -p|base64 -w0)
 			PKG_SHA512=$(sha512sum $PKG_PATH |sed "s/ .*//")
 			PKG_SHA512_B64=$(echo -n ${PKG_SHA512}|xxd -r -p|base64 -w0)
-			PKG_DEST="${YARN_CACHE_DIR}/v6/npm-${YARN_SCOPE/\//-}${YARN_NAME//[._]/-}-${YARN_VER}-${PKG_SHA1}-integrity/node_modules"
+			YARN_NAME_DEST=${YARN_NAME//[._]/-}
+			YARN_NAME_DEST=${YARN_NAME_DEST//--/-}
+			PKG_DEST="${YARN_CACHE_DIR}/v6/npm-${YARN_SCOPE/\//-}${YARN_NAME_DEST}-${YARN_VER}-${PKG_SHA1}-integrity"
 			PKG_URL="https://registry.npmjs.org/${YARN_SCOPE}${YARN_NAME}/-/${YARN_NAME}-${YARN_VER}.tgz"
-			mkdir -p ${PKG_DEST}/${YARN_SCOPE}
+			mkdir -p ${PKG_DEST}/node_modules/${YARN_SCOPE}
+			echo "${YARN_SCOPE} - ${YARN_NAME} @ ${YARN_VER} "
 			#echo "$PKG_PATH -> ${PKG_DEST}"
-			tar xzf ${PKG_PATH} -C ${PKG_DEST}
-			mv ${PKG_DEST}/package ${PKG_DEST}/${YARN_SCOPE}/${YARN_NAME}|| exit
+			mkdir -p ${PKG_DEST}/unpack
+			pushd ${PKG_DEST}/unpack > /dev/null
+			#no-unknown-keyword disables the warning  Ignoring unknown extended header keyword 'foo'
+			tar xzf ${PKG_PATH} -C ${PKG_DEST}/unpack --warning=no-unknown-keyword || die "Failed to extract tarball"
+			if [[ -d ${PKG_DEST}/unpack/package ]];then
+				mv ${PKG_DEST}/unpack/package ${PKG_DEST}/node_modules/${YARN_SCOPE}/${YARN_NAME} || die "Failed to move 1"
+			else
+				YARN_FOLDER_NAME=(${PKG_DEST}/unpack/*)
+				[[ ${YARN_FOLDER_NAME[0]} == "${PKG_DEST}/unpack/*" ]] && die "Oops"
+				#echo ${#YARN_FOLDER_NAME[@]} - ${YARN_FOLDER_NAME}
+				if [[ 1 -eq ${#YARN_FOLDER_NAME[@]} ]];then
+					mv "${YARN_FOLDER_NAME[0]}" "${PKG_DEST}/node_modules/${YARN_SCOPE}/${YARN_NAME}" || die "Failed to move 2"
+				else
+					die "Failed to move n"
+				fi
+			fi
+			rmdir ${PKG_DEST}/unpack || die "Failed to remove unpack dir"
 			#build ${PKG_DEST}/${YARN_NAME}/.yarn-metadata.json
-			cat <<_EOF_ > ${PKG_DEST}/${YARN_SCOPE}/${YARN_NAME}/.yarn-metadata.json
+			cat <<_EOF_ > ${PKG_DEST}/node_modules/${YARN_SCOPE}/${YARN_NAME}/.yarn-metadata.json
 			{"remote":{
 			"hash": "${PKG_SHA1}",
 			"integrity":"sha512-${PKG_SHA512_B64}",
 			"cacheIntegrity": "sha512-${PKG_SHA512_B64} sha1-${PKG_SHA1_B64}"}}
 _EOF_
 	done
+	echo
 }
 yarn_set_config(){
 	YARN_CACHE_DIR="${WORKDIR}/yarn_cache"
@@ -116,8 +126,9 @@ yarn_src_compile(){
 	# Setting up variables
 	local NODE_GYP_DIR=${WORKDIR}/node_gyp
 	local YARN_FILES_DIR=${WORKDIR}/.nodejs_files
-	local YARN_CACHE_DIR=${WORKDIR}/.yarn_cache
+	#local YARN_CACHE_DIR=${WORKDIR}/.yarn_cache
 	local YARN_CONFIG=${WORKDIR}/.yarnrc
+	export YARN_CACHE_DIR="${WORKDIR}/yarn_cache"
 
 	local YARN_CMD_OPTIONS="--cache-folder ${YARN_CACHE_DIR} --use-yarnrc ${YARN_CONFIG}  --non-interactive --offline --no-pregess"
 	if [[ ${NODE_GYP_VER} != "" ]] ; then

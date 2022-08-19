@@ -50,7 +50,7 @@ npm_build_src_uri(){
 	done
 }
 npm_src_unpack(){
-	mkdir ${NODEJS_FILES_PATH}
+	mkdir ${WORKDIR}/.nodejs_files
 	for ARCHIVE in ${A}; do
 		case ${ARCHIVE} in
 			# future NODE_GYP

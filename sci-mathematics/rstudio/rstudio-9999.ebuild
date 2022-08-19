@@ -1763,6 +1763,7 @@ src_unpack(){
 	fi
 	npm_src_unpack
 	use panmirror && yarn_build_cache ${NODE_GYP_SKEIN}
+	use panmirror && yarn_build_cache ${PANMIRROR_SKEIN}
 	local ARCHIVE=""
 	for ARCHIVE in ${A} ;do
 		case ${ARCHIVE} in
@@ -1868,7 +1869,11 @@ src_prepare(){
 			yarn_src_prepare_gyp ${FILESDIR}/node-gyp-${NODE_GYP_VER}-9999-yarn.lock
 
 			patch                        -p1 < ${FILESDIR}/${PN}-${PV_RELEASE}-panmirror-package.patch || die "Panmirror patch failed"
-			npm_fix_lock_path  "${FILESDIR}/${PN}-${PV_RELEASE}-panmirror-yarn.lock" "${S}/src/gwt/panmirror/src/editor/yarn.lock" "Panmirror's"
+			#npm_fix_lock_path  "${FILESDIR}/${PN}-${PV_RELEASE}-panmirror-yarn.lock" "${S}/src/gwt/panmirror/src/editor/yarn.lock" "Panmirror's"
+			#this is a temporary patch; next release build w/o __GENTOO_PATH__ use native urls
+			#caution this could pick up base64 with the pattern ++/
+			sed  -E  "s#file://__GENTOO_PATH__/((@[^+]+)\+)?(.*)@(.*).tgz#https://registry.yarnpkg.com/\2++/\3/-/\3-\4.tgz#; s#/\+\+/#++/#;s#\+\+/#/#" \
+				${FILESDIR}/rstudio-${PV_RELEASE}-panmirror-yarn.lock > "${S}/src/gwt/panmirror/src/editor/yarn.lock"
 		fi
 	fi
 
