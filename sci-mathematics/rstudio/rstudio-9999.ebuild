@@ -1741,7 +1741,6 @@ PATCHES=(
 	"${FILESDIR}/${PN}-1.4.1106-server-paths.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-package-build.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-pandoc_path_fix.patch"
-	"${FILESDIR}/${PN}-2022.07.0.548-toggle_quarto.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-node_path.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-electron_path.patch"
@@ -1940,7 +1939,7 @@ src_configure() {
 		-DRSTUDIO_USE_SYSTEM_YAML_CPP=ON
 		-DRSTUDIO_PACKAGE_BUILD=1
 		-DRSTUDIO_BIN_PATH=${EPREFIX}/usr/bin
-		-DQUARTO_ENABLED=$(usex quarto TRUE FALSE)
+		-DQUARTO_ENABLED=$(usex quarto)
 		-DRSTUDIO_USE_SYSTEM_SOCI=TRUE
 	)
 	if use electron; then
