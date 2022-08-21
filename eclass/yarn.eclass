@@ -21,6 +21,7 @@ if [[ ! ${_YARN_ECLASS} ]]; then
 _YARN_ECLASS=1
 
 yarn_build_cache(){
+	einfo "Building Yarn cache..."
 	YARN_CACHE_DIR="${WORKDIR}/yarn_cache"
 	#PACKAGES=$(cat packages)
 	CUR_TIME=$(date +%s)
@@ -55,10 +56,9 @@ yarn_build_cache(){
 			PKG_DEST="${YARN_CACHE_DIR}/v6/npm-${YARN_SCOPE/\//-}${YARN_NAME_DEST}-${YARN_VER}-${PKG_SHA1}-integrity"
 			PKG_URL="https://registry.npmjs.org/${YARN_SCOPE}${YARN_NAME}/-/${YARN_NAME}-${YARN_VER}.tgz"
 			mkdir -p ${PKG_DEST}/node_modules/${YARN_SCOPE}
-			echo "${YARN_SCOPE} - ${YARN_NAME} @ ${YARN_VER} "
+			#echo "${YARN_SCOPE} - ${YARN_NAME} @ ${YARN_VER} "
 			#echo "$PKG_PATH -> ${PKG_DEST}"
 			mkdir -p ${PKG_DEST}/unpack
-			pushd ${PKG_DEST}/unpack > /dev/null
 			#no-unknown-keyword disables the warning  Ignoring unknown extended header keyword 'foo'
 			tar xzf ${PKG_PATH} -C ${PKG_DEST}/unpack --warning=no-unknown-keyword || die "Failed to extract tarball"
 			if [[ -d ${PKG_DEST}/unpack/package ]];then
@@ -82,7 +82,7 @@ yarn_build_cache(){
 			"cacheIntegrity": "sha512-${PKG_SHA512_B64} sha1-${PKG_SHA1_B64}"}}
 _EOF_
 	done
-	echo
+	einfo "Finished building Yarn cache"
 }
 yarn_set_config(){
 	YARN_CACHE_DIR="${WORKDIR}/yarn_cache"

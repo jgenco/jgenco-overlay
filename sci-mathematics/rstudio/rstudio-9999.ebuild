@@ -687,15 +687,15 @@ zenscroll@4.0.2
 "
 #####End   of PANMIRROR package list#####
 
-#####Start of NODEJS package list#####
-ELECTRON_PACKAGE_HASH="c5bc999ca8881892d7d0031f9d5c39254dcbf519"
-ELECTRON_VERSION="19.0.4"
+#####Start of ELECTRON  package list#####
+ELECTRON_PACKAGE_HASH="c3fa66142e1cd58603c86c085b4d04123b58df39"
+ELECTRON_VERSION="19.0.10"
 ELECTRON_VERSION_MAJ="19"
-ELECTRON_EGIT_COMMIT="e80e1a57761c4f52eb9aa72b3ca3f60b82037efc"
+ELECTRON_EGIT_COMMIT="febae33db0b6d4aaa83edafa20b74df64eab2801"
 RELECTRON_NODEJS_DEPS="
 abbrev@1.1.1
 accepts@1.3.8
-acorn@8.7.1
+acorn@8.8.0
 acorn-import-assertions@1.8.0
 acorn-walk@8.2.0
 agent-base@6.0.2
@@ -716,20 +716,13 @@ ansi-styles@3.2.1
 ansi-styles@4.3.0
 anymatch@3.1.2
 any-promise@1.3.0
-@apidevtools/json-schema-ref-parser@9.0.9
 aproba@2.0.0
-are-we-there-yet@3.0.0
+are-we-there-yet@3.0.1
 arg@4.1.3
 argparse@2.0.1
-array-differ@1.0.0
 array-flatten@1.1.1
 array-flatten@2.1.2
-array-union@1.0.2
-array-union@3.0.1
-array-uniq@1.0.3
-arrify@1.0.1
-asap@2.0.6
-asar@3.1.0
+asar@3.2.0
 asn1@0.2.6
 assertion-error@1.1.0
 assert-plus@1.0.0
@@ -743,10 +736,11 @@ aws-sign2@0.7.0
 @babel/code-frame@7.18.6
 @babel/helper-validator-identifier@7.18.6
 @babel/highlight@7.18.6
-@babel/runtime@7.18.6
+@babel/runtime@7.18.9
 balanced-match@1.0.2
 base64-js@1.5.1
 batch@0.6.1
+@bcherny/json-schema-ref-parser@9.0.9
 bcrypt-pbkdf@1.0.2
 big.js@5.2.2
 binary-extensions@2.2.0
@@ -758,10 +752,12 @@ bonjour-service@1.0.13
 boolbase@1.0.0
 boolean@3.2.0
 brace-expansion@1.1.11
+brace-expansion@2.0.1
 braces@3.0.2
-browserslist@4.21.1
+browserslist@4.21.3
 browser-stdout@1.3.1
 buffer@5.7.1
+buffer@6.0.3
 buffer-alloc@1.2.0
 buffer-alloc-unsafe@1.1.0
 buffer-crc32@0.2.13
@@ -770,7 +766,7 @@ buffer-fill@1.0.0
 buffer-from@1.1.2
 bytes@3.0.0
 bytes@3.1.2
-cacache@15.3.0
+cacache@16.1.2
 cacheable-lookup@5.0.4
 cacheable-request@6.1.0
 cacheable-request@7.0.2
@@ -779,7 +775,7 @@ call-me-maybe@1.0.1
 callsites@3.1.0
 camel-case@4.1.2
 camelcase@6.3.0
-caniuse-lite@1.0.30001361
+caniuse-lite@1.0.30001379
 caseless@0.12.0
 chai@4.3.6
 chalk@2.4.2
@@ -790,16 +786,16 @@ chokidar@3.5.3
 chownr@2.0.0
 chrome-trace-event@1.0.3
 chromium-pickle-js@0.2.0
-clean-css@5.3.0
+clean-css@5.3.1
 clean-stack@2.2.0
-cli-color@2.0.2
+cli-color@2.0.3
 cli-cursor@3.1.0
-cli-spinners@2.6.1
+cli-spinners@2.7.0
 cliui@7.0.4
 cli-width@3.0.0
 clone@1.0.4
 clone-deep@4.0.1
-clone-response@1.0.2
+clone-response@1.0.3
 code-point-at@1.1.0
 color@3.2.1
 color-convert@1.9.3
@@ -824,7 +820,7 @@ compressible@2.0.18
 compression@1.7.4
 concat-map@0.0.1
 concat-stream@1.6.2
-conf@10.1.2
+conf@10.2.0
 config-chain@1.1.13
 connect-history-api-fallback@2.0.0
 console-control-strings@1.1.0
@@ -832,19 +828,18 @@ content-disposition@0.5.4
 content-type@1.0.4
 cookie@0.5.0
 cookie-signature@1.0.6
-copy-webpack-plugin@10.2.4
+copy-webpack-plugin@11.0.0
 core-util-is@1.0.2
 core-util-is@1.0.3
 cosmiconfig@6.0.0
-crc@3.8.0
+crc@4.1.1
 create-require@1.1.1
 cross-spawn@6.0.5
 cross-spawn@7.0.3
 cross-spawn-windows-exe@1.2.0
-@cspotcode/source-map-consumer@0.8.0
-@cspotcode/source-map-support@0.7.0
+@cspotcode/source-map-support@0.8.1
 cssesc@3.0.0
-css-loader@6.5.1
+css-loader@6.7.1
 css-select@4.3.0
 css-what@6.1.0
 d@1.0.1
@@ -866,13 +861,12 @@ defer-to-connect@1.1.3
 defer-to-connect@2.0.1
 define-lazy-prop@2.0.0
 define-properties@1.1.4
-del@2.2.2
 delayed-stream@1.0.0
 delegates@1.0.0
 depd@1.1.2
 depd@2.0.0
 destroy@1.2.0
-detect-libc@1.0.3
+detect-libc@2.0.1
 detect-node@2.1.0
 diff@4.0.2
 diff@5.0.0
@@ -888,40 +882,40 @@ domutils@2.8.0
 dom-walk@0.1.2
 dot-case@3.0.4
 dot-prop@6.0.1
-duplexer3@0.1.4
+duplexer3@0.1.5
 ecc-jsbn@0.1.2
 ee-first@1.1.1
-electron@19.0.4
-@electron-forge/async-ora@6.0.0-beta.63
-@electron-forge/cli@6.0.0-beta.63
-@electron-forge/core@6.0.0-beta.63
-@electron-forge/installer-base@6.0.0-beta.63
-@electron-forge/installer-darwin@6.0.0-beta.63
-@electron-forge/installer-deb@6.0.0-beta.63
-@electron-forge/installer-dmg@6.0.0-beta.63
-@electron-forge/installer-exe@6.0.0-beta.63
-@electron-forge/installer-linux@6.0.0-beta.63
-@electron-forge/installer-rpm@6.0.0-beta.63
-@electron-forge/installer-zip@6.0.0-beta.63
-@electron-forge/maker-base@6.0.0-beta.63
-@electron-forge/plugin-base@6.0.0-beta.63
-@electron-forge/plugin-webpack@6.0.0-beta.63
-@electron-forge/publisher-base@6.0.0-beta.63
-@electron-forge/shared-types@6.0.0-beta.63
-@electron-forge/template-base@6.0.0-beta.63
-@electron-forge/template-typescript@6.0.0-beta.63
-@electron-forge/template-typescript-webpack@6.0.0-beta.63
-@electron-forge/template-webpack@6.0.0-beta.63
-@electron-forge/web-multi-logger@6.0.0-beta.63
+electron@19.0.10
+@electron-forge/async-ora@6.0.0-beta.64
+@electron-forge/cli@6.0.0-beta.64
+@electron-forge/core@6.0.0-beta.64
+@electron-forge/installer-base@6.0.0-beta.64
+@electron-forge/installer-darwin@6.0.0-beta.64
+@electron-forge/installer-deb@6.0.0-beta.64
+@electron-forge/installer-dmg@6.0.0-beta.64
+@electron-forge/installer-exe@6.0.0-beta.64
+@electron-forge/installer-linux@6.0.0-beta.64
+@electron-forge/installer-rpm@6.0.0-beta.64
+@electron-forge/installer-zip@6.0.0-beta.64
+@electron-forge/maker-base@6.0.0-beta.64
+@electron-forge/plugin-base@6.0.0-beta.64
+@electron-forge/plugin-webpack@6.0.0-beta.64
+@electron-forge/publisher-base@6.0.0-beta.64
+@electron-forge/shared-types@6.0.0-beta.64
+@electron-forge/template-base@6.0.0-beta.64
+@electron-forge/template-typescript@6.0.0-beta.64
+@electron-forge/template-typescript-webpack@6.0.0-beta.64
+@electron-forge/template-webpack@6.0.0-beta.64
+@electron-forge/web-multi-logger@6.0.0-beta.64
 @electron/get@1.14.1
 electron-mocha@11.0.2
 electron-notarize@1.2.1
 electron-osx-sign@0.5.0
 electron-packager@15.5.1
-electron-rebuild@3.2.7
+electron-rebuild@3.2.9
 electron-squirrel-startup@1.0.0
-electron-store@8.0.1
-electron-to-chromium@1.4.174
+electron-store@8.1.0
+electron-to-chromium@1.4.225
 @electron/universal@1.3.0
 electron-window@0.8.1
 emoji-regex@8.0.0
@@ -934,9 +928,8 @@ enhanced-resolve@5.10.0
 entities@2.2.0
 env-paths@2.2.1
 err-code@2.0.3
-errno@0.1.8
 error-ex@1.3.2
-es5-ext@0.10.61
+es5-ext@0.10.62
 es6-error@4.1.1
 es6-iterator@2.0.3
 es6-symbol@3.1.3
@@ -969,6 +962,7 @@ fast-deep-equal@3.1.3
 fast-glob@3.2.11
 fast-json-stable-stringify@2.1.0
 fastq@1.13.0
+fast-zlib@2.0.1
 faye-websocket@0.11.4
 fd-slicer@1.1.0
 fecha@4.2.3
@@ -1017,17 +1011,17 @@ get-stream@5.2.0
 get-stream@6.0.1
 glob@7.2.0
 glob@7.2.3
+glob@8.0.3
 global@4.4.0
 global-agent@3.0.0
 global-modules@1.0.0
 global-prefix@1.0.2
 globalthis@1.0.3
 global-tunnel-ng@2.7.1
-globby@12.2.0
-globby@5.0.0
+globby@13.1.2
 glob-parent@5.1.2
 glob-parent@6.0.2
-glob-promise@3.4.0
+glob-promise@4.2.2
 glob-to-regexp@0.4.1
 got@11.8.5
 got@9.6.0
@@ -1058,13 +1052,13 @@ http-errors@1.6.3
 http-errors@2.0.0
 http-parser-js@0.5.8
 http-proxy@1.18.1
-http-proxy-agent@4.0.1
+http-proxy-agent@5.0.0
 http-proxy-middleware@2.0.6
 http-signature@1.2.0
 https-proxy-agent@5.0.1
 humanize-ms@1.2.1
 human-signals@2.1.0
-i18next@21.6.10
+i18next@21.9.0
 iconv-lite@0.4.24
 iconv-lite@0.6.3
 icss-utils@5.1.0
@@ -1079,7 +1073,7 @@ inherits@2.0.3
 inherits@2.0.4
 ini@1.3.8
 inquirer@8.2.4
-ip@1.1.8
+ip@2.0.0
 ipaddr.js@1.9.1
 ipaddr.js@2.0.1
 isarray@0.0.1
@@ -1088,7 +1082,7 @@ is-arrayish@0.2.1
 is-arrayish@0.3.2
 isbinaryfile@3.0.3
 is-binary-path@2.1.0
-is-core-module@2.9.0
+is-core-module@2.10.0
 is-docker@2.2.1
 is-electron-renderer@2.0.1
 isexe@2.0.0
@@ -1101,9 +1095,6 @@ is-lambda@1.0.1
 is-number@7.0.0
 is-obj@2.0.0
 isobject@3.0.1
-is-path-cwd@1.0.0
-is-path-in-cwd@1.0.1
-is-path-inside@1.0.1
 is-plain-obj@2.1.0
 is-plain-obj@3.0.0
 is-plain-object@2.0.4
@@ -1117,11 +1108,12 @@ is-windows@1.0.2
 is-wsl@2.2.0
 jest-worker@27.5.1
 @jridgewell/gen-mapping@0.3.2
-@jridgewell/resolve-uri@3.0.8
+@jridgewell/resolve-uri@3.1.0
 @jridgewell/set-array@1.1.2
 @jridgewell/source-map@0.3.2
 @jridgewell/sourcemap-codec@1.4.14
-@jridgewell/trace-mapping@0.3.14
+@jridgewell/trace-mapping@0.3.15
+@jridgewell/trace-mapping@0.3.9
 jsbn@0.1.1
 @jsdevtools/ono@7.1.3
 json@11.0.0
@@ -1132,8 +1124,7 @@ jsonfile@4.0.0
 jsonfile@6.1.0
 json-parse-even-better-errors@2.3.1
 json-schema@0.4.0
-json-schema-ref-parser@9.0.9
-json-schema-to-typescript@10.1.5
+json-schema-to-typescript@11.0.2
 json-schema-traverse@0.4.1
 json-schema-traverse@1.0.0
 json-schema-typed@7.0.3
@@ -1141,11 +1132,10 @@ json-stringify-safe@5.0.1
 jsprim@1.4.2
 js-tokens@4.0.0
 js-yaml@4.1.0
-junk@1.0.3
 junk@3.1.0
 just-extend@4.2.1
 keyv@3.1.0
-keyv@4.3.2
+keyv@4.3.3
 kind-of@6.0.3
 kuler@2.0.0
 @leichtgewicht/ip-codec@2.0.4
@@ -1161,22 +1151,22 @@ locate-path@6.0.0
 lodash@4.17.21
 lodash.debounce@4.0.8
 lodash.get@4.4.2
-logform@2.4.1
+logform@2.4.2
 log-symbols@4.1.0
 loupe@2.3.4
 lower-case@2.0.2
 lowercase-keys@1.0.1
 lowercase-keys@2.0.0
 lru-cache@6.0.0
+lru-cache@7.14.0
 lru-queue@0.1.0
 lzma-native@8.0.6
 make-error@1.3.6
-make-fetch-happen@9.1.0
+make-fetch-happen@10.2.1
 @malept/cross-spawn-promise@1.1.1
 @malept/cross-spawn-promise@2.0.0
 map-age-cleaner@0.1.3
 matcher@3.0.0
-maximatch@0.1.0
 media-typer@0.3.0
 mem@4.3.0
 memfs@3.4.7
@@ -1198,10 +1188,11 @@ minimalistic-assert@1.0.1
 minimatch@3.0.4
 minimatch@3.1.2
 minimatch@4.2.1
+minimatch@5.1.0
 minimist@1.2.6
 minipass@3.3.4
 minipass-collect@1.0.2
-minipass-fetch@1.4.1
+minipass-fetch@2.1.1
 minipass-flush@1.0.5
 minipass-pipeline@1.2.4
 minipass-sized@1.0.3
@@ -1209,10 +1200,18 @@ minizlib@2.1.2
 mkdirp@0.5.6
 mkdirp@1.0.4
 mocha@9.2.2
-moment@2.29.3
+moment@2.29.4
 ms@2.0.0
 ms@2.1.2
 ms@2.1.3
+msgpackr@1.6.2
+msgpackr-extract@2.1.2
+@msgpackr-extract/msgpackr-extract-darwin-arm64@2.1.2
+@msgpackr-extract/msgpackr-extract-darwin-x64@2.1.2
+@msgpackr-extract/msgpackr-extract-linux-arm@2.1.2
+@msgpackr-extract/msgpackr-extract-linux-arm64@2.1.2
+@msgpackr-extract/msgpackr-extract-linux-x64@2.1.2
+@msgpackr-extract/msgpackr-extract-win32-x64@2.1.2
 multicast-dns@7.2.5
 mute-stream@0.0.8
 mz@2.7.0
@@ -1221,31 +1220,33 @@ nanoid@3.3.1
 nanoid@3.3.4
 negotiator@0.6.3
 neo-async@2.6.2
+net-ipc@2.0.1
 next-tick@1.1.0
 nice-try@1.0.5
 nise@5.1.1
 no-case@3.0.4
-node-abi@3.22.0
+node-abi@3.24.0
 node-addon-api@3.2.1
-node-addon-api@4.3.0
+node-addon-api@5.0.0
 node-api-version@0.1.4
 node-fetch@2.6.7
 node-forge@1.3.1
-node-gyp@8.4.1
-node-gyp-build@4.4.0
+node-gyp@9.1.0
+node-gyp-build@4.5.0
+node-gyp-build-optional-packages@5.0.3
 @nodelib/fs.scandir@2.1.5
 @nodelib/fs.stat@2.0.5
 @nodelib/fs.walk@1.2.8
 node-loader@2.0.0
-node-releases@2.0.5
+node-releases@2.0.6
 node-system-fonts@1.0.1
 nopt@5.0.0
 normalize-package-data@2.5.0
 normalize-path@3.0.0
 normalize-url@4.5.1
 normalize-url@6.1.0
-@npmcli/fs@1.1.1
-@npmcli/move-file@1.1.2
+@npmcli/fs@2.1.2
+@npmcli/move-file@2.0.1
 npm-conf@1.1.3
 npmlog@6.0.2
 npm-run-path@2.0.2
@@ -1280,7 +1281,6 @@ pascal-case@3.1.2
 path-exists@3.0.0
 path-exists@4.0.0
 path-is-absolute@1.0.1
-path-is-inside@1.0.2
 path-key@2.0.1
 path-key@3.1.1
 path-parse@1.0.7
@@ -1299,21 +1299,19 @@ picocolors@1.0.0
 picomatch@2.3.1
 pify@2.3.0
 pify@3.0.0
-pinkie@2.0.4
-pinkie-promise@2.0.1
 p-is-promise@2.1.0
 pkg-dir@4.2.0
 pkg-up@3.1.0
 p-limit@1.3.0
 p-limit@2.3.0
 p-limit@3.1.0
-plist@3.0.5
+plist@3.0.6
 p-locate@2.0.0
 p-locate@3.0.0
 p-locate@4.1.0
 p-locate@5.0.0
 p-map@4.0.0
-postcss@8.4.14
+postcss@8.4.16
 postcss-modules-extract-imports@3.0.0
 postcss-modules-local-by-default@4.0.0
 postcss-modules-scope@3.0.0
@@ -1330,14 +1328,12 @@ process@0.11.10
 process-nextick-args@2.0.1
 progress@2.0.3
 progress-stream@1.2.0
-promise@7.3.1
 promise-inflight@1.0.1
 promise-retry@2.0.1
 properties-reader@2.2.0
 proto-list@1.2.4
 proxy-addr@2.0.7
-prr@1.0.1
-psl@1.8.0
+psl@1.9.0
 p-try@1.0.0
 p-try@2.2.0
 pump@3.0.0
@@ -1356,7 +1352,6 @@ readable-stream@3.6.0
 readdirp@3.6.0
 read-pkg@2.0.0
 read-pkg-up@2.0.0
-recursive-copy@2.0.13
 regenerator-runtime@0.13.9
 relateurl@0.2.7
 renderkid@3.0.0
@@ -1370,17 +1365,16 @@ resolve-dir@1.0.1
 resolve-from@4.0.0
 resolve-package@1.0.1
 responselike@1.0.2
-responselike@2.0.0
+responselike@2.0.1
 restore-cursor@3.1.0
 retry@0.12.0
 retry@0.13.1
 reusify@1.0.4
-rimraf@2.7.1
 rimraf@3.0.2
 roarr@2.15.4
 run-async@2.4.1
 run-parallel@1.2.0
-rxjs@7.5.5
+rxjs@7.5.6
 safe-buffer@5.1.2
 safe-buffer@5.2.1
 safer-buffer@2.1.2
@@ -1413,17 +1407,16 @@ simple-swizzle@0.2.2
 @sindresorhus/is@0.14.0
 @sindresorhus/is@4.6.0
 single-line-log@1.1.2
-sinon@13.0.1
+sinon@14.0.0
 @sinonjs/commons@1.8.3
 @sinonjs/fake-timers@9.1.2
 @sinonjs/samsam@6.1.1
-@sinonjs/text-encoding@0.7.1
-slash@1.0.0
+@sinonjs/text-encoding@0.7.2
 slash@4.0.0
 smart-buffer@4.2.0
 sockjs@0.3.24
-socks@2.6.2
-socks-proxy-agent@6.2.1
+socks@2.7.0
+socks-proxy-agent@7.0.0
 source-map@0.6.1
 source-map-js@1.0.2
 source-map-support@0.5.21
@@ -1436,7 +1429,7 @@ spdy-transport@3.0.0
 speedometer@0.1.4
 sprintf-js@1.1.2
 sshpk@1.17.0
-ssri@8.0.1
+ssri@9.0.1
 stack-trace@0.0.10
 statuses@1.5.0
 statuses@2.0.1
@@ -1463,8 +1456,8 @@ supports-preserve-symlinks-flag@1.0.0
 tapable@1.1.3
 tapable@2.2.1
 tar@6.1.11
-terser@5.14.1
-terser-webpack-plugin@5.3.3
+terser@5.14.2
+terser-webpack-plugin@5.3.5
 text-hex@1.0.0
 thenify@3.3.1
 thenify-all@1.6.0
@@ -1475,7 +1468,7 @@ thunky@1.1.0
 timers-ext@0.1.7
 tmp@0.0.33
 toidentifier@1.0.1
-@tootallnate/once@1.1.2
+@tootallnate/once@2.0.0
 to-readable-stream@1.0.0
 to-regex-range@5.0.1
 tough-cookie@2.5.0
@@ -1487,61 +1480,60 @@ triple-beam@1.3.0
 @tsconfig/node14@1.0.3
 @tsconfig/node16@1.0.3
 tslib@2.4.0
-ts-loader@9.2.6
-ts-node@10.4.0
+ts-loader@9.3.1
+ts-node@10.9.1
 tunnel@0.0.6
 tunnel-agent@0.6.0
 tweetnacl@0.14.5
 type@1.2.0
-type@2.6.0
+type@2.7.2
 typedarray@0.0.6
 type-detect@4.0.8
 type-fest@0.13.1
 type-fest@0.21.3
-type-fest@1.4.0
+type-fest@2.18.1
 type-is@1.6.18
 @types/body-parser@1.19.2
 @types/bonjour@3.5.10
 @types/cacheable-request@6.0.2
-@types/chai@4.3.0
+@types/chai@4.3.3
 @types/connect@3.4.35
 @types/connect-history-api-fallback@1.3.5
-@types/crc@3.4.0
-typescript@4.5.2
-@types/eslint@8.4.3
-@types/eslint-scope@3.7.3
+@types/crc@3.8.0
+typescript@4.7.4
+@types/eslint@8.4.6
+@types/eslint-scope@3.7.4
 @types/estree@0.0.51
 @types/express@4.17.13
-@types/express-serve-static-core@4.17.29
+@types/express-serve-static-core@4.17.30
 @types/glob@7.2.0
 @types/html-minifier-terser@6.1.0
 @types/http-cache-semantics@4.0.1
 @types/http-proxy@1.17.9
-@types/i18next@13.0.0
 @types/json-buffer@3.0.0
 @types/json-schema@7.0.11
 @types/keyv@3.1.4
 @types/line-reader@0.0.34
-@types/lodash@4.14.182
+@types/lodash@4.14.184
 @types/lodash.debounce@4.0.7
-@types/mime@1.3.2
+@types/mime@3.0.1
 @types/minimatch@3.0.5
-@types/mocha@9.1.0
-@types/node@16.11.42
+@types/mocha@9.1.1
+@types/node@16.11.51
 @types/node@16.11.7
 @types/parse-json@4.0.0
-@types/prettier@2.6.3
+@types/prettier@2.7.0
 @types/properties-reader@2.1.1
 @types/qs@6.9.7
 @types/range-parser@1.2.4
 @types/responselike@1.0.0
 @types/retry@0.12.0
 @types/serve-index@1.9.1
-@types/serve-static@1.13.10
-@types/sinon@10.0.11
+@types/serve-static@1.15.0
+@types/sinon@10.0.13
 @types/sinonjs__fake-timers@8.1.2
 @types/sockjs@0.3.33
-@types/uuid@8.3.1
+@types/uuid@8.3.4
 @types/ws@8.5.3
 @types/yauzl@2.10.0
 @ungap/promise-all-settled@1.1.2
@@ -1550,7 +1542,7 @@ unique-slug@2.0.2
 universalify@0.1.2
 universalify@2.0.0
 unpipe@1.0.0
-update-browserslist-db@1.0.4
+update-browserslist-db@1.0.5
 uri-js@4.4.1
 url-parse-lax@3.0.0
 username@5.1.0
@@ -1559,9 +1551,10 @@ util-deprecate@1.0.2
 utils-merge@1.0.1
 uuid@3.4.0
 uuid@8.3.2
+v8-compile-cache-lib@3.0.1
 validate-npm-package-license@3.0.4
 vary@1.1.2
-@vercel/webpack-asset-relocator-loader@1.7.0
+@vercel/webpack-asset-relocator-loader@1.7.3
 verror@1.10.0
 watchpack@2.4.0
 wbuf@1.7.3
@@ -1582,9 +1575,9 @@ wcwidth@1.0.1
 @webassemblyjs/wasm-parser@1.11.1
 @webassemblyjs/wast-printer@1.11.1
 webidl-conversions@3.0.1
-webpack@5.73.0
+webpack@5.74.0
 webpack-dev-middleware@5.3.3
-webpack-dev-server@4.9.3
+webpack-dev-server@4.10.0
 webpack-merge@5.8.0
 webpack-sources@3.2.3
 websocket-driver@0.7.4
@@ -1594,15 +1587,15 @@ which@1.3.1
 which@2.0.2
 wide-align@1.1.5
 wildcard@2.0.0
-winston@3.5.0
-winston-daily-rotate-file@4.6.0
+winston@3.8.1
+winston-daily-rotate-file@4.7.1
 winston-transport@4.5.0
 workerpool@6.2.0
 wrap-ansi@7.0.0
 wrappy@1.0.2
-ws@7.5.8
-ws@8.8.0
-xmlbuilder@9.0.7
+ws@7.5.9
+ws@8.8.1
+xmlbuilder@15.1.1
 xtend@2.1.2
 xterm@4.19.0
 xterm-addon-fit@0.5.0
@@ -1616,14 +1609,14 @@ yargs@16.2.0
 yargs@17.5.1
 yargs-parser@20.2.4
 yargs-parser@20.2.9
-yargs-parser@21.0.1
+yargs-parser@21.1.1
 yargs-unparser@2.0.0
 yarn-or-npm@3.0.1
 yauzl@2.10.0
 yn@3.1.1
 yocto-queue@0.1.0
 "
-#####End   of ELECTRON package list#####
+#####End   of NODEJS package list#####
 
 #RSudio requires 5.12.8 but when QT 5.12.x and glibc 2.34(clone3) is used it will cause a
 #sandbox violation in chromium. QT fixed this around 5.15.x(5?). Gentoo is at 5.15.3 and
@@ -1755,14 +1748,14 @@ src_unpack(){
 		:
 	else
 		#A good last commit when testing a patch
-		#EGIT_COMMIT="b44036f75972f7c0c0929718ca40f7ca6bce3155" # 2022-07-29
+		#EGIT_COMMIT="febae33db0b6d4aaa83edafa20b74df64eab2801" # 2022-08-19
 		:
 	fi
 		git-r3_src_unpack
 	fi
 	npm_src_unpack
-	use panmirror && yarn_build_cache ${NODE_GYP_SKEIN}
-	use panmirror && yarn_build_cache ${PANMIRROR_SKEIN}
+	use panmirror && yarn_build_cache ${NODE_GYP_SKEIN} ${PANMIRROR_SKEIN}
+	use electron  &&  npm_build_cache ${RELECTRON_NODEJS_DEPS}
 	local ARCHIVE=""
 	for ARCHIVE in ${A} ;do
 		case ${ARCHIVE} in
@@ -1881,8 +1874,8 @@ src_prepare(){
 		if [[ ${ELECTRON_PACKAGE_HASH} != ${ELECTRON_SRC_HASH:0:40} ]];then
 			die "Electron Hash doesn't match"
 		else
-			patch -p1 < "${FILESDIR}/${PN}-${PV_RELEASE}-electron-package.patch" || die "Electron patch failed"
-			npm_fix_lock_path "${FILESDIR}/${PN}-${PV_RELEASE}-electron-package.lock" "${S}/src/node/desktop/package-lock.json"
+			patch -p1 < "${FILESDIR}/${PN}-${PV}-electron-package.patch" || die "Electron patch failed"
+			patch -p1 < "${FILESDIR}/${PN}-${PV}-electron-package-lock.json.patch" || die "Electron lock file patch failed"
 		fi
 	fi
 }
@@ -1904,7 +1897,7 @@ src_configure() {
 	CMAKE_BUILD_TYPE=$(usex debug Debug Release) #RelWithDebInfo Release
 	mkdir -p  ${WORKDIR}/.cache
 	mkdir -p "${WORKDIR}/.npm"
-	echo "cache=${WORKDIR}/.npm" > ${S}/src/node/desktop/.npmrc
+	echo "cache=${WORKDIR}/node_cache" > ${S}/src/node/desktop/.npmrc
 	#Instead of using RSTUDIO_TARGET set RSTUDIO_{SERVER,DESKTOP,ELECTRON} manualy
 	#This allows ELECTRON with SERVER
 	#RSTUDIO_TARGET is set to true to bypass a test to see if undefined
