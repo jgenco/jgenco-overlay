@@ -13,4 +13,4 @@ RESTRICT=mirror
 SLOT=0
 SRC_URI=https://github.com/quarto-dev/quarto-cli/archive/refs/tags/v1.0.38.tar.gz -> quarto-cli-1.0.38.tar.gz
 _eclasses_=toolchain-funcs	1542e649be915f43f6908a9e93909961	multilib	5ca4e49abed8e3a2f7b56920eadee157	bash-completion-r1	f5e7a020fd9c741740756aac61bf75ff
-_md5_=56b3b9c90f7443f3d6a93b675e19bbcc
+_md5_=c9ed0f7f9ffd6dd0064a50eb9ce1b18e
