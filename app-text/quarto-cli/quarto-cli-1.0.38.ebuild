@@ -158,7 +158,7 @@ src_install(){
 		insinto /usr/share/${PN}/
 		doins -r *
 		dosym -r ${EPREFIX}/usr/share/${PN}/src/resources/version ${EPREFIX}/usr/share/${PN}/version
-	
+
 	fi
 	#This builds the shell completion files
 	DENO_OPTS="run --unstable --no-config --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/dev_import_map.json"
