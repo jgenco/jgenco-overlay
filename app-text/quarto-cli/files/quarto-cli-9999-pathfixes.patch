@@ -1,5 +1,5 @@
 diff --git a/src/core/dart-sass.ts b/src/core/dart-sass.ts
-index 539d5d4..2b854ac 100644
+index 539d5d41..2b854acc 100644
 --- a/src/core/dart-sass.ts
 +++ b/src/core/dart-sass.ts
 @@ -6,7 +6,7 @@
@@ -30,7 +30,7 @@ index 539d5d4..2b854ac 100644
    const sass = resolvePath();
  
 diff --git a/src/core/devconfig.ts b/src/core/devconfig.ts
-index 4ee7e26..db6abf5 100644
+index 4ee7e264..db6abf56 100644
 --- a/src/core/devconfig.ts
 +++ b/src/core/devconfig.ts
 @@ -45,12 +45,12 @@ export function createDevConfig(
@@ -74,7 +74,7 @@ index 4ee7e26..db6abf5 100644
      readConfig("DENO"),
      readConfig("DENO_DOM"),
 diff --git a/src/core/esbuild.ts b/src/core/esbuild.ts
-index a7b4406..d26bf33 100644
+index a7b44066..d26bf334 100644
 --- a/src/core/esbuild.ts
 +++ b/src/core/esbuild.ts
 @@ -6,7 +6,7 @@
@@ -96,7 +96,7 @@ index a7b4406..d26bf33 100644
    ];
  
 diff --git a/src/core/quarto.ts b/src/core/quarto.ts
-index 1f987e8..dc0a8d4 100644
+index 1f987e84..dc0a8d40 100644
 --- a/src/core/quarto.ts
 +++ b/src/core/quarto.ts
 @@ -24,6 +24,7 @@ export interface QuartoConfig {
@@ -117,7 +117,7 @@ index 1f987e8..dc0a8d4 100644
      const watcher = Deno.watchFs([srcDir], { recursive: true });
      const watchForChanges = async () => {
 diff --git a/src/core/resources.ts b/src/core/resources.ts
-index 1343f9f..7496c42 100644
+index 1343f9f2..7496c42d 100644
 --- a/src/core/resources.ts
 +++ b/src/core/resources.ts
 @@ -29,6 +29,10 @@ export function formatResourcePath(format: string, resource: string) {
@@ -141,7 +141,7 @@ index 1343f9f..7496c42 100644
  
  export async function rBinaryPath(binary: string): Promise<string> {
 diff --git a/src/core/run/deno.ts b/src/core/run/deno.ts
-index 2628750..b34a575 100644
+index 2aed4e22..da472c3f 100644
 --- a/src/core/run/deno.ts
 +++ b/src/core/run/deno.ts
 @@ -9,7 +9,7 @@ import { existsSync } from "fs/mod.ts";
@@ -153,17 +153,17 @@ index 2628750..b34a575 100644
  import { RunHandler, RunHandlerOptions } from "./types.ts";
  import { removeIfExists } from "../path.ts";
  import { copyTo } from "../copy.ts";
-@@ -37,7 +37,7 @@ export const denoRunHandler: RunHandler = {
- 
-     return await execProcess({
-       cmd: [
--        toolsPath("deno"),
-+        binaryPath("deno"),
-         "run",
-         "--import-map",
-         importMap,
+@@ -38,7 +38,7 @@ export const denoRunHandler: RunHandler = {
+     return await execProcess(
+       {
+         cmd: [
+-          toolsPath("deno"),
++          binaryPath("deno"),
+           "run",
+           "--import-map",
+           importMap,
 diff --git a/src/quarto.ts b/src/quarto.ts
-index 1e5c618..1451fc1 100644
+index 1e5c6187..1451fc1f 100644
 --- a/src/quarto.ts
 +++ b/src/quarto.ts
 @@ -52,8 +52,7 @@ export async function quarto(
