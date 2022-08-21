@@ -7,7 +7,7 @@ DESCRIPTION="Open-source scientific and technical publishing system built on Pan
 HOMEPAGE="https://quarto.org/"
 
 RESTRICT="mirror"
-IUSE="bundle"
+IUSE=""
 
 inherit bash-completion-r1
 #NOTE previews for version x.y are simply x.y.[1..n]
@@ -19,8 +19,6 @@ if [[ "${PV}" == *9999 ]];then
 else
 	SRC_URI="https://github.com/quarto-dev/quarto-cli/archive/refs/tags/v${PV}.tar.gz   -> ${P}.tar.gz"
 fi
-
-#SRC_URI="${SRC_URI} bundle? ( $(build_deno_src_uri) )"
 
 #Quarto-cli has third party libraries bundled in their software
 #BOOTSWATCH=5.1.3
@@ -68,7 +66,7 @@ DEPEND="
 "
 RDEPEND="${DEPEND}"
 BDEPEND="
-	bundle? ( dev-util/esbuild )
+	dev-util/esbuild
 "
 
 DENO_SRC="${WORKDIR}/deno_src"
@@ -86,7 +84,6 @@ src_compile(){
 	mkdir -p package/dist/config/
 	sed "s#_EPREFIX_#${EPREFIX}#" ${FILESDIR}/quarto.combined.eprefix |sed "s#src/import_map.json#src/dev_import_map.json#" > ${S}/quarto
 
-	if use bundle;then
 		#Setup package/bin dir
 		mkdir -p ${S}/package/dist/bin
 
@@ -110,27 +107,7 @@ src_compile(){
 		./quarto-bld prepare-dist --log-level info || die
 		popd
 		echo -n "${PV}"  > ${S}/package/dist/share/version
-	else
-		#deno -v |sed "s/deno //"
-		DENO=$(grep     "export DENO="     configuration |sed "s/.*=//")
-		#
-		DENO_DOM=$(grep "export DENO_DOM=" configuration |sed "s/.*=//")
-		#pandoc -v|grep "pandoc "|sed "s/pandoc //"
-		PANDOC=$(grep   "export PANDOC="   configuration |sed "s/.*=//")
-		#sass --version
-		DARTSASS=$(grep "export DARTSASS=" configuration |sed "s/.*=//")
-		#esbuild --version
-		ESBUILD=$(grep  "export ESBUILD="  configuration |sed "s/.*=//")
-		QUARTO_MD5=$(md5sum ${S}/quarto)
-		#QUARTO_MD5=`grep  "export QUARTO_MD5="  configuration |sed "s/.*=//"`
-		importMap=$(md5sum       ${S}/src/import_map.json)
-		bundleImportMap=$(md5sum ${S}/src/resources/vendor/import_map.json)
 
-		echo -n "{\"deno\": \"${DENO}\",\"deno_dom\": \"${DENO_DOM}\",\"pandoc\": \"${PANDOC}\",\"dartsass\": \"${DARTSASS}\",\"esbuild\": \"${ESBUILD}\",
-		\"script\": \"${QUARTO_MD5:0:32}\",\"importMap\":\"${importMap:0:32}\",\"bundleImportMap\":\"${bundleImportMap:0:32}\"}" > package/dist/config/dev-config
-		deno -V |sed "s/deno //" > package/dist/config/deno-version
-		echo -n "${PV}"  > src/resources/version
-	fi
 	rm tests/bin/python3
 	ln -s ${EPREFIX}/usr/bin/python tests/bin/python3
 }
@@ -138,7 +115,6 @@ src_install(){
 	#DENO_DIR, QUARTO_* sets vars for quarto to run to build
 	#shell completion file(s)
 	export DENO_DIR=${DENO_CACHE}
-	if use bundle;then
 		export QUARTO_BASE_PATH=${S}
 		export QUARTO_BIN_PATH="${QUARTO_BASE_PATH}/package/dist/bin"
 		export QUARTO_SHARE_PATH="${QUARTO_BASE_PATH}/package/dist/share"
@@ -149,17 +125,7 @@ src_install(){
 		insinto /usr/share/${PN}/bin
 		doins ${S}/package/dist/bin/quarto.js
 		doins -r ${S}/package/dist/bin/vendor
-	else
-		export QUARTO_BASE_PATH=${S}
-		export QUARTO_BIN_PATH=${S}
-		QUARTO_TARGET="${QUARTO_BASE_PATH}/src/quarto.ts"
-		export QUARTO_SHARE_PATH="${QUARTO_BASE_PATH}/src/resources/"
-		dobin ${S}/quarto
-		insinto /usr/share/${PN}/
-		doins -r *
-		dosym -r ${EPREFIX}/usr/share/${PN}/src/resources/version ${EPREFIX}/usr/share/${PN}/version
 
-	fi
 	#This builds the shell completion files
 	DENO_OPTS="run --unstable --no-config --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/dev_import_map.json"
 	deno ${DENO_OPTS} ${QUARTO_TARGET} completions bash > _quarto.sh || die "Failed to build bash completion"
@@ -175,7 +141,6 @@ src_install(){
 src_test(){
 	#this only works with bundled libraries
 	#TODO: with deno versioning can be done w/o bundling
-	if use bundle;then
 		pushd ${S}/tests > /dev/null
 		export DENO_DIR=${DENO_CACHE}
 		export QUARTO_BASE_PATH=${S}
@@ -192,5 +157,4 @@ src_test(){
 		#  screen shots - probably not possible
 		#deno test --unstable --no-config --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/import_map.json test.ts smoke
 		popd > /dev/null
-	fi
 }
