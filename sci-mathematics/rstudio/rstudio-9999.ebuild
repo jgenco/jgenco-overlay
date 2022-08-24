@@ -1742,61 +1742,44 @@ PATCHES=(
 )
 src_unpack(){
 	if [[ "${PV}" == *9999 ]];then
-	if use electron; then
-		#Electron package.json changes alot. This is a known good version
-		EGIT_COMMIT=${ELECTRON_EGIT_COMMIT} # 2022-05-30
-		:
-	else
-		#A good last commit when testing a patch
-		#EGIT_COMMIT="febae33db0b6d4aaa83edafa20b74df64eab2801" # 2022-08-19
-		:
-	fi
+		if use electron; then
+			#Electron package.json changes alot. This is a known good version
+			EGIT_COMMIT=${ELECTRON_EGIT_COMMIT}
+			:
+		else
+			#A good last commit when testing a patch
+			#EGIT_COMMIT="febae33db0b6d4aaa83edafa20b74df64eab2801" # 2022-08-19
+			:
+		fi
 		git-r3_src_unpack
+	else
+		unpack ${P}.tar.gz
 	fi
+
 	npm_src_unpack
 	use panmirror && yarn_build_cache ${NODE_GYP_SKEIN} ${PANMIRROR_SKEIN}
 	use electron  &&  npm_build_cache ${RELECTRON_NODEJS_DEPS}
-	local ARCHIVE=""
-	for ARCHIVE in ${A} ;do
-		case ${ARCHIVE} in
-			(${P}.tar.gz)
-				unpack ${ARCHIVE};;
-			(${PN}-core-dictionaries.zip)
-				# rstudio's build-system expects these dictionary files to exist, but does
-				# not ship them in the release tarball. Therefore, they are fetched in
-				# `SRC_URI`, and here we unpack and move them to the correct place.
-				mkdir -p ${S}/dependencies/dictionaries
-				pushd "${S}/dependencies/dictionaries" > /dev/null
-				unpack ${ARCHIVE}
-				popd > /dev/null ;;
-			(node_node-gyp@${NODE_GYP_VER}*)
-				:;;
-			(node_*)
-				:;;
-			(electron-v${ELECTRON_VERSION}-headers*)
-				#IF bundling electron
-				mkdir -p ${WORKDIR}/.electron-gyp
-				pushd    ${WORKDIR}/.electron-gyp > /dev/null
 
-				unpack ${ARCHIVE}
-				mv node_headers ${ELECTRON_VERSION} || die
-				#It only been 9 so far
-				echo "9" > ${ELECTRON_VERSION}/installVersion
-
-				popd > /dev/null;;
-			(electron-v${ELECTRON_VERSION}-linux-*)
-				#IF bundling electron
-				local ELECTRON_HASH=$(echo -n "https://github.com/electron/electron/releases/download/v${ELECTRON_VERSION}" |sha256sum |sed "s/ .*//")
-				mkdir -p ${WORKDIR}/.cache/electron/${ELECTRON_HASH}
-				#NOTE  might need to create ${WORKDIR}/.cache/electron/${ELECTRON_HASH}/${ARCHIVE}/SHASUMS256.txt
-				ln -s ${DISTDIR}/${ARCHIVE} ${WORKDIR}/.cache/electron/${ELECTRON_HASH}/${ARCHIVE};;
-			(*) die "No valid case for ${ARCHIVE}";;
-		esac
-	done
-
-	#This is commented out b/c commit 821341dd0fcf1f6376b74f0647c8fee7eb68a977
-	#breaks seperating electron from R saving this code for the future
 	if use electron; then
+		#IF bundling electron
+		mkdir -p ${WORKDIR}/.electron-gyp
+		pushd    ${WORKDIR}/.electron-gyp > /dev/null
+
+		unpack electron-v${ELECTRON_VERSION}-headers.tar.gz
+		mv node_headers ${ELECTRON_VERSION} || die
+		#It only been 9 so far
+		echo "9" > ${ELECTRON_VERSION}/installVersion
+
+		popd > /dev/null
+
+		#IF bundling electron
+		local ELECTRON_HASH=$(echo -n "https://github.com/electron/electron/releases/download/v${ELECTRON_VERSION}" |sha256sum |sed "s/ .*//")
+		mkdir -p ${WORKDIR}/.cache/electron/${ELECTRON_HASH}
+		#NOTE  might need to create ${WORKDIR}/.cache/electron/${ELECTRON_HASH}/SHASUMS256.txt in the future
+		ln -s ${DISTDIR}/electron-v${ELECTRON_VERSION}-linux-x64.zip ${WORKDIR}/.cache/electron/${ELECTRON_HASH}/electron-v${ELECTRON_VERSION}-linux-x64.zip
+
+#		This is commented out b/c commit 821341dd0fcf1f6376b74f0647c8fee7eb68a977
+#		breaks seperating electron from R saving this code for the future
 #		#If using system electron
 #		mkdir -p ${WORKDIR}/.electron-gyp/${ELECTRON_VERSION}
 #		pushd    ${WORKDIR}/.electron-gyp/${ELECTRON_VERSION} > /dev/null
@@ -1812,7 +1795,7 @@ src_unpack(){
 #		mkdir -p ${WORKDIR}/.cache/electron/${ELECTRON_HASH}
 #		touch electron
 #		zip -0 ${WORKDIR}/.cache/electron/${ELECTRON_HASH}/electron-v${ELECTRON_VERSION}-linux-x64.zip electron
-#
+
 		local NODEJS_VERSION=$(node -v) || die "Node version not found"
 		NODEJS_VERSION=${NODEJS_VERSION#v}
 		mkdir -p ${WORKDIR}/.cache/node-gyp/${NODEJS_VERSION}/include
@@ -1824,7 +1807,13 @@ src_unpack(){
 
 	if use sysdicts;then
 		ln -s ${EPREFIX}/usr/share/hunspell ${S}/dependencies/dictionaries || die "Failed to link dictionaries"
+	else
+		mkdir -p ${S}/dependencies/dictionaries
+		pushd "${S}/dependencies/dictionaries" > /dev/null
+		unpack ${PN}-core-dictionaries.zip
+		popd > /dev/null
 	fi
+
 }
 src_prepare(){
 	cmake_src_prepare
@@ -2034,7 +2023,7 @@ src_install() {
 
 	#linking the resources/dictionaries directory to the hunspell directory
 	if use sysdicts;then
-		for filename in /usr/share/hunspell/*.dic; do
+		for filename in ${EPREFIX}/usr/share/hunspell/*.dic; do
 			if [ ! -f ${filename} ];then
 				ewarn "You need to install system dictionaries."
 				break
