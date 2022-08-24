@@ -1626,7 +1626,7 @@ QT_SLOT=5
 
 SLOT="0"
 KEYWORDS=""
-IUSE="server electron +qt5 test debug quarto panmirror sysdicts"
+IUSE="server electron +qt5 test debug quarto panmirror"
 REQUIRED_USE="!server? ( ^^ ( electron qt5 ) )"
 
 DESCRIPTION="IDE for the R language"
@@ -1645,7 +1645,6 @@ else
 	SRC_URI="https://github.com/rstudio/rstudio/archive/${RSTUDIO_SOURCE_FILENAME} -> ${P}.tar.gz"
 fi
 
-SRC_URI="${SRC_URI} !sysdicts? ( https://s3.amazonaws.com/rstudio-dictionaries/core-dictionaries.zip -> ${PN}-core-dictionaries.zip ) "
 #node_gyp and panmirror are seperate lines
 #buffers@0.1.1 = MIT/X11
 LICENSE="AGPL-3 BSD MIT Apache-2.0 Boost-1.0 CC-BY-4.0
@@ -1714,6 +1713,7 @@ RDEPEND="
 	electron? (
 		>=net-libs/nodejs-16.14.0[npm]
 	)
+	app-text/hunspell
 	"
 
 DEPEND="${RDEPEND}"
@@ -1723,7 +1723,6 @@ BDEPEND="
 	dev-java/javax-inject
 	=dev-java/validation-api-1.0*:1.0[source]
 	<=virtual/jdk-11:=
-	!sysdicts? ( app-arch/unzip )
 "
 PV_RELEASE="2022.07.0.548"
 PATCHES=(
@@ -1739,6 +1738,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2022.07.0.548-electron_path.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-reenable-sandbox.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-libfmt.patch"
+	"${FILESDIR}/${PN}-9999-hunspell.patch"
 )
 src_unpack(){
 	if [[ "${PV}" == *9999 ]];then
@@ -1805,15 +1805,7 @@ src_unpack(){
 		echo "9" > ${WORKDIR}/.cache/node-gyp/${NODEJS_VERSION}/installVersion
 	fi
 
-	if use sysdicts;then
-		ln -s ${EPREFIX}/usr/share/hunspell ${S}/dependencies/dictionaries || die "Failed to link dictionaries"
-	else
-		mkdir -p ${S}/dependencies/dictionaries
-		pushd "${S}/dependencies/dictionaries" > /dev/null
-		unpack ${PN}-core-dictionaries.zip
-		popd > /dev/null
-	fi
-
+	ln -s ${EPREFIX}/usr/share/hunspell ${S}/dependencies/dictionaries || die "Failed to link dictionaries"
 }
 src_prepare(){
 	cmake_src_prepare
@@ -2019,16 +2011,6 @@ src_install() {
 	else
 		# This binary name is much to generic, so we'll change it
 		mv "${ED}/usr/bin/diagnostics" "${ED}/usr/bin/${PN}-diagnostics"
-	fi
-
-	#linking the resources/dictionaries directory to the hunspell directory
-	if use sysdicts;then
-		for filename in ${EPREFIX}/usr/share/hunspell/*.dic; do
-			if [ ! -f ${filename} ];then
-				ewarn "You need to install system dictionaries."
-				break
-			fi
-		done
 	fi
 }
 src_test() {
