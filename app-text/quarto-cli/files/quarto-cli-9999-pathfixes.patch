@@ -30,25 +30,10 @@ index 539d5d41..2b854acc 100644
    const sass = resolvePath();
  
 diff --git a/src/core/devconfig.ts b/src/core/devconfig.ts
-index 4ee7e264..db6abf56 100644
+index d9319a47..61cfe7ff 100644
 --- a/src/core/devconfig.ts
 +++ b/src/core/devconfig.ts
-@@ -45,12 +45,12 @@ export function createDevConfig(
-     script: md5Hash(Deno.readTextFileSync(scriptPath)),
-     importMap: md5Hash(
-       Deno.readTextFileSync(
--        join(scriptPath, "../../../../src/import_map.json"),
-+        join(quartoConfig.basePath(), "/src/import_map.json"),
-       ),
-     ),
-     bundleImportMap: md5Hash(
-       Deno.readTextFileSync(
--        join(scriptPath, "../../../../src/resources/vendor/import_map.json"),
-+        join(quartoConfig.basePath(), "/src/resources/vendor/import_map.json"),
-       ),
-     ),
-   };
-@@ -66,8 +66,7 @@ export function writeDevConfig(config: DevConfig, binPath: string) {
+@@ -67,8 +67,7 @@ export function writeDevConfig(config: DevConfig, binPath: string) {
  }
  
  export function readInstalledDevConfig(): DevConfig | null {
@@ -58,23 +43,8 @@ index 4ee7e264..db6abf56 100644
    if (existsSync(configPath)) {
      return JSON.parse(Deno.readTextFileSync(configPath)) as DevConfig;
    } else {
-@@ -93,13 +92,7 @@ export function readSourceDevConfig(): DevConfig {
-     }
-   };
- 
--  const srcScriptPath = join(
--    quartoConfig.binPath(),
--    "..",
--    "..",
--    "scripts",
--    isWindows() ? "windows" : "common",
--  );
-+  const srcScriptPath = quartoConfig.binPath();
-   return createDevConfig(
-     readConfig("DENO"),
-     readConfig("DENO_DOM"),
 diff --git a/src/core/esbuild.ts b/src/core/esbuild.ts
-index a7b44066..d26bf334 100644
+index b39eeb7a..dbca2b59 100644
 --- a/src/core/esbuild.ts
 +++ b/src/core/esbuild.ts
 @@ -6,7 +6,7 @@
@@ -90,8 +60,8 @@ index a7b44066..d26bf334 100644
    workingDir: string,
  ) {
    const cmd = [
--    toolsPath("esbuild"),
-+    binaryPath("esbuild"),
+-    Deno.env.get("QUARTO_ESBUILD") || toolsPath("esbuild"),
++    Deno.env.get("QUARTO_ESBUILD") || binaryPath("esbuild"),
      ...args,
    ];
  

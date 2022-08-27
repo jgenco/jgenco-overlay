@@ -51,7 +51,7 @@ SLOT="0"
 KEYWORDS=""
 PATCHES="
 	${FILESDIR}/quarto-cli-9999-pathfixes.patch
-	${FILESDIR}/quarto-cli-0.9.256-configuration.patch
+	${FILESDIR}/quarto-cli-9999-configuration.patch
 "
 #DENO 1.22
 #DART-sass 1.32.8
@@ -68,8 +68,8 @@ RDEPEND="${DEPEND}"
 BDEPEND="
 	dev-util/esbuild
 "
+DOCS=( COPYING.md COPYRIGHT README.md news )
 
-DENO_SRC="${WORKDIR}/deno_src"
 DENO_CACHE="${WORKDIR}/deno_cache"
 
 src_unpack(){
@@ -99,7 +99,7 @@ src_compile(){
 		#End package/bin dir
 
 		mkdir -p ${S}/package/dist/config
-		export QUARTO_ROOT_DIR="${S}"
+		export QUARTO_ROOT="${S}"
 		pushd ${S}/package/src
 
 		einfo "Building ${P}..."
@@ -125,6 +125,7 @@ src_install(){
 		insinto /usr/share/${PN}/bin
 		doins ${S}/package/dist/bin/quarto.js
 		doins -r ${S}/package/dist/bin/vendor
+		rm ${ED}/usr/share/${PN}/{COPYING.md,COPYRIGHT}
 
 	#This builds the shell completion files
 	DENO_OPTS="run --unstable --no-config --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/dev_import_map.json"
@@ -137,6 +138,7 @@ src_install(){
 		insinto /usr/share/zsh/site-functions
 		doins _quarto
 	fi
+	einstalldocs
 }
 src_test(){
 	#this only works with bundled libraries

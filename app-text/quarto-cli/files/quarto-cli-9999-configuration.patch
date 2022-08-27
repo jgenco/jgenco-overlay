@@ -1,0 +1,15 @@
+diff -ruN quarto-cli-0.9.256.orig/package/src/common/configure.ts quarto-cli-0.9.256/package/src/common/configure.ts
+--- quarto-cli-0.9.256.orig/package/src/common/configure.ts	2022-04-15 10:46:41.000000000
++++ quarto-cli-0.9.256/package/src/common/configure.ts	2022-04-15 15:15:52.924166568
+@@ -34,11 +34,6 @@
+   info("******************************************");
+   info("");
+ 
+-  // Download dependencies
+-  for (const dependency of kDependencies) {
+-    await configureDependency(dependency, config);
+-  }
+-
+   // Move the quarto script into place
+   info("Creating Quarto script");
+   if (Deno.build.os === "windows") {
