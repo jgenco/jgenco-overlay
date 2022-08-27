@@ -1740,6 +1740,8 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2022.07.0.548-libfmt.patch"
 	"${FILESDIR}/${PN}-9999-hunspell.patch"
 )
+DOCS=(CONTRIBUTING.md COPYING INSTALL NEWS.md NOTICE README.md SOURCE
+	VERSION version/news )
 src_unpack(){
 	if [[ "${PV}" == *9999 ]];then
 		if use electron; then
@@ -2008,10 +2010,13 @@ src_install() {
 #ELECTRON_FORCE_IS_PACKAGED=true electron-${ELECTRON_VERSION_MAJ} ${EPREFIX}/usr/share/${PN}/resources/app ARGS
 #_EOF_
 #		dobin ${PN}
+		dodoc ${ED}/usr/share/${PN}/{LICENSE,LICENSES.chromium.html}
+		rm ${ED}/usr/share/${PN}/{COPYING,INSTALL,LICENSE,LICENSES.chromium.html,NOTICE,SOURCE}
 	else
 		# This binary name is much to generic, so we'll change it
 		mv "${ED}/usr/bin/diagnostics" "${ED}/usr/bin/${PN}-diagnostics"
 	fi
+	einstalldocs
 }
 src_test() {
 	# There is a gwt test suite, but it seems to require network access
