@@ -53,20 +53,16 @@ PATCHES="
 	${FILESDIR}/quarto-cli-9999-pathfixes.patch
 	${FILESDIR}/quarto-cli-9999-configuration.patch
 "
-#DENO 1.22
-#DART-sass 1.32.8
-#esbuild 0.14.39
-
 DEPEND="
-	<=net-libs/deno-1.23.0
-	>=app-text/pandoc-2.18
-	dev-lang/dart-sass
-	net-libs/deno-dom
+	>=net-libs/deno-1.25.1
+	>=app-text/pandoc-2.19.2
+	~dev-lang/dart-sass-1.32.8
+	~net-libs/deno-dom-0.1.23_alpha_p20220508
 	dev-lang/lua
 "
 RDEPEND="${DEPEND}"
 BDEPEND="
-	dev-util/esbuild
+	>=dev-util/esbuild-0.15.6
 "
 DOCS=( COPYING.md COPYRIGHT README.md news )
 
@@ -88,8 +84,8 @@ src_compile(){
 		mkdir -p ${S}/package/dist/bin
 
 		pushd ${S}/package/dist/bin > /dev/null
-		mkdir tools
-		ln -s ${EPREFIX}/usr/bin/deno tools/deno
+		mkdir -p tools/deno-x86_64-unknown-linux-gnu
+		ln -s ${EPREFIX}/usr/bin/deno tools/deno-x86_64-unknown-linux-gnu/deno
 		ln -s ${EPREFIX}/usr/bin/pandoc        pandoc
 		ln -s ${EPREFIX}/usr/bin/sass          sass
 		ln -s ${EPREFIX}/usr/bin/esbuild       esbuild

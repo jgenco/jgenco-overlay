@@ -1,13 +1,26 @@
-diff -ruN quarto-cli-0.9.256.orig/package/src/common/configure.ts quarto-cli-0.9.256/package/src/common/configure.ts
---- quarto-cli-0.9.256.orig/package/src/common/configure.ts	2022-04-15 10:46:41.000000000
-+++ quarto-cli-0.9.256/package/src/common/configure.ts	2022-04-15 15:15:52.924166568
-@@ -34,11 +34,6 @@
+diff --git a/package/src/common/configure.ts b/package/src/common/configure.ts
+index a8a97beb..d079fce2 100644
+--- a/package/src/common/configure.ts
++++ b/package/src/common/configure.ts
+@@ -41,23 +41,6 @@ export async function configure(
    info("******************************************");
    info("");
  
 -  // Download dependencies
 -  for (const dependency of kDependencies) {
--    await configureDependency(dependency, config);
+-    try {
+-      await configureDependency(dependency, config);
+-    } catch (e) {
+-      if (
+-        e.message ===
+-          "The architecture aarch64 is missing the dependency deno_dom"
+-      ) {
+-        info("\nIgnoring deno_dom dependency on Apple Silicon");
+-        continue;
+-      } else {
+-        throw e;
+-      }
+-    }
 -  }
 -
    // Move the quarto script into place
