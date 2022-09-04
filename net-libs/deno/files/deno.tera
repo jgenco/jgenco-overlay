@@ -68,7 +68,7 @@ src_prepare() {
 			break
 		fi
 	done
-	pushd "${WORKDIR}/cargo_home/gentoo/${V8_DIR}" > /dev/null || die "V8 crate not found"
+	pushd "${ECARGO_VENDOR}/${V8_DIR}" > /dev/null || die "V8 crate not found"
 	patch -p1 < ${FILESDIR}/v8-0.43.1-lockfile.patch || die
 	patch -p1 < ${FILESDIR}/v8-0.42.0-disable-auto-ccache.patch || die
 	patch -p1 < ${FILESDIR}/v8-0.40.2-jobfix.patch   || die
