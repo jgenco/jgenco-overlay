@@ -63,12 +63,12 @@ DEPEND="
 	<=net-libs/deno-1.22.0
 	>=app-text/pandoc-2.18
 	dev-lang/dart-sass
-	=net-libs/deno-dom-0.1.17_alpha
+	~net-libs/deno-dom-0.1.17_alpha
 	dev-lang/lua
 "
 RDEPEND="${DEPEND}"
 BDEPEND="
-bundle? ( dev-util/esbuild )
+bundle? ( ~dev-util/esbuild-0.14.39 )
 "
 
 DENO_SRC="${WORKDIR}/deno_src"
