@@ -78,34 +78,34 @@ src_compile(){
 	#Configuration
 	einfo "Setting Configuration"
 	mkdir -p package/dist/config/
-	sed "s#_EPREFIX_#${EPREFIX}#" ${FILESDIR}/quarto.combined.eprefix |sed "s#src/import_map.json#src/dev_import_map.json#" > ${S}/quarto
+	sed "s#_EPREFIX_#${EPREFIX}#" "${FILESDIR}/quarto.combined.eprefix" |sed "s#src/import_map.json#src/dev_import_map.json#" > "${S}/quarto"
 
 		#Setup package/bin dir
-		mkdir -p ${S}/package/dist/bin
+		mkdir -p "${S}/package/dist/bin"
 
-		pushd ${S}/package/dist/bin > /dev/null
+		pushd "${S}/package/dist/bin" > /dev/null
 		mkdir -p tools/deno-x86_64-unknown-linux-gnu
-		ln -s ${EPREFIX}/usr/bin/deno tools/deno-x86_64-unknown-linux-gnu/deno
-		ln -s ${EPREFIX}/usr/bin/pandoc        pandoc
-		ln -s ${EPREFIX}/usr/bin/sass          sass
-		ln -s ${EPREFIX}/usr/bin/esbuild       esbuild
-		ln -s ${EPREFIX}/usr/lib64/deno-dom.so libplugin.so
+		ln -s "${EPREFIX}/usr/bin/deno" tools/deno-x86_64-unknown-linux-gnu/deno
+		ln -s "${EPREFIX}/usr/bin/pandoc"        pandoc
+		ln -s "${EPREFIX}/usr/bin/sass"          sass
+		ln -s "${EPREFIX}/usr/bin/esbuild"       esbuild
+		ln -s "${EPREFIX}/usr/lib64/deno-dom.so" libplugin.so
 		popd > /dev/null
 
 		#End package/bin dir
 
-		mkdir -p ${S}/package/dist/config
+		mkdir -p "${S}/package/dist/config"
 		export QUARTO_ROOT="${S}"
-		pushd ${S}/package/src
+		pushd "${S}/package/src"
 
 		einfo "Building ${P}..."
 		export DENO_DIR=${DENO_CACHE}
 		./quarto-bld prepare-dist --log-level info || die
 		popd
-		echo -n "${PV}"  > ${S}/package/dist/share/version
+		echo -n "${PV}"  > "${S}/package/dist/share/version"
 
 	rm tests/bin/python3
-	ln -s ${EPREFIX}/usr/bin/python tests/bin/python3
+	ln -s "${EPREFIX}/usr/bin/python" tests/bin/python3
 }
 src_install(){
 	#DENO_DIR, QUARTO_* sets vars for quarto to run to build
@@ -115,13 +115,13 @@ src_install(){
 		export QUARTO_BIN_PATH="${QUARTO_BASE_PATH}/package/dist/bin"
 		export QUARTO_SHARE_PATH="${QUARTO_BASE_PATH}/package/dist/share"
 		QUARTO_TARGET="${QUARTO_BIN_PATH}/quarto.js"
-		dobin ${S}/quarto
+		dobin "${S}/quarto"
 		insinto /usr/share/${PN}/
-		doins -r ${S}/package/dist/share/*
+		doins -r "${S}/package/dist/share/"*
 		insinto /usr/share/${PN}/bin
-		doins ${S}/package/dist/bin/quarto.js
-		doins -r ${S}/package/dist/bin/vendor
-		rm ${ED}/usr/share/${PN}/{COPYING.md,COPYRIGHT}
+		doins "${S}/package/dist/bin/quarto.js"
+		doins -r "${S}/package/dist/bin/vendor"
+		rm "${ED}/usr/share/${PN}/"{COPYING.md,COPYRIGHT}
 
 	#This builds the shell completion files
 	DENO_OPTS="run --unstable --no-config --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/dev_import_map.json"
@@ -139,7 +139,7 @@ src_install(){
 src_test(){
 	#this only works with bundled libraries
 	#TODO: with deno versioning can be done w/o bundling
-		pushd ${S}/tests > /dev/null
+		pushd "${S}/tests" > /dev/null
 		export DENO_DIR=${DENO_CACHE}
 		export QUARTO_BASE_PATH=${S}
 		export QUARTO_BIN_PATH=${QUARTO_BASE_PATH}/package/dist/bin/
