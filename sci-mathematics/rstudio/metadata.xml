@@ -15,6 +15,7 @@
 		<flag name="quarto">Adds Quarto support</flag>
 		<flag name="system_dictionaries">Uses system hunspell dictionaries instead of using RStudio's prebuild ones</flag>
 		<flag name="electron">Enables Electron GUI - Experimental</flag>
+		<flag name="doc">Builds User Guide - requires building R pkgs rmarkdown and ggplot2</flag>
 	</use>
 	<upstream>
 		<remote-id type="github">rstudio/rstudio</remote-id>

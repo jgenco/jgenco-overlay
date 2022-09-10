@@ -1618,6 +1618,91 @@ yocto-queue@0.1.0
 "
 #####End   of NODEJS package list#####
 
+#####Start of RMARKDOWN package list#####
+#also includes ggplot2
+R_RMARKDOWN_PKGS="
+rlang_1.0.5
+glue_1.6.2
+cli_3.4.0
+fastmap_1.1.0
+base64enc_0.1-3
+digest_0.6.29
+rlang_1.0.5
+glue_1.6.2
+cli_3.4.0
+vctrs_0.4.1
+utf8_1.2.2
+lifecycle_1.0.2
+fansi_1.0.3
+colorspace_2.0-3
+lattice_0.20-45
+stringi_1.7.8
+magrittr_2.0.3
+xfun_0.32
+fastmap_1.1.0
+base64enc_0.1-3
+digest_0.6.29
+cachem_1.0.6
+htmltools_0.5.3
+rappdirs_0.3.3
+R6_2.5.1
+fs_1.5.2
+vctrs_0.4.1
+rlang_1.0.5
+pkgconfig_2.0.3
+pillar_1.8.1
+magrittr_2.0.3
+lifecycle_1.0.2
+fansi_1.0.3
+viridisLite_0.4.1
+RColorBrewer_1.1-3
+R6_2.5.1
+munsell_0.5.0
+labeling_0.4.2
+farver_2.1.1
+Matrix_1.4-1
+nlme_3.1-159
+xfun_0.32
+stringi_1.7.8
+glue_1.6.2
+yaml_2.3.5
+stringr_1.4.1
+highr_0.9
+evaluate_0.16
+htmltools_0.5.3
+fastmap_1.1.0
+base64enc_0.1-3
+digest_0.6.29
+memoise_2.0.1
+cachem_1.0.6
+jquerylib_0.1.4
+sass_0.4.2
+jsonlite_1.8.0
+withr_2.5.0
+tibble_3.1.8
+scales_1.2.1
+rlang_1.0.5
+mgcv_1.8-40
+MASS_7.3-58.1
+isoband_0.2.5
+gtable_0.3.1
+glue_1.6.2
+digest_0.6.29
+yaml_2.3.5
+xfun_0.32
+tinytex_0.41
+stringr_1.4.1
+knitr_1.40
+jsonlite_1.8.0
+jquerylib_0.1.4
+htmltools_0.5.3
+evaluate_0.16
+bslib_0.4.0
+rmarkdown_2.16
+ggplot2_3.3.6
+"
+#####End   of RMARKDOWN package list#####
+
 #RSudio requires 5.12.8 but when QT 5.12.x and glibc 2.34(clone3) is used it will cause a
 #sandbox violation in chromium. QT fixed this around 5.15.x(5?). Gentoo is at 5.15.3 and
 #it works. I assume it was back ported or I'm wrong about the timeline.
@@ -1626,7 +1711,7 @@ QT_SLOT=5
 
 SLOT="0"
 KEYWORDS=""
-IUSE="server electron +qt5 test debug quarto panmirror"
+IUSE="server electron +qt5 test debug quarto panmirror doc"
 REQUIRED_USE="!server? ( ^^ ( electron qt5 ) )"
 
 DESCRIPTION="IDE for the R language"
@@ -1651,8 +1736,14 @@ LICENSE="AGPL-3 BSD MIT Apache-2.0 Boost-1.0 CC-BY-4.0
 panmirror? ( BSD-2 ISC MIT )
 panmirror? ( || ( AFL-2.1 BSD ) || ( MIT Apache-2.0 ) 0BSD Apache-2.0 BSD BSD-2 ISC LGPL-3 MIT PYTHON Unlicense )"
 
+build_r_src_uri(){
+	for RPKG in ${@}; do
+		echo "https://cloud.r-project.org/src/contrib/${RPKG}.tar.gz -> R_${RPKG}.tar.gz "
+	done
+}
 SRC_URI="${SRC_URI} panmirror? ( $(npm_build_src_uri ${NODE_GYP_SKEIN}) $(npm_build_src_uri ${PANMIRROR_SKEIN}) )"
 SRC_URI="${SRC_URI} electron?  ( $(npm_build_src_uri ${RELECTRON_NODEJS_DEPS}) )"
+SRC_URI="${SRC_URI} quarto? ( doc? ( $(build_r_src_uri ${R_RMARKDOWN_PKGS} ) ) )"
 
 #If not using system electron modify unpack also
 SRC_URI="${SRC_URI} electron?  (
@@ -1742,6 +1833,18 @@ PATCHES=(
 	"${FILESDIR}/${PN}-9999-hunspell.patch"
 )
 DOCS=(CONTRIBUTING.md COPYING INSTALL NEWS.md NOTICE README.md version/news )
+
+R_LIB_PATH="$WORKDIR}/r_pkgs"
+install_r_packages(){
+	mkdir -p ${R_LIB_PATH}
+	R_SCRIPT="${S}/R_pkg_ins.R"
+	echo -n 'pkgs = c("' >> ${R_SCRIPT}
+	echo  -n ${@}|sed 's/ /","/g' >> ${R_SCRIPT}
+	echo  '")' >> ${R_SCRIPT}
+	echo 'pkgs_files = paste0("'"${DISTDIR}"'/R_",pkgs,".tar.gz")' >> ${R_SCRIPT}
+	echo 'install.packages(pkgs_files,repos=NULL,Ncpus='$(makeopts_jobs)')' >> ${R_SCRIPT}
+	R_LIBS="${R_LIB_PATH}" Rscript ${R_SCRIPT} || die "Failed to install R packages"
+}
 
 src_unpack(){
 	if [[ "${PV}" == *9999 ]];then
@@ -1979,6 +2082,13 @@ src_compile(){
 	local EANT_EXTRA_ARGS="${eant_extra_args[@]}"
 	java-pkg-2_src_compile
 	cmake_src_compile
+	#NOTE curently not in the build system
+	if use quarto && use doc;then
+		pushd ${S}/docs/user/rstudio
+		install_r_packages ${R_RMARKDOWN_PKGS}
+		R_LIBS="${R_LIB_PATH}" quarto render || die " Quarto failed to render user quide"
+		popd
+	fi
 }
 
 src_install() {
@@ -2013,6 +2123,10 @@ src_install() {
 	rm ${ED}/usr/share/${PN}/{COPYING,INSTALL,NOTICE,SOURCE,VERSION,README.md}
 
 	einstalldocs
+	if use quarto && use doc;then
+		mv ${S}/docs/user/rstudio/{_site,user_guide}
+		dodoc -r  docs/user/rstudio/user_guide
+	fi
 }
 src_test() {
 	# There is a gwt test suite, but it seems to require network access
