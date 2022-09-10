@@ -556,7 +556,7 @@ done
 LICENSE="Apache-2.0 MIT 0BSD Apache-2.0 Apache-2.0 Apache-2.0-with-LLVM-exceptions Artistic-2 BSD BSD-2 Boost-1.0 CC0-1.0 ISC MPL-2.0 Unicode-DFS-2016 Unlicense ZLIB openssl SSLeay ISC"
 SLOT="0"
 KEYWORDS="~amd64"
-#tcc might not be needed next version 
+#tcc might not be needed next version
 #https://github.com/denoland/deno/pull/15305
 BDEPEND="
 	sys-devel/llvm
@@ -586,10 +586,11 @@ src_prepare() {
 			break
 		fi
 	done
+
 	pushd "${ECARGO_VENDOR}/${V8_DIR}" > /dev/null || die "V8 crate not found"
-	patch -p1 < ${FILESDIR}/v8-0.43.1-lockfile.patch || die
-	patch -p1 < ${FILESDIR}/v8-0.42.0-disable-auto-ccache.patch || die
-	patch -p1 < ${FILESDIR}/v8-0.40.2-jobfix.patch   || die
+	eapply ${FILESDIR}/v8-0.43.1-lockfile.patch \
+		${FILESDIR}/v8-0.42.0-disable-auto-ccache.patch \
+		${FILESDIR}/v8-0.40.2-jobfix.patch
 	#missing files - might only need x64 file?
 	#hopefuly fixed next version
 	#https://github.com/denoland/rusty_v8/pull/1063
@@ -622,4 +623,3 @@ src_install() {
 pkg_postinst(){
 	:
 	}
-
