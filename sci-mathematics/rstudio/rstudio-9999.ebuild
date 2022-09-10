@@ -1650,6 +1650,7 @@ fi
 LICENSE="AGPL-3 BSD MIT Apache-2.0 Boost-1.0 CC-BY-4.0
 panmirror? ( BSD-2 ISC MIT )
 panmirror? ( || ( AFL-2.1 BSD ) || ( MIT Apache-2.0 ) 0BSD Apache-2.0 BSD BSD-2 ISC LGPL-3 MIT PYTHON Unlicense )"
+
 SRC_URI="${SRC_URI} panmirror? ( $(npm_build_src_uri ${NODE_GYP_SKEIN}) $(npm_build_src_uri ${PANMIRROR_SKEIN}) )"
 SRC_URI="${SRC_URI} electron?  ( $(npm_build_src_uri ${RELECTRON_NODEJS_DEPS}) )"
 
@@ -1741,6 +1742,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-9999-hunspell.patch"
 )
 DOCS=(CONTRIBUTING.md COPYING INSTALL NEWS.md NOTICE README.md version/news )
+
 src_unpack(){
 	if [[ "${PV}" == *9999 ]];then
 		if use electron; then
@@ -1842,13 +1844,15 @@ src_prepare(){
 		else
 			yarn_src_prepare_gyp ${FILESDIR}/node-gyp-${NODE_GYP_VER}-9999-yarn.lock
 
-			patch                        -p1 < ${FILESDIR}/${PN}-${PV_RELEASE}-panmirror-package.patch || die "Panmirror patch failed"
+			eapply  ${FILESDIR}/${PN}-${PV_RELEASE}-panmirror-package.patch
 			#npm_fix_lock_path  "${FILESDIR}/${PN}-${PV_RELEASE}-panmirror-yarn.lock" "${S}/src/gwt/panmirror/src/editor/yarn.lock" "Panmirror's"
 			#this is a temporary patch; next release build w/o __GENTOO_PATH__ use native urls
 			#caution this could pick up base64 with the pattern ++/
 			sed  -E  "s#file://__GENTOO_PATH__/((@[^+]+)\+)?(.*)@(.*).tgz#https://registry.yarnpkg.com/\2++/\3/-/\3-\4.tgz#; s#/\+\+/#++/#;s#\+\+/#/#" \
 				${FILESDIR}/rstudio-${PV_RELEASE}-panmirror-yarn.lock > "${S}/src/gwt/panmirror/src/editor/yarn.lock"
 		fi
+	else
+		eapply "${FILESDIR}/${PN}-2022.07.0.548.panmirror_disable.patch"
 	fi
 
 	if  use electron;then
@@ -1856,8 +1860,8 @@ src_prepare(){
 		if [[ ${ELECTRON_PACKAGE_HASH} != ${ELECTRON_SRC_HASH:0:40} ]];then
 			die "Electron Hash doesn't match"
 		else
-			patch -p1 < "${FILESDIR}/${PN}-${PV}-electron-package.patch" || die "Electron patch failed"
-			patch -p1 < "${FILESDIR}/${PN}-${PV}-electron-package-lock.json.patch" || die "Electron lock file patch failed"
+			eapply "${FILESDIR}/${PN}-${PV}-electron-package.patch"
+			eapply "${FILESDIR}/${PN}-${PV}-electron-package-lock.json.patch"
 		fi
 	fi
 }
@@ -1941,8 +1945,6 @@ src_compile(){
 		yarn_src_compile
 		popd > /dev/null
 		#Finished Building PANMIRROR
-	else
-		patch -p1 < "${FILESDIR}/${PN}-2022.07.0.548.panmirror_disable.patch" || die "Couldn't apply panmirror disable patch"
 	fi
 
 	export EANT_BUILD_XML="src/gwt/build.xml"
@@ -1969,13 +1971,6 @@ src_compile(){
 		-Dextras.dir="extras"
 		-Dlib.dir="lib"
 		-Dgwt.main.module="org.rstudio.studio.${GWT_MAIN_MODULE}"
-		# These are added by me, to make things work
-		-Dnode.bin="${EPREFIX}/bin/node"
-		-Daopalliance.sdk="${EPREFIX}/share/aopalliance-1/lib"
-		-Dgin.sdk="${EPREFIX}/share/gin-2.1/lib"
-		-Djavax.inject="${EPREFIX}/share/javax-inject/lib"
-		-Dvalidation.api="${EPREFIX}/share/validation-api-1.0/lib"
-		-Dvalidation.api.sources="${EPREFIX}/share/validation-api-1.0/sources"
 		# These are added as improvements, but are not strictly necessary
 		# -Dgwt.extra.args='-incremental' # actually, it fails to build with # this
 		-DlocalWorkers=$(makeopts_jobs)
@@ -1988,7 +1983,6 @@ src_compile(){
 
 src_install() {
 	cmake_src_install
-
 	if use server ;then
 		dopamd src/cpp/server/extras/pam/rstudio
 		newinitd "${FILESDIR}/rstudio-server" rstudio-server
@@ -2009,12 +2003,15 @@ src_install() {
 #ELECTRON_FORCE_IS_PACKAGED=true electron-${ELECTRON_VERSION_MAJ} ${EPREFIX}/usr/share/${PN}/resources/app ARGS
 #_EOF_
 #		dobin ${PN}
-		dodoc ${ED}/usr/share/${PN}/{LICENSE,LICENSES.chromium.html,SOURCE,VERSION}
-		rm ${ED}/usr/share/${PN}/{COPYING,INSTALL,LICENSE,LICENSES.chromium.html,NOTICE,SOURCE,VERSION}
+		dodoc ${ED}/usr/share/${PN}/{LICENSE,LICENSES.chromium.html}
+		rm ${ED}/usr/share/${PN}/{LICENSE,LICENSES.chromium.html}
 	else
 		# This binary name is much to generic, so we'll change it
 		mv "${ED}/usr/bin/diagnostics" "${ED}/usr/bin/${PN}-diagnostics"
 	fi
+	dodoc ${ED}/usr/share/${PN}/{SOURCE,VERSION}
+	rm ${ED}/usr/share/${PN}/{COPYING,INSTALL,NOTICE,SOURCE,VERSION,README.md}
+
 	einstalldocs
 }
 src_test() {
