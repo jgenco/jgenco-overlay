@@ -559,7 +559,8 @@ KEYWORDS="~amd64"
 #tcc might not be needed next version
 #https://github.com/denoland/deno/pull/15305
 BDEPEND="
-	sys-devel/llvm
+	sys-devel/clang
+	sys-devel/lld
 	dev-util/gn
 	dev-util/ninja
 	>=virtual/rust-1.59.0

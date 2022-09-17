@@ -543,7 +543,8 @@ LICENSE="Apache-2.0 0BSD Apache-2.0 Apache-2.0-with-LLVM-exceptions Artistic-2 B
 SLOT="0"
 KEYWORDS=""
 BDEPEND="
-	sys-devel/llvm
+	sys-devel/clang
+	sys-devel/lld
 	dev-util/gn
 	dev-util/ninja
 	>=virtual/rust-1.59.0
@@ -597,4 +598,3 @@ pkg_postinst(){
 	ewarn "Crate: time@0.1.44   - Potential segfaults"
 	ewarn "Url:   https://rustsec.org/advisories/RUSTSEC-2020-0071"
 	}
-

@@ -22,6 +22,9 @@ CRATES+="${P}"
 # - Nope maybe remove windows deps from the Cargo.{toml,lock} files?
 #update postinstall for security warnings
 #remove GN/NINJA vars?
+#make sys-devel/lld optional?
+# * use_lld/use_gold in build/config/compiler/BUILD.gn
+# * GN_ARGS="use_lld=false use_gold=false" ?
 
 inherit {% block inherit -%}cargo{%- endblock %} llvm multiprocessing check-reqs bash-completion-r1
 
@@ -39,7 +42,8 @@ LICENSE={%- block license -%}"{{ license }}"{%- endblock %}
 SLOT={%- block slot -%}"0"{%- endblock %}
 KEYWORDS={%- block keyword -%}"~amd64"{%- endblock %}
 BDEPEND="
-	sys-devel/llvm
+	sys-devel/clang
+	sys-devel/lld
 	dev-util/gn
 	dev-util/ninja
 	>=virtual/rust-1.59.0

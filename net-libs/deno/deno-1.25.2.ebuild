@@ -558,7 +558,8 @@ LICENSE="Apache-2.0 MIT 0BSD Apache-2.0 Apache-2.0 Apache-2.0-with-LLVM-exceptio
 SLOT="0"
 KEYWORDS="~amd64"
 BDEPEND="
-	sys-devel/llvm
+	sys-devel/clang
+	sys-devel/lld
 	dev-util/gn
 	dev-util/ninja
 	>=virtual/rust-1.59.0
