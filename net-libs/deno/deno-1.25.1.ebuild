@@ -568,14 +568,13 @@ BDEPEND="
 "
 #These might be wrong check next version
 pkg_pretend() {
-	#This used 8.6GB using 9000M for safety
-	CHECKREQS_DISK_BUILD="9000M"
+	#This used 3.5GB using 3750M for safety
+	CHECKREQS_DISK_BUILD="3750M"
 	check-reqs_pkg_pretend
 	}
 
 pkg_setup() {
-	#This used 8.6GB using 9000M for safety
-	CHECKREQS_DISK_BUILD="9000M"
+	CHECKREQS_DISK_BUILD="3750M"
 	check-reqs_pkg_setup
 	}
 
