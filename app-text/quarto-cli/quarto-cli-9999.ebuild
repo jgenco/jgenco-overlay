@@ -150,7 +150,16 @@ src_test(){
 		export QUARTO_BIN_PATH=${QUARTO_BASE_PATH}/package/dist/bin/
 		export QUARTO_SHARE_PATH=${QUARTO_BASE_PATH}/src/resources/
 		export QUARTO_DEBUG=true
-		deno test --unstable --no-config --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/import_map.json test.ts unit
+
+		deno test --unstable --no-config --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/dev_import_map.json test.ts unit
+
+		mkdir -p ${QUARTO_BASE_PATH}/package/dist/config/
+		#maybe build corect files to silence quarto thinks it needs to be rebuilt
+		echo "{}" >  ${QUARTO_BASE_PATH}/package/dist/config/dev-config
+		touch ${QUARTO_BASE_PATH}/src/configuration
+
+		ln -s "${S}/quarto-sandbox" "${S}/package/dist/bin/quarto"
+
 		#This will run an extended test about half work now
 		#will need to install/setup
 		#* python libraries - see requirements.txt - not all in portage
@@ -158,6 +167,9 @@ src_test(){
 		#* install tinytex - not in portage
 		#* it uses a chrome (see if ff will work) based browser to do
 		#  screen shots - probably not possible
-		#deno test --unstable --no-config --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/import_map.json test.ts smoke
+		deno test --unstable --no-config --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/dev_import_map.json test.ts smoke
+		#deno test --unstable --no-config --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/dev_import_map.json test.ts ./smoke/authors/author-name.test.ts
+		einfo "Some test need to be deleted"
+		einfo "Quarto thinking it needs to be rebuilt is not a problem"
 		popd > /dev/null
 }
