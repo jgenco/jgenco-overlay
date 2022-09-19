@@ -42,8 +42,7 @@ npm_build_src_uri(){
 			YARN_FILENAME="${YARN_NAME}-${YARN_VER}.${FILE_EXT}"
 			#add node_ change / to + b/c + is an invalid nodejs package char
 			YARN_FILENAME_SAVE="node_${YARN_NAME_FULL/\//+}@${YARN_VER}.${FILE_EXT}"
-			#echo "https://registry.yarnpkg.com/${YARN_NAME_FULL}/-/${YARN_FILENAME} -> ${YARN_FILENAME_SAVE/\//-}"
-			echo "https://registry.npmjs.org/${YARN_NAME_FULL}/-/${YARN_FILENAME} -> ${YARN_FILENAME_SAVE/\//-}"
+			echo "mirror://npm/${YARN_NAME_FULL}/-/${YARN_FILENAME} -> ${YARN_FILENAME_SAVE/\//-}"
 			continue
 		fi
 		die "NO regex found for packages"
