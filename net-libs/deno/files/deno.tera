@@ -23,8 +23,8 @@ CRATES+="${P}"
 #update postinstall for security warnings
 #remove GN/NINJA vars?
 #make sys-devel/lld optional?
-# * use_lld/use_gold in build/config/compiler/BUILD.gn
-# * GN_ARGS="use_lld=false use_gold=false" ?
+# * GN_ARGS=" use_lld=false"                works with deno-1.22.3
+# * GN_ARGS=" use_lld=false use_gold=false" works with deno-1.25.2
 
 inherit {% block inherit -%}cargo{%- endblock %} llvm multiprocessing check-reqs bash-completion-r1
 
@@ -87,7 +87,7 @@ src_compile() {
 	export NINJA=${EPREFIX}/usr/bin/ninja
 	export CLANG_BASE_PATH=$(get_llvm_prefix)
 	export NINJA_JOBS=$(makeopts_jobs)
-	#GN_ARGS=
+	#export GN_ARGS=""
 	cargo_src_compile --locked
 	}
 src_install() {
