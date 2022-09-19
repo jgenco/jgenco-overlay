@@ -74,11 +74,16 @@ src_unpack(){
 	fi
 	default
 }
+src_prepare(){
+mkdir -p package/dist/config/
+	sed "s#_EPREFIX_#${EPREFIX}#;s#src/import_map.json#src/dev_import_map.json#" "${FILESDIR}/quarto.combined.eprefix" > "${S}/quarto"
+	sed 's#export QUARTO_BASE_PATH=".*"#export QUARTO_BASE_PATH="'"${S}"'"#' "${S}/quarto" > "${S}/quarto-sandbox"
+	chmod +x "${S}/quarto-sandbox"
+	default
+}
 src_compile(){
 	#Configuration
 	einfo "Setting Configuration"
-	mkdir -p package/dist/config/
-	sed "s#_EPREFIX_#${EPREFIX}#" "${FILESDIR}/quarto.combined.eprefix" |sed "s#src/import_map.json#src/dev_import_map.json#" > "${S}/quarto"
 
 		#Setup package/bin dir
 		mkdir -p "${S}/package/dist/bin"
@@ -102,7 +107,14 @@ src_compile(){
 		export DENO_DIR=${DENO_CACHE}
 		./quarto-bld prepare-dist --log-level info || die
 		popd
-		echo -n "${PV}"  > "${S}/package/dist/share/version"
+		if [[ "${PV}" == "9999" ]];then
+			echo -n "99.9.9" > "${S}/package/dist/share/version"
+		else
+			echo -n "${PV}"  > "${S}/package/dist/share/version"
+		fi
+		cp "${S}/package/dist/share/version"  "${S}/src/resources/version"
+
+	"${S}/quarto-sandbox" completions bash > _quarto.sh || die "Failed to build bash completion"
 
 	rm tests/bin/python3
 	ln -s "${EPREFIX}/usr/bin/python" tests/bin/python3
@@ -111,10 +123,6 @@ src_install(){
 	#DENO_DIR, QUARTO_* sets vars for quarto to run to build
 	#shell completion file(s)
 	export DENO_DIR=${DENO_CACHE}
-		export QUARTO_BASE_PATH=${S}
-		export QUARTO_BIN_PATH="${QUARTO_BASE_PATH}/package/dist/bin"
-		export QUARTO_SHARE_PATH="${QUARTO_BASE_PATH}/package/dist/share"
-		QUARTO_TARGET="${QUARTO_BIN_PATH}/quarto.js"
 		dobin "${S}/quarto"
 		insinto /usr/share/${PN}/
 		doins -r "${S}/package/dist/share/"*
@@ -123,9 +131,6 @@ src_install(){
 		doins -r "${S}/package/dist/bin/vendor"
 		rm "${ED}/usr/share/${PN}/"{COPYING.md,COPYRIGHT}
 
-	#This builds the shell completion files
-	DENO_OPTS="run --unstable --no-config --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/dev_import_map.json"
-	deno ${DENO_OPTS} ${QUARTO_TARGET} completions bash > _quarto.sh || die "Failed to build bash completion"
 	newbashcomp _quarto.sh quarto
 
 	#>=app-shells/zsh-4.3.5 is what app-shells/gentoo-zsh-completions depends on NOT tested

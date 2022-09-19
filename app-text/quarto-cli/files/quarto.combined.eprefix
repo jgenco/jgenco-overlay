@@ -68,7 +68,7 @@ if [ "$1" == "--reload-deno-cache" ]; then
 fi
 
 if [[ ! -d ${QUARTO_DIR} ]];then
-	mkdir ${QUARTO_DIR}
+	mkdir -p ${QUARTO_DIR}
 fi
 #Deleting file that non-bundled version leaves
 if [[ ${BUNDLED} == "TRUE" && -f ${QUARTO_DIR}/deno-version ]];then
