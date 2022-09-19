@@ -108,9 +108,13 @@ npm_build_cache(){
 			mkdir -p ${NODE_PKG_IDX_PATH}
 			NODE_PKG_IDX_PATH+="/${NODE_URL_SHA256:4:60}"
 
-			NODE_PKG_CNT_PATH="${NPM_CACHE_CNT}/sha512/${PKG_SHA512:0:2}/${PKG_SHA512:2:2}"
-			mkdir -p ${NODE_PKG_CNT_PATH}
-			NODE_PKG_CNT_PATH+="/${PKG_SHA512:4:124}"
+			NODE_PKG_CNT_PATH_SHA_512="${NPM_CACHE_CNT}/sha512/${PKG_SHA512:0:2}/${PKG_SHA512:2:2}"
+			mkdir -p ${NODE_PKG_CNT_PATH_SHA_512}
+			NODE_PKG_CNT_PATH_SHA_512+="/${PKG_SHA512:4:124}"
+
+			NODE_PKG_CNT_PATH_SHA_1="${NPM_CACHE_CNT}/sha1/${PKG_SHA1:0:2}/${PKG_SHA1:2:2}"
+			mkdir -p ${NODE_PKG_CNT_PATH_SHA_1}
+			NODE_PKG_CNT_PATH_SHA_1+="/${PKG_SHA1:4:36}"
 
 			NODE_CACHE_FILE=${NPM_CACHE_IDX}/${PKG_SHA}
 
@@ -119,7 +123,15 @@ npm_build_cache(){
 			META_DATA+="}"
 			META_DATA_SHA1=$(echo -n $META_DATA | sha1sum| sed "s/ .*//")
 			echo -ne "\n${META_DATA_SHA1}\t${META_DATA}" >> ${NODE_PKG_IDX_PATH}
-			cp  ${PKG_PATH} ${NODE_PKG_CNT_PATH}
+
+			META_DATA="{\"key\":\"${NODE_URL}\",\"integrity\":\"sha1-${PKG_SHA1_B64}\",\"time\":${CUR_TIME}000,\"size\":${PKG_SIZE}"
+			META_DATA+=",\"metadata\":{\"time\":${CUR_TIME}000}"
+			META_DATA+="}"
+			META_DATA_SHA1=$(echo -n $META_DATA | sha1sum| sed "s/ .*//")
+			echo -ne "\n${META_DATA_SHA1}\t${META_DATA}" >> ${NODE_PKG_IDX_PATH}
+
+			ln -s ${PKG_PATH} ${NODE_PKG_CNT_PATH_SHA_512}
+			ln -s ${PKG_PATH} ${NODE_PKG_CNT_PATH_SHA_1}
 	done
 	einfo "Finished building NPM cache"
 }
