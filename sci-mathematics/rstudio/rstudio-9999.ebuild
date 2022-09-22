@@ -1823,7 +1823,7 @@ SRC_URI+="test?          ( $(build_r_src_uri ${R_TESTTHAT_PKGS} ) ) "
 #If not using system electron modify unpack also
 SRC_URI+="electron?  (
 		https://www.electronjs.org/headers/v${ELECTRON_VERSION}/node-v${ELECTRON_VERSION}-headers.tar.gz    -> electron-v${ELECTRON_VERSION}-headers.tar.gz
-		amd64? ( https://github.com/electron/electron/releases/download/v${ELECTRON_VERSION}/electron-v${ELECTRON_VERSION}-linux-x64.zip -> electron-v${ELECTRON_VERSION}-linux-x64.zip )
+		amd64? ( https://github.com/electron/electron/releases/download/v${ELECTRON_VERSION}/electron-v${ELECTRON_VERSION}-linux-x64.zip )
 		) "
 RESTRICT="mirror !test? ( test )"
 
@@ -1877,6 +1877,7 @@ BDEPEND="
 	dev-java/javax-inject
 	=dev-java/validation-api-1.0*:1.0[source]
 	<=virtual/jdk-11:=
+	electron? ( app-arch/unzip )
 "
 PV_RELEASE="2022.07.0.548"
 PATCHES=(
@@ -1930,8 +1931,8 @@ src_unpack(){
 
 	if use electron; then
 		#IF bundling electron
-		mkdir -p ${WORKDIR}/.electron-gyp
-		pushd    ${WORKDIR}/.electron-gyp > /dev/null
+		mkdir -p "${WORKDIR}/.electron-gyp"
+		pushd    "${WORKDIR}/.electron-gyp" > /dev/null
 
 		unpack electron-v${ELECTRON_VERSION}-headers.tar.gz
 		mv node_headers ${ELECTRON_VERSION} || die
@@ -1942,17 +1943,17 @@ src_unpack(){
 
 		#IF bundling electron
 		local ELECTRON_HASH=$(echo -n "https://github.com/electron/electron/releases/download/v${ELECTRON_VERSION}" |sha256sum |sed "s/ .*//")
-		mkdir -p ${WORKDIR}/.cache/electron/${ELECTRON_HASH}
+		mkdir -p "${WORKDIR}/.cache/electron/${ELECTRON_HASH}"
 		#NOTE  might need to create ${WORKDIR}/.cache/electron/${ELECTRON_HASH}/SHASUMS256.txt in the future
-		ln -s ${DISTDIR}/electron-v${ELECTRON_VERSION}-linux-x64.zip ${WORKDIR}/.cache/electron/${ELECTRON_HASH}/electron-v${ELECTRON_VERSION}-linux-x64.zip
+		ln -s "${DISTDIR}/electron-v${ELECTRON_VERSION}-linux-x64.zip" "${WORKDIR}/.cache/electron/${ELECTRON_HASH}/electron-v${ELECTRON_VERSION}-linux-x64.zip"
 
 #		This is commented out b/c commit 821341dd0fcf1f6376b74f0647c8fee7eb68a977
 #		breaks seperating electron from R saving this code for the future
 #		#If using system electron
-#		mkdir -p ${WORKDIR}/.electron-gyp/${ELECTRON_VERSION}
-#		pushd    ${WORKDIR}/.electron-gyp/${ELECTRON_VERSION} > /dev/null
+#		mkdir -p "${WORKDIR}/.electron-gyp/${ELECTRON_VERSION}"
+#		pushd    "${WORKDIR}/.electron-gyp/${ELECTRON_VERSION}" > /dev/null
 #
-#		ln -s /usr/include/electron-${ELECTRON_VERSION_MAJ} include || die
+#		ln -s "/usr/include/electron-${ELECTRON_VERSION_MAJ}" include || die
 #		#It only been 9 so far
 #		echo "9" > installVersion
 #
@@ -1960,40 +1961,42 @@ src_unpack(){
 #
 #		#so far it seems happy to have only the file electron which it will rename
 #		local ELECTRON_HASH=$(echo -n "https://github.com/electron/electron/releases/download/v${ELECTRON_VERSION}" |sha256sum |sed "s/ .*//")
-#		mkdir -p ${WORKDIR}/.cache/electron/${ELECTRON_HASH}
+#		mkdir -p "${WORKDIR}/.cache/electron/${ELECTRON_HASH}"
 #		touch electron
-#		zip -0 ${WORKDIR}/.cache/electron/${ELECTRON_HASH}/electron-v${ELECTRON_VERSION}-linux-x64.zip electron
+#		zip -0 "${WORKDIR}/.cache/electron/${ELECTRON_HASH}/electron-v${ELECTRON_VERSION}-linux-x64.zip" electron
 
 		local NODEJS_VERSION=$(node -v) || die "Node version not found"
 		NODEJS_VERSION=${NODEJS_VERSION#v}
-		mkdir -p ${WORKDIR}/.cache/node-gyp/${NODEJS_VERSION}/include
-		ln -s /usr/include/node ${WORKDIR}/.cache/node-gyp/${NODEJS_VERSION}/include/node
+		mkdir -p "${WORKDIR}/.cache/node-gyp/${NODEJS_VERSION}/include"
+		ln -s "/usr/include/node" "${WORKDIR}/.cache/node-gyp/${NODEJS_VERSION}/include/node"
 		#This tells it the headers where installed
 		#Don't know what 9 is
-		echo "9" > ${WORKDIR}/.cache/node-gyp/${NODEJS_VERSION}/installVersion
+		echo "9" > "${WORKDIR}/.cache/node-gyp/${NODEJS_VERSION}/installVersion"
 	fi
 
-	ln -s ${EPREFIX}/usr/share/hunspell ${S}/dependencies/dictionaries || die "Failed to link dictionaries"
+	ln -s "${EPREFIX}/usr/share/hunspell" "${S}/dependencies/dictionaries" || die "Failed to link dictionaries"
 }
 src_prepare(){
 	cmake_src_prepare
 	java-pkg-2_src_prepare
 
-	ln -s ${EPREFIX}/usr/share/mathjax ${S}/dependencies/mathjax-27
+	ln -s "${EPREFIX}/usr/share/mathjax" "${S}/dependencies/mathjax-27"
 
 	#Remove Bundled deps ln -s to system libraries - see /src/gwt/.classpath
 	#gin and aopalliance
-	rm ${S}/src/gwt/lib/gin/2.1.2/* -R
-	ln -s ${EPREFIX}/usr/share/aopalliance-1/lib/aopalliance.jar ${S}/src/gwt/lib/gin/2.1.2/aopalliance.jar || die "linking to aopalliance.jar failed"
-	ln -s ${EPREFIX}/usr/share/javax-inject/lib/javax-inject.jar ${S}/src/gwt/lib/gin/2.1.2/javax-inject.jar || die "linking to javax-inject.jar failed"
+	rm "${S}/src/gwt/lib/gin/2.1.2/"* -R
+	ln -s "${EPREFIX}/usr/share/aopalliance-1/lib/aopalliance.jar" "${S}/src/gwt/lib/gin/2.1.2/aopalliance.jar"  || die "linking to aopalliance.jar failed"
+	ln -s "${EPREFIX}/usr/share/javax-inject/lib/javax-inject.jar" "${S}/src/gwt/lib/gin/2.1.2/javax-inject.jar" || die "linking to javax-inject.jar failed"
 	for JAR in gin guice-assistedinject-3.0 guice-3.0 ;do
-		ln -s ${EPREFIX}/usr/share/gin-2.1/lib/${JAR}.jar ${S}/src/gwt/lib/gin/2.1.2/${JAR}.jar || die "linking to ${JAR} failed"
+		ln -s "${EPREFIX}/usr/share/gin-2.1/lib/${JAR}.jar" "${S}/src/gwt/lib/gin/2.1.2/${JAR}.jar" || die "linking to ${JAR} failed"
 	done
 	#gwt - they bundle a custom gwt build @github rstudio/gwt tree v1.4
 	#validation-api
-	rm ${S}/src/gwt/lib/gwt/gwt-rstudio/validation-api-*.jar
-	ln -s ${EPREFIX}/usr/share/validation-api-1.0/lib/validation-api.jar ${S}/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA.jar || die "linking to validation-api.jar"
-	ln -s ${EPREFIX}/usr/share/validation-api-1.0/sources/validation-api-src.zip ${S}/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA-sources.jar || die "linking to validation-api-src.zip"
+	rm "${S}/src/gwt/lib/gwt/gwt-rstudio/validation-api-"*.jar
+	ln -s "${EPREFIX}/usr/share/validation-api-1.0/lib/validation-api.jar" \
+		"${S}/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA.jar" || die "linking to validation-api.jar"
+	ln -s "${EPREFIX}/usr/share/validation-api-1.0/sources/validation-api-src.zip" \
+		"${S}/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA-sources.jar" || die "linking to validation-api-src.zip"
 	#todo lib/junit-4.9b3.jar dev-java/junit - only for testing
 	#todo create elemental2
 
@@ -2003,25 +2006,25 @@ src_prepare(){
 		CMakeGlobals.txt src/cpp/desktop/CMakeLists.txt || die
 
 	if  use panmirror;then
-		PANMIRROR_SRC_HASH=$(sha1sum ${S}/src/gwt/panmirror/src/editor/package.json)
+		PANMIRROR_SRC_HASH=$(sha1sum "${S}/src/gwt/panmirror/src/editor/package.json")
 		if [[ ${PANMIRROR_PACKAGE_HASH} != ${PANMIRROR_SRC_HASH:0:40} ]];then
 			die "Panmirror Hash doesn't match"
 		else
-			yarn_src_prepare_gyp ${FILESDIR}/node-gyp-${NODE_GYP_VER}-9999-yarn.lock
+			yarn_src_prepare_gyp "${FILESDIR}/node-gyp-${NODE_GYP_VER}-9999-yarn.lock"
 
-			eapply  ${FILESDIR}/${PN}-${PV_RELEASE}-panmirror-package.patch
+			eapply  "${FILESDIR}/${PN}-${PV_RELEASE}-panmirror-package.patch"
 			#npm_fix_lock_path  "${FILESDIR}/${PN}-${PV_RELEASE}-panmirror-yarn.lock" "${S}/src/gwt/panmirror/src/editor/yarn.lock" "Panmirror's"
 			#this is a temporary patch; next release build w/o __GENTOO_PATH__ use native urls
 			#caution this could pick up base64 with the pattern ++/
 			sed  -E  "s#file://__GENTOO_PATH__/((@[^+]+)\+)?(.*)@(.*).tgz#https://registry.yarnpkg.com/\2++/\3/-/\3-\4.tgz#; s#/\+\+/#++/#;s#\+\+/#/#" \
-				${FILESDIR}/rstudio-${PV_RELEASE}-panmirror-yarn.lock > "${S}/src/gwt/panmirror/src/editor/yarn.lock"
+				"${FILESDIR}/rstudio-${PV_RELEASE}-panmirror-yarn.lock" > "${S}/src/gwt/panmirror/src/editor/yarn.lock"
 		fi
 	else
 		eapply "${FILESDIR}/${PN}-2022.07.0.548.panmirror_disable.patch"
 	fi
 
 	if  use electron;then
-		ELECTRON_SRC_HASH=$(sha1sum ${S}/src/node/desktop/package.json)
+		ELECTRON_SRC_HASH=$(sha1sum "${S}/src/node/desktop/package.json")
 		if [[ ${ELECTRON_PACKAGE_HASH} != ${ELECTRON_SRC_HASH:0:40} ]];then
 			die "Electron Hash doesn't match"
 		else
@@ -2046,9 +2049,9 @@ src_configure() {
 	fi
 
 	CMAKE_BUILD_TYPE=$(usex debug Debug Release) #RelWithDebInfo Release
-	mkdir -p  ${WORKDIR}/.cache
+	mkdir -p  "${WORKDIR}/.cache"
 	mkdir -p "${WORKDIR}/.npm"
-	echo "cache=${WORKDIR}/node_cache" > ${S}/src/node/desktop/.npmrc
+	echo "cache=${WORKDIR}/node_cache" > "${S}/src/node/desktop/.npmrc"
 	#Instead of using RSTUDIO_TARGET set RSTUDIO_{SERVER,DESKTOP,ELECTRON} manualy
 	#This allows ELECTRON with SERVER
 	#RSTUDIO_TARGET is set to true to bypass a test to see if undefined
@@ -2071,7 +2074,7 @@ src_configure() {
 	#it is now used also for the path for r-ldpath
 	#in electron this by default is located at /usr/share/rstudio/resources/app/bin
 	local mycmakeargs=(
-		-DRSTUDIO_INSTALL_SUPPORTING=${EPREFIX}/usr/share/${PN}
+		-DRSTUDIO_INSTALL_SUPPORTING="${EPREFIX}/usr/share/${PN}"
 		-DRSTUDIO_TARGET=TRUE
 		-DRSTUDIO_SERVER=${RSTUDIO_SERVER}
 		-DRSTUDIO_DESKTOP=${RSTUDIO_DESKTOP}
@@ -2082,7 +2085,7 @@ src_configure() {
 		-DGWT_COPY=ON
 		-DRSTUDIO_USE_SYSTEM_YAML_CPP=ON
 		-DRSTUDIO_PACKAGE_BUILD=1
-		-DRSTUDIO_BIN_PATH=${EPREFIX}/usr/bin
+		-DRSTUDIO_BIN_PATH="${EPREFIX}/usr/bin"
 		-DQUARTO_ENABLED=$(usex quarto)
 		-DRSTUDIO_USE_SYSTEM_SOCI=TRUE
 	)
@@ -2105,7 +2108,7 @@ src_compile(){
 
 		# Building PANMIRROR
 		einfo "Building PANMIRROR"
-		pushd ${S}/src/gwt/panmirror/src/editor > /dev/null
+		pushd "${S}/src/gwt/panmirror/src/editor" > /dev/null
 		yarn_set_config ignore-engines true
 		yarn_src_compile
 		popd > /dev/null
@@ -2152,7 +2155,7 @@ src_compile(){
 
 	#NOTE curently not in the build system
 	if use doc && use quarto;then
-		pushd ${S}/docs/user/rstudio
+		pushd "${S}/docs/user/rstudio"
 		R_LIBS="${R_LIB_PATH}" quarto render || die " Quarto failed to render user quide"
 		popd
 	fi
@@ -2180,18 +2183,18 @@ src_install() {
 #ELECTRON_FORCE_IS_PACKAGED=true electron-${ELECTRON_VERSION_MAJ} ${EPREFIX}/usr/share/${PN}/resources/app ARGS
 #_EOF_
 #		dobin ${PN}
-		dodoc ${ED}/usr/share/${PN}/{LICENSE,LICENSES.chromium.html}
-		rm ${ED}/usr/share/${PN}/{LICENSE,LICENSES.chromium.html}
+		dodoc "${ED}/usr/share/${PN}/"{LICENSE,LICENSES.chromium.html}
+		rm "${ED}/usr/share/${PN}/"{LICENSE,LICENSES.chromium.html}
 	else
 		# This binary name is much to generic, so we'll change it
 		mv "${ED}/usr/bin/diagnostics" "${ED}/usr/bin/${PN}-diagnostics"
 	fi
-	dodoc ${ED}/usr/share/${PN}/{SOURCE,VERSION}
-	rm ${ED}/usr/share/${PN}/{COPYING,INSTALL,NOTICE,SOURCE,VERSION,README.md}
+	dodoc "${ED}/usr/share/${PN}/"{SOURCE,VERSION}
+	rm "${ED}/usr/share/${PN}/"{COPYING,INSTALL,NOTICE,SOURCE,VERSION,README.md}
 
 	einstalldocs
 	if use quarto && use doc;then
-		mv ${S}/docs/user/rstudio/{_site,user_guide}
+		mv "${S}/docs/user/rstudio/"{_site,user_guide}
 		dodoc -r  docs/user/rstudio/user_guide
 	fi
 }
@@ -2200,8 +2203,8 @@ src_test() {
 	# export EANT_TEST_TARGET="unittest"
 	# java-pkg-2_src_test
 
-	mkdir -p ${HOME}/.local/share/rstudio || die
-	cd ${BUILD_DIR}/src/cpp || die
+	mkdir -p "${HOME}/.local/share/rstudio" || die
+	cd "${BUILD_DIR}/src/cpp" || die
 	#--scope core,rserver,rsession,r
 	export QUARTO_ENABLED=$(usex quarto "TRUE" "FALSE")
 	R_LIBS="${R_LIB_PATH}" ./rstudio-tests || die
