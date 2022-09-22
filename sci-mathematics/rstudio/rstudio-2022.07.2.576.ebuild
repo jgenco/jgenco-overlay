@@ -1765,7 +1765,6 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2022.07.0.548-electron_path.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-reenable-sandbox.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-libfmt.patch"
-	"${FILESDIR}/${PN}-2022.07.0.548-byte_offsets_fix.patch"
 )
 src_unpack(){
 	if [[ "${PV}" == *9999 ]];then
