@@ -7,9 +7,83 @@ DESCRIPTION="Open-source scientific and technical publishing system built on Pan
 HOMEPAGE="https://quarto.org/"
 
 RESTRICT="mirror"
-IUSE=""
+IUSE="test"
+RESTRICT="!test? ( test )"
+#note:matrix bumped to -1
+#     knitr bumped down from .1
+RENV_HASH="fe40c06f6624238757b2b70f2ced273644ddaa4a"
+RENV_TEST_PKGS="
+Rcpp_1.0.9
+base64enc_0.1-3
+digest_0.6.29
+fastmap_1.1.0
+cli_3.4.0
+glue_1.6.2
+rlang_1.0.5
+lattice_0.20-45
+colorspace_2.0-3
+fansi_1.0.3
+lifecycle_1.0.2
+utf8_1.2.2
+vctrs_0.4.1
+stringi_1.7.8
+xfun_0.32
+fs_1.5.2
+rappdirs_0.3.3
+cachem_1.0.6
+htmltools_0.5.3
+R6_2.5.1
+later_1.3.0
+magrittr_2.0.3
+promises_1.2.0.1
+jquerylib_0.1.4
+jsonlite_1.8.0
+memoise_2.0.1
+sass_0.4.2
+evaluate_0.16
+highr_0.9
+stringr_1.4.1
+yaml_2.3.5
+pillar_1.8.1
+pkgconfig_2.0.3
+RColorBrewer_1.1-3
+farver_2.1.1
+labeling_0.4.2
+munsell_0.5.0
+viridisLite_0.4.1
+Matrix_1.5-1
+nlme_3.1-159
+bit_4.0.4
+DBI_1.1.3
+bit64_4.0.5
+blob_1.2.3
+plogr_0.2.0
+MASS_7.3-58.1
+gtable_0.3.1
+isoband_0.2.5
+mgcv_1.8-40
+scales_1.2.1
+tibble_3.1.8
+knitr_1.40
+tinytex_0.41
+bslib_0.4.0
+commonmark_1.8.0
+crayon_1.5.1
+ellipsis_0.3.2
+fontawesome_0.3.0
+httpuv_1.6.6
+mime_0.12
+sourcetools_0.1.7
+withr_2.5.0
+xtable_1.8-4
+shiny_1.7.2
+rmarkdown_2.16
+renv_0.15.5
+ggplot2_3.3.6
+RSQLite_2.2.17
+"
 
-inherit bash-completion-r1
+inherit bash-completion-r1 multiprocessing
 #NOTE previews for version x.y are simply x.y.[1..n]
 #     releases simply bump to x.y.n+1  no need to be fancy
 if [[ "${PV}" == *9999 ]];then
@@ -17,9 +91,15 @@ if [[ "${PV}" == *9999 ]];then
 	EGIT_REPO_URI="https://github.com/quarto-dev/${PN}"
 	EGIT_BRANCH="main"
 else
-	SRC_URI="https://github.com/quarto-dev/quarto-cli/archive/refs/tags/v${PV}.tar.gz   -> ${P}.tar.gz"
+	SRC_URI="https://github.com/quarto-dev/quarto-cli/archive/refs/tags/v${PV}.tar.gz   -> ${P}.tar.gz "
 fi
 
+build_r_src_uri(){
+	for RPKG in ${@}; do
+		echo "https://cloud.r-project.org/src/contrib/${RPKG}.tar.gz -> R_${RPKG}.tar.gz "
+	done
+}
+SRC_URI+="test? ( $(build_r_src_uri ${RENV_TEST_PKGS} ) )"
 #Quarto-cli has third party libraries bundled in their software
 #BOOTSWATCH=5.1.3
 #MIT & BSD: rstudio/bslib
@@ -59,6 +139,7 @@ DEPEND="
 	~dev-lang/dart-sass-1.32.8
 	~net-libs/deno-dom-0.1.23_alpha_p20220508
 	dev-lang/lua
+	test? ( >=dev-lang/R-4.1.0 )
 "
 RDEPEND="${DEPEND}"
 BDEPEND="
@@ -66,18 +147,35 @@ BDEPEND="
 "
 DOCS=( COPYING.md COPYRIGHT README.md news )
 
+R_LIB_PATH="${WORKDIR}/r_pkgs"
+install_r_packages(){
+	mkdir -p ${R_LIB_PATH}
+	R_SCRIPT="${S}/R_pkg_ins.R"
+	echo -n 'pkgs = c("' >> ${R_SCRIPT}
+	echo  -n ${@}|sed 's/ /","/g' >> ${R_SCRIPT}
+	echo  '")' >> ${R_SCRIPT}
+	echo 'pkgs_files = paste0("'"${DISTDIR}"'/R_",pkgs,".tar.gz")' >> ${R_SCRIPT}
+	echo 'install.packages(pkgs_files,repos=NULL,Ncpus='$(makeopts_jobs)')' >> ${R_SCRIPT}
+	R_LIBS="${R_LIB_PATH}" Rscript ${R_SCRIPT} || die "Failed to install R packages"
+}
+
 DENO_CACHE="${WORKDIR}/deno_cache"
 
 src_unpack(){
 	if [[ "${PV}" == *9999 ]];then
 		git-r3_src_unpack
+		RENV_HASH_CUR=$(sha1sum "${S}/tests/renv.lock")
+		if [[ ${RENV_HASH_CUR:0:40} != ${RENV_HASH} ]];then
+			ewarn "test/renv.lock has changed"
+		fi
+	else
+		unpack ${P}.tar.gz
 	fi
-	default
 }
 src_prepare(){
 mkdir -p package/dist/config/
-	sed "s#_EPREFIX_#${EPREFIX}#;s#src/import_map.json#src/dev_import_map.json#" "${FILESDIR}/quarto.combined.eprefix" > "${S}/quarto"
-	sed 's#export QUARTO_BASE_PATH=".*"#export QUARTO_BASE_PATH="'"${S}"'"#' "${S}/quarto" > "${S}/quarto-sandbox"
+	sed "s#_EPREFIX_#${EPREFIX}# ; s#src/import_map.json#src/dev_import_map.json#" "${FILESDIR}/quarto.combined.eprefix" > "${S}/quarto"
+	sed 's#export QUARTO_BASE_PATH=".*"#export QUARTO_BASE_PATH="'"${S}"'"# ; s#export SCRIPT_PATH=.*#export SCRIPT_PATH="'${S}'/package/dist/bin"#' "${S}/quarto" > "${S}/quarto-sandbox"
 	chmod +x "${S}/quarto-sandbox"
 	default
 }
@@ -95,6 +193,9 @@ src_compile(){
 		ln -s "${EPREFIX}/usr/bin/sass"          sass
 		ln -s "${EPREFIX}/usr/bin/esbuild"       esbuild
 		ln -s "${EPREFIX}/usr/lib64/deno-dom.so" libplugin.so
+		#added for deno-sandbox for simplicity
+		ln -s "${EPREFIX}/usr/bin/deno" deno
+		ln -s "${S}/quarto-sandbox" quarto
 		popd > /dev/null
 
 		#End package/bin dir
@@ -104,6 +205,7 @@ src_compile(){
 		pushd "${S}/package/src"
 
 		einfo "Building ${P}..."
+		mkdir -p ${DENO_CACHE}
 		export DENO_DIR=${DENO_CACHE}
 		./quarto-bld prepare-dist --log-level info || die
 		popd
@@ -114,7 +216,16 @@ src_compile(){
 		fi
 		cp "${S}/package/dist/share/version"  "${S}/src/resources/version"
 
+	mkdir -p     "${S}/package/dist/config/"
+	#Create proper dev-config to silence Quarto thinking it needs to be rebuilt is not a problem
+	#or change the patch
+	echo "{}" >  "${S}/package/dist/config/dev-config"
+	touch        "${S}/src/configuration"
 	"${S}/quarto-sandbox" completions bash > _quarto.sh || die "Failed to build bash completion"
+
+	if use test; then
+		install_r_packages ${RENV_TEST_PKGS}
+	fi
 
 	rm tests/bin/python3
 	ln -s "${EPREFIX}/usr/bin/python" tests/bin/python3
@@ -145,30 +256,34 @@ src_test(){
 	#this only works with bundled libraries
 	#TODO: with deno versioning can be done w/o bundling
 		pushd "${S}/tests" > /dev/null
+		#this disables renv - it might be nice to use renv
+		rm .Rprofile
+		#this lovely test needs internet access thus fails; so as punishment it breaks a large chunk of tests after it.
+		rm smoke/extensions/install.test.ts
+
 		export DENO_DIR=${DENO_CACHE}
 		export QUARTO_BASE_PATH=${S}
 		export QUARTO_BIN_PATH=${QUARTO_BASE_PATH}/package/dist/bin/
 		export QUARTO_SHARE_PATH=${QUARTO_BASE_PATH}/src/resources/
 		export QUARTO_DEBUG=true
+		export R_LIBS="${R_LIB_PATH}"
+		DENO_OPTS="--unstable --no-config --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/dev_import_map.json"
+		einfo "Starting unit test"
+		deno test ${DENO_OPTS} test.ts unit
 
-		deno test --unstable --no-config --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/dev_import_map.json test.ts unit
-
-		mkdir -p ${QUARTO_BASE_PATH}/package/dist/config/
-		#maybe build corect files to silence quarto thinks it needs to be rebuilt
-		echo "{}" >  ${QUARTO_BASE_PATH}/package/dist/config/dev-config
-		touch ${QUARTO_BASE_PATH}/src/configuration
-
-		ln -s "${S}/quarto-sandbox" "${S}/package/dist/bin/quarto"
-
-		#This will run an extended test about half work now
 		#will need to install/setup
-		#* python libraries - see requirements.txt - not all in portage
-		#* a correct R enviroment - see renv.lock
-		#* install tinytex - not in portage
-		#* it uses a chrome (see if ff will work) based browser to do
-		#  screen shots - probably not possible
-		deno test --unstable --no-config --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/dev_import_map.json test.ts smoke
-		#deno test --unstable --no-config --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/dev_import_map.json test.ts ./smoke/authors/author-name.test.ts
+		# * python libraries - see requirements.txt - not all in portage
+		# * dev-python/jupyter
+		# * install tinytex - not in portage
+		# * it uses a chrome (see if ff will work) based browser to do screen shots - probably not possible
+
+		einfo "Starting smoke test"
+		deno test ${DENO_OPTS} test.ts smoke
+
+		#Gentoo sand  148 passed / 32 failed
+		#On an internet connected terminal
+		#w/o  tinytex 155 passed / 28 failed
+		#with tinytex 178 passed /  5 failed
 		einfo "Some test need to be deleted"
 		einfo "Quarto thinking it needs to be rebuilt is not a problem"
 		popd > /dev/null
