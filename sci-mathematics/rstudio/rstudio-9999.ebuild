@@ -1702,6 +1702,80 @@ rmarkdown_2.16
 ggplot2_3.3.6
 "
 #####End   of RMARKDOWN package list#####
+#####Start of TESTHAT   package list#####
+#also includes xml2
+R_TESTTHAT_PKGS="
+rlang_1.0.5
+glue_1.6.2
+cli_3.4.0
+rlang_1.0.5
+glue_1.6.2
+cli_3.4.0
+vctrs_0.4.1
+utf8_1.2.2
+lifecycle_1.0.2
+fansi_1.0.3
+rlang_1.0.5
+glue_1.6.2
+cli_3.4.0
+vctrs_0.4.1
+utf8_1.2.2
+lifecycle_1.0.2
+fansi_1.0.3
+pkgconfig_2.0.3
+pillar_1.8.1
+magrittr_2.0.3
+vctrs_0.4.1
+rlang_1.0.5
+pkgconfig_2.0.3
+pillar_1.8.1
+magrittr_2.0.3
+lifecycle_1.0.2
+fansi_1.0.3
+tibble_3.1.8
+crayon_1.5.1
+rprojroot_2.0.3
+R6_2.5.1
+cli_3.4.0
+ps_1.7.1
+tibble_3.1.8
+rlang_1.0.5
+rematch2_2.1.2
+glue_1.6.2
+fansi_1.0.3
+diffobj_0.3.5
+cli_3.4.0
+R6_2.5.1
+ps_1.7.1
+withr_2.5.0
+rprojroot_2.0.3
+fs_1.5.2
+desc_1.4.2
+crayon_1.5.1
+processx_3.7.0
+withr_2.5.0
+waldo_0.4.0
+rlang_1.0.5
+R6_2.5.1
+ps_1.7.1
+processx_3.7.0
+praise_1.0.0
+pkgload_1.3.0
+magrittr_2.0.3
+lifecycle_1.0.2
+jsonlite_1.8.0
+evaluate_0.16
+ellipsis_0.3.2
+digest_0.6.29
+desc_1.4.2
+crayon_1.5.1
+cli_3.4.0
+callr_3.7.2
+brio_1.1.3
+testthat_3.1.4
+xml2_1.3.3
+"
+#####End   of TESTHAT   package list#####
 
 #RSudio requires 5.12.8 but when QT 5.12.x and glibc 2.34(clone3) is used it will cause a
 #sandbox violation in chromium. QT fixed this around 5.15.x(5?). Gentoo is at 5.15.3 and
@@ -1727,7 +1801,7 @@ if [[ "${PV}" == *9999 ]];then
 else
 	RSTUDIO_SOURCE_FILENAME="v$(ver_rs 3 "+").tar.gz"
 	S="${WORKDIR}/${PN}-$(ver_rs 3 "-")"
-	SRC_URI="https://github.com/rstudio/rstudio/archive/${RSTUDIO_SOURCE_FILENAME} -> ${P}.tar.gz"
+	SRC_URI="https://github.com/rstudio/rstudio/archive/${RSTUDIO_SOURCE_FILENAME} "
 fi
 
 #node_gyp and panmirror are seperate lines
@@ -1741,29 +1815,17 @@ build_r_src_uri(){
 		echo "https://cloud.r-project.org/src/contrib/${RPKG}.tar.gz -> R_${RPKG}.tar.gz "
 	done
 }
-SRC_URI="${SRC_URI} panmirror? ( $(npm_build_src_uri ${NODE_GYP_SKEIN}) $(npm_build_src_uri ${PANMIRROR_SKEIN}) )"
-SRC_URI="${SRC_URI} electron?  ( $(npm_build_src_uri ${RELECTRON_NODEJS_DEPS}) )"
-SRC_URI="${SRC_URI} quarto? ( doc? ( $(build_r_src_uri ${R_RMARKDOWN_PKGS} ) ) )"
+SRC_URI+="panmirror? ( $(npm_build_src_uri ${NODE_GYP_SKEIN}) $(npm_build_src_uri ${PANMIRROR_SKEIN}) ) "
+SRC_URI+="electron?  ( $(npm_build_src_uri ${RELECTRON_NODEJS_DEPS}) ) "
+SRC_URI+="quarto? ( doc? ( $(build_r_src_uri ${R_RMARKDOWN_PKGS} ) ) ) "
+SRC_URI+="test?          ( $(build_r_src_uri ${R_TESTTHAT_PKGS} ) ) "
 
 #If not using system electron modify unpack also
-SRC_URI="${SRC_URI} electron?  (
+SRC_URI+="electron?  (
 		https://www.electronjs.org/headers/v${ELECTRON_VERSION}/node-v${ELECTRON_VERSION}-headers.tar.gz    -> electron-v${ELECTRON_VERSION}-headers.tar.gz
 		amd64? ( https://github.com/electron/electron/releases/download/v${ELECTRON_VERSION}/electron-v${ELECTRON_VERSION}-linux-x64.zip -> electron-v${ELECTRON_VERSION}-linux-x64.zip )
 		) "
-# The test require an R package to be installed called `testthat`. I was able to
-# install this using R itself via:
-# ```sh
-# $ R
-# > install.packages("testthat")
-# // select a CRAN mirror
-# ```
-# Using this locally installed "testthat", I got the following results from the
-# test suite. It's unclear to me if the failures are from upstream or due to the
-# gentoo packaging. I don't really have the motivation to continue improving on
-# this, however I did want to leave this here for anyone who may be more
-# interested in the future.
-# [ FAIL 7 | WARN 6 | SKIP 2 | PASS 980 ]
-RESTRICT="test mirror"
+RESTRICT="mirror !test? ( test )"
 
 DEPEND=""
 RDEPEND="
@@ -1834,14 +1896,14 @@ PATCHES=(
 )
 DOCS=(CONTRIBUTING.md COPYING INSTALL NEWS.md NOTICE README.md version/news )
 
-R_LIB_PATH="$WORKDIR}/r_pkgs"
+R_LIB_PATH="${WORKDIR}/r_pkgs"
 install_r_packages(){
 	mkdir -p ${R_LIB_PATH}
 	R_SCRIPT="${S}/R_pkg_ins.R"
 	echo -n 'pkgs = c("' >> ${R_SCRIPT}
 	echo  -n ${@}|sed 's/ /","/g' >> ${R_SCRIPT}
 	echo  '")' >> ${R_SCRIPT}
-	echo 'pkgs_files = paste0("'"${DISTDIR}"'/R_",pkgs,".tar.gz")' >> ${R_SCRIPT}
+	echo 'pkgs_files = unique(paste0("'"${DISTDIR}"'/R_",pkgs,".tar.gz"))' >> ${R_SCRIPT}
 	echo 'install.packages(pkgs_files,repos=NULL,Ncpus='$(makeopts_jobs)')' >> ${R_SCRIPT}
 	R_LIBS="${R_LIB_PATH}" Rscript ${R_SCRIPT} || die "Failed to install R packages"
 }
@@ -2082,10 +2144,15 @@ src_compile(){
 	local EANT_EXTRA_ARGS="${eant_extra_args[@]}"
 	java-pkg-2_src_compile
 	cmake_src_compile
+
+	R_PKGS=()
+	use test   &&            R_PKGS+=(${R_TESTTHAT_PKGS[@]})
+	use doc && use quarto && R_PKGS+=(${R_RMARKDOWN_PKGS[@]})
+	[ ${#R_PKGS[@]} -gt 0 ] && install_r_packages ${R_PKGS[@]}
+
 	#NOTE curently not in the build system
-	if use quarto && use doc;then
+	if use doc && use quarto;then
 		pushd ${S}/docs/user/rstudio
-		install_r_packages ${R_RMARKDOWN_PKGS}
 		R_LIBS="${R_LIB_PATH}" quarto render || die " Quarto failed to render user quide"
 		popd
 	fi
@@ -2135,7 +2202,12 @@ src_test() {
 
 	mkdir -p ${HOME}/.local/share/rstudio || die
 	cd ${BUILD_DIR}/src/cpp || die
-	./rstudio-tests || die
+	#--scope core,rserver,rsession,r
+	export QUARTO_ENABLED=$(usex quarto "TRUE" "FALSE")
+	R_LIBS="${R_LIB_PATH}" ./rstudio-tests || die
+	#FAIL 5 | WARN 0 | SKIP 2 | PASS 1026
+	#FAIL = probably simply need packages purr, flexdashboard, and shiny installed
+	#SKIP = test-document-apis.R - NYI
 }
 
 pkg_preinst() {
