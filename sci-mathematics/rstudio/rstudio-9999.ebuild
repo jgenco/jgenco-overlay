@@ -2086,7 +2086,7 @@ src_configure() {
 		-DRSTUDIO_USE_SYSTEM_YAML_CPP=ON
 		-DRSTUDIO_PACKAGE_BUILD=1
 		-DRSTUDIO_BIN_PATH="${EPREFIX}/usr/bin"
-		-DQUARTO_ENABLED=$(usex quarto)
+		-DQUARTO_ENABLED=$(usex quarto TRUE FALSE)
 		-DRSTUDIO_USE_SYSTEM_SOCI=TRUE
 	)
 	if use electron; then
@@ -2199,17 +2199,17 @@ src_install() {
 	fi
 }
 src_test() {
-	# There is a gwt test suite, but it seems to require network access
-	# export EANT_TEST_TARGET="unittest"
-	# java-pkg-2_src_test
+	# It seems to run correctly and ends with BUILD SUCCESSFUL.
+	export EANT_TEST_TARGET="unittest"
+	java-pkg-2_src_test
 
 	mkdir -p "${HOME}/.local/share/rstudio" || die
 	cd "${BUILD_DIR}/src/cpp" || die
 	#--scope core,rserver,rsession,r
-	export QUARTO_ENABLED=$(usex quarto "TRUE" "FALSE")
 	R_LIBS="${R_LIB_PATH}" ./rstudio-tests || die
-	#FAIL 5 | WARN 0 | SKIP 2 | PASS 1026
+	#FAIL 9 | WARN 0 | SKIP 1 | PASS 1030
 	#FAIL = probably simply need packages purr, flexdashboard, and shiny installed
+	#       also 4 quarto FAILs
 	#SKIP = test-document-apis.R - NYI
 }
 
