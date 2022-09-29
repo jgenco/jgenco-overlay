@@ -18,38 +18,39 @@ esac
 
 if [[ ! ${_NPM_ECLASS} ]]; then
 _NPM_ECLASS=1
+NPM_CACHE_DIR="${WORKDIR}/node_cache"
 npm_build_src_uri(){
-	local SKEIN=$@
 	local gitex='(github):\/\/(.+)\/(.+)#([0-9a-f]+)'
 	local regex='((.*\/)?(.*))@(.*)'
-	local FILE_EXT="tgz"
-	for YARN in ${SKEIN}
+	local file_ext="tgz"
+	local pkgs=${@}
+	for pkg in ${pkgs}
 	do
-		if [[ ${YARN} =~ ${gitex} ]]; then
-			PKG_GITSERVER=${BASH_REMATCH[1]}
-			PKG_USR=${BASH_REMATCH[2]}
-			PKG_PRJ=${BASH_REMATCH[3]}
-			PKG_COMMIT=${BASH_REMATCH[4]}
-			PKG_URL="https://${PKG_GITSERVER}.com/${PKG_USR}/${PKG_PRJ}/archive/${PKG_COMMIT}.tar.gz"
-			PKG_FN="node_${PKG_USR}+${PKG_PRJ}@${PKG_COMMIT}.${FILE_EXT}"
-			echo "${PKG_URL} -> ${PKG_FN}"
+		if [[ ${pkg} =~ ${gitex} ]]; then
+			local pkg_gitserver=${BASH_REMATCH[1]}
+			local pkg_usr=${BASH_REMATCH[2]}
+			local pkg_prj=${BASH_REMATCH[3]}
+			local pkg_commit=${BASH_REMATCH[4]}
+			local pkg_url="https://${pkg_gitserver}.com/${pkg_usr}/${pkg_prj}/archive/${pkg_commit}.tar.gz"
+			local pkg_fn="node_${pkg_usr}+${pkg_prj}@${pkg_commit}.${file_ext}"
+			echo "${pkg_url} -> ${pkg_fn}"
 			continue
 		fi
-		if [[ ${YARN} =~ ${regex} ]];then
-			YARN_NAME_FULL=${BASH_REMATCH[1]}
-			YARN_NAME=${BASH_REMATCH[3]}
-			YARN_VER=${BASH_REMATCH[4]}
-			YARN_FILENAME="${YARN_NAME}-${YARN_VER}.${FILE_EXT}"
+		if [[ ${pkg} =~ ${regex} ]];then
+			local npm_name_full=${BASH_REMATCH[1]}
+			local npm_name=${BASH_REMATCH[3]}
+			local npm_ver=${BASH_REMATCH[4]}
+			local npm_filename="${npm_name}-${npm_ver}.${file_ext}"
 			#add node_ change / to + b/c + is an invalid nodejs package char
-			YARN_FILENAME_SAVE="node_${YARN_NAME_FULL/\//+}@${YARN_VER}.${FILE_EXT}"
-			echo "mirror://npm/${YARN_NAME_FULL}/-/${YARN_FILENAME} -> ${YARN_FILENAME_SAVE/\//-}"
+			local npm_filename_save="node_${npm_name_full/\//+}@${npm_ver}.${file_ext}"
+			echo "mirror://npm/${npm_name_full}/-/${npm_filename} -> ${npm_filename_save/\//-}"
 			continue
 		fi
 		die "NO regex found for packages"
 	done
 }
 npm_src_unpack(){
-	mkdir ${WORKDIR}/.nodejs_files
+	mkdir ${NPM_CACHE_DIR}
 	for ARCHIVE in ${A}; do
 		case ${ARCHIVE} in
 			# future NODE_GYP
@@ -59,78 +60,79 @@ npm_src_unpack(){
 					mv package node_gyp
 				fi;;
 			(node_*)
-				ln -s ${DISTDIR}/${ARCHIVE} ${WORKDIR}/.nodejs_files/${ARCHIVE#node_};;
+				#ln -s ${DISTDIR}/${ARCHIVE} ${NPM_CACHE_DIR}/${ARCHIVE#node_}
+				:;;
 		esac
 	done
 }
 npm_build_cache(){
 	#NOTE this dosn't account for git+ssh:// urls
-	NODE_CACHE_DIR="${WORKDIR}/node_cache"
-	CUR_TIME=$(date +%s)
-	mkdir -p ${NODE_CACHE_DIR}
-	mkdir -p ${NODE_CACHE_DIR}/_cacache
-	echo "${CUR_TIME}" > ${NODE_CACHE_DIR}/_cacache/_lastverified
-	touch ${NODE_CACHE_DIR}/update-notifier-last-checked
+
+	cur_time=$(date +%s)
+	mkdir -p ${NPM_CACHE_DIR}
+	mkdir -p ${NPM_CACHE_DIR}/_cacache
+	echo "${cur_time}" > ${NPM_CACHE_DIR}/_cacache/_lastverified
+	touch ${NPM_CACHE_DIR}/update-notifier-last-checked
 	einfo "Building NPM cache..."
 	for PKG in ${@};do
 		regex='((.*\/)?(.*))@(.*)'
 		[[ ${PKG} =~ ${regex} ]]
-			YARN_NAME_FULL=${BASH_REMATCH[1]}
-			YARN_SCOPE=${BASH_REMATCH[2]}
-			YARN_NAME=${BASH_REMATCH[3]}
-			YARN_VER=${BASH_REMATCH[4]}
-			FILE_EXT="tgz"
-			YARN_FILENAME="${YARN_NAME}-${YARN_VER}.${FILE_EXT}"
-			YARN_FILENAME_SAVE="node_${YARN_NAME_FULL/\//+}@${YARN_VER}.${FILE_EXT}"
+			local npm_name_full=${BASH_REMATCH[1]}
+			local npm_scope=${BASH_REMATCH[2]}
+			local npm_name=${BASH_REMATCH[3]}
+			local npm_ver=${BASH_REMATCH[4]}
+			local file_ext="tgz"
+			local npm_filename="${npm_name}-${npm_ver}.${file_ext}"
+			local npm_filename_save="node_${npm_name_full/\//+}@${npm_ver}.${file_ext}"
 
-			PKG_PATH=""
-			if [[ -f "${DISTDIR}/${YARN_FILENAME_SAVE}" ]];then
-				PKG_PATH="${DISTDIR}/${YARN_FILENAME_SAVE}"
+			pkg_path=""
+			if [[ -f "${DISTDIR}/${npm_filename_save}" ]];then
+				pkg_path="${DISTDIR}/${npm_filename_save}"
 			else
-				echo "${YARN_FILENAME_SAVE}"
+				echo "${npm_filename_save}"
 				echo "Not Found"
 				die
 			fi
-			PKG_SIZE=$(wc -c ${PKG_PATH}| sed "s/ .*//")
-			PKG_SHA1=$(sha1sum ${PKG_PATH}| sed "s/ .*//")
-			PKG_SHA1_B64=$(echo ${PKG_SHA1} | xxd -r -p|base64)
-			#PKG_SHA512_B64=$(sha512sum $PKG_PATH |sed "s/ .*//"|xxd -r -p|base64 -w0)
-			PKG_SHA512=$(sha512sum $PKG_PATH |sed "s/ .*//")
-			PKG_SHA512_B64=$(echo -n ${PKG_SHA512}|xxd -r -p|base64 -w0)
-			PKG_URL="https://registry.npmjs.org/${YARN_SCOPE}${YARN_NAME}/-/${YARN_NAME}-${YARN_VER}.tgz"
-			NPM_CACHE_IDX="${NODE_CACHE_DIR}/_cacache/index-v5"
-			NPM_CACHE_CNT="${NODE_CACHE_DIR}/_cacache/content-v2"
-			NODE_URL="make-fetch-happen:request-cache:${PKG_URL}"
+			local pkg_size=$(wc -c ${pkg_path}| sed "s/ .*//")
+			local pkg_sha1=$(sha1sum ${pkg_path}| sed "s/ .*//")
+			local pkg_sha1_b64=$(echo ${pkg_sha1} | xxd -r -p|base64)
+			#local pkg_sha512_b64=$(sha512sum $pkg_path |sed "s/ .*//"|xxd -r -p|base64 -w0)
+			local pkg_sha512=$(sha512sum $pkg_path |sed "s/ .*//")
+			local pkg_sha512_b64=$(echo -n ${pkg_sha512}|xxd -r -p|base64 -w0)
+			local pkg_url="https://registry.npmjs.org/${npm_scope}${npm_name}/-/${npm_name}-${npm_ver}.tgz"
+			local npm_cache_idx="${NPM_CACHE_DIR}/_cacache/index-v5"
+			local npm_cache_cnt="${NPM_CACHE_DIR}/_cacache/content-v2"
+			local npm_url="make-fetch-happen:request-cache:${pkg_url}"
 
-			NODE_URL_SHA256=$(echo -n  ${NODE_URL} |sha256sum | sed "s/ .*//")
-			NODE_PKG_IDX_PATH="${NPM_CACHE_IDX}/${NODE_URL_SHA256:0:2}/${NODE_URL_SHA256:2:2}"
-			mkdir -p ${NODE_PKG_IDX_PATH}
-			NODE_PKG_IDX_PATH+="/${NODE_URL_SHA256:4:60}"
+			local npm_url_sha256=$(echo -n  ${npm_url} |sha256sum | sed "s/ .*//")
+			local npm_pkg_idx_path="${npm_cache_idx}/${npm_url_sha256:0:2}/${npm_url_sha256:2:2}"
+			mkdir -p ${npm_pkg_idx_path}
+			npm_pkg_idx_path+="/${npm_url_sha256:4:60}"
 
-			NODE_PKG_CNT_PATH_SHA_512="${NPM_CACHE_CNT}/sha512/${PKG_SHA512:0:2}/${PKG_SHA512:2:2}"
-			mkdir -p ${NODE_PKG_CNT_PATH_SHA_512}
-			NODE_PKG_CNT_PATH_SHA_512+="/${PKG_SHA512:4:124}"
+			local npm_pkg_cnt_path_sha_512="${npm_cache_cnt}/sha512/${pkg_sha512:0:2}/${pkg_sha512:2:2}"
+			mkdir -p ${npm_pkg_cnt_path_sha_512}
+			npm_pkg_cnt_path_sha_512+="/${pkg_sha512:4:124}"
 
-			NODE_PKG_CNT_PATH_SHA_1="${NPM_CACHE_CNT}/sha1/${PKG_SHA1:0:2}/${PKG_SHA1:2:2}"
-			mkdir -p ${NODE_PKG_CNT_PATH_SHA_1}
-			NODE_PKG_CNT_PATH_SHA_1+="/${PKG_SHA1:4:36}"
+			local npm_pkg_cnt_path_sha_1="${npm_cache_cnt}/sha1/${pkg_sha1:0:2}/${pkg_sha1:2:2}"
+			mkdir -p ${npm_pkg_cnt_path_sha_1}
+			npm_pkg_cnt_path_sha_1+="/${pkg_sha1:4:36}"
 
-			NODE_CACHE_FILE=${NPM_CACHE_IDX}/${PKG_SHA}
+			local npm_cache_file=${npm_cache_idx}/${pkg_sha}
 
-			META_DATA="{\"key\":\"${NODE_URL}\",\"integrity\":\"sha512-${PKG_SHA512_B64}\",\"time\":${CUR_TIME}000,\"size\":${PKG_SIZE}"
-			META_DATA+=",\"metadata\":{\"time\":${CUR_TIME}000}"
-			META_DATA+="}"
-			META_DATA_SHA1=$(echo -n $META_DATA | sha1sum| sed "s/ .*//")
-			echo -ne "\n${META_DATA_SHA1}\t${META_DATA}" >> ${NODE_PKG_IDX_PATH}
+			local meta_data="{\"key\":\"${npm_url}\",\"integrity\":\"sha512-${pkg_sha512_b64}\",\"time\":${cur_time}000,\"size\":${pkg_size}"
+			meta_data+=",\"metadata\":{\"time\":${cur_time}000}"
+			meta_data+="}"
+			local meta_data_sha1=$(echo -n $meta_data | sha1sum| sed "s/ .*//")
+			echo -ne "\n${meta_data_sha1}\t${meta_data}" >> ${npm_pkg_idx_path}
 
-			META_DATA="{\"key\":\"${NODE_URL}\",\"integrity\":\"sha1-${PKG_SHA1_B64}\",\"time\":${CUR_TIME}000,\"size\":${PKG_SIZE}"
-			META_DATA+=",\"metadata\":{\"time\":${CUR_TIME}000}"
-			META_DATA+="}"
-			META_DATA_SHA1=$(echo -n $META_DATA | sha1sum| sed "s/ .*//")
-			echo -ne "\n${META_DATA_SHA1}\t${META_DATA}" >> ${NODE_PKG_IDX_PATH}
+			meta_data="{\"key\":\"${npm_url}\",\"integrity\":\"sha1-${pkg_sha1_b64}\",\"time\":${cur_time}000,\"size\":${pkg_size}"
+			meta_data+=",\"metadata\":{\"time\":${cur_time}000}"
+			meta_data+="}"
+			meta_data_sha1=$(echo -n $meta_data | sha1sum| sed "s/ .*//")
+			echo -ne "\n${meta_data_sha1}\t${meta_data}" >> ${npm_pkg_idx_path}
 
-			ln -s ${PKG_PATH} ${NODE_PKG_CNT_PATH_SHA_512}
-			ln -s ${PKG_PATH} ${NODE_PKG_CNT_PATH_SHA_1}
+			ln -s ${pkg_path} ${npm_pkg_cnt_path_sha_512}
+			ln -s ${pkg_path} ${npm_pkg_cnt_path_sha_1}
 	done
 	einfo "Finished building NPM cache"
 }
