@@ -1,13 +1,13 @@
 diff --git a/src/node/desktop/package.json b/src/node/desktop/package.json
-index f2e8000112..e9841fea54 100644
+index 8576b397c9..5bc617353f 100644
 --- a/src/node/desktop/package.json
 +++ b/src/node/desktop/package.json
 @@ -36,28 +36,17 @@
      "@types/properties-reader": "2.1.1",
      "@types/sinon": "10.0.13",
      "@types/uuid": "8.3.4",
--    "@typescript-eslint/eslint-plugin": "5.33.0",
--    "@typescript-eslint/parser": "5.33.0",
+-    "@typescript-eslint/eslint-plugin": "5.34.0",
+-    "@typescript-eslint/parser": "5.34.0",
      "@vercel/webpack-asset-relocator-loader": "1.7.3",
      "chai": "4.3.6",
      "copy-webpack-plugin": "11.0.0",
