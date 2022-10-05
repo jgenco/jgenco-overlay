@@ -1,22 +1,13 @@
 diff --git a/src/core/dart-sass.ts b/src/core/dart-sass.ts
-index 539d5d41..2b854acc 100644
+index 04764e296..a089d8bcb 100644
 --- a/src/core/dart-sass.ts
 +++ b/src/core/dart-sass.ts
-@@ -6,7 +6,7 @@
- */
- import { join } from "path/mod.ts";
- 
--import { toolsPath } from "./resources.ts";
-+import { binaryPath } from "./resources.ts";
- import { execProcess } from "./process.ts";
- import { TempContext } from "./temp.ts";
- import { lines } from "./text.ts";
 @@ -15,7 +15,7 @@ import { existsSync } from "fs/mod.ts";
  import { warnOnce } from "./log.ts";
  
  export function dartSassInstallDir() {
 -  return toolsPath("dart-sass");
-+  return binaryPath("");
++  return toolsPath("");
  }
  
  export async function dartSassVersion() {
@@ -25,12 +16,12 @@ index 539d5d41..2b854acc 100644
  
      const command = Deno.build.os === "windows" ? "sass.bat" : "sass";
 -    return toolsPath(join("dart-sass", command));
-+    return binaryPath(join(command));
++    return toolsPath(command);
    };
    const sass = resolvePath();
  
 diff --git a/src/core/devconfig.ts b/src/core/devconfig.ts
-index d9319a47..61cfe7ff 100644
+index bb88c7957..7e5bfa7c2 100644
 --- a/src/core/devconfig.ts
 +++ b/src/core/devconfig.ts
 @@ -67,8 +67,7 @@ export function writeDevConfig(config: DevConfig, binPath: string) {
@@ -43,33 +34,11 @@ index d9319a47..61cfe7ff 100644
    if (existsSync(configPath)) {
      return JSON.parse(Deno.readTextFileSync(configPath)) as DevConfig;
    } else {
-diff --git a/src/core/esbuild.ts b/src/core/esbuild.ts
-index b39eeb7a..dbca2b59 100644
---- a/src/core/esbuild.ts
-+++ b/src/core/esbuild.ts
-@@ -6,7 +6,7 @@
- */
- 
- import { execProcess } from "./process.ts";
--import { toolsPath } from "./resources.ts";
-+import { binaryPath } from "./resources.ts";
- 
- export async function esbuildCompile(
-   input: string,
-@@ -30,7 +30,7 @@ export async function esbuildCommand(
-   workingDir: string,
- ) {
-   const cmd = [
--    Deno.env.get("QUARTO_ESBUILD") || toolsPath("esbuild"),
-+    Deno.env.get("QUARTO_ESBUILD") || binaryPath("esbuild"),
-     ...args,
-   ];
- 
 diff --git a/src/core/quarto.ts b/src/core/quarto.ts
-index 1f987e84..dc0a8d40 100644
+index 81cb6239c..297a0b8b1 100644
 --- a/src/core/quarto.ts
 +++ b/src/core/quarto.ts
-@@ -24,6 +24,7 @@ export interface QuartoConfig {
+@@ -26,6 +26,7 @@ export interface QuartoConfig {
  let dotenvConfig: DotenvConfig;
  
  export const quartoConfig = {
@@ -77,8 +46,8 @@ index 1f987e84..dc0a8d40 100644
    binPath: () => getenv("QUARTO_BIN_PATH"),
    toolsPath: () => join(getenv("QUARTO_BIN_PATH"), "tools"),
    sharePath: () => getenv("QUARTO_SHARE_PATH"),
-@@ -55,7 +56,7 @@ export const quartoConfig = {
- export function monitorQuartoSrcChanges(cleanup?: VoidFunction) {
+@@ -67,7 +68,7 @@ export function monitorPreviewTerminationConditions(cleanup?: VoidFunction) {
+   // src code change
    if (quartoConfig.isDebug()) {
      const srcDir = Deno.realPathSync(
 -      join(quartoConfig.binPath(), "../../../src"),
@@ -87,62 +56,25 @@ index 1f987e84..dc0a8d40 100644
      const watcher = Deno.watchFs([srcDir], { recursive: true });
      const watchForChanges = async () => {
 diff --git a/src/core/resources.ts b/src/core/resources.ts
-index 1343f9f2..7496c42d 100644
+index 1343f9f2a..87adb772e 100644
 --- a/src/core/resources.ts
 +++ b/src/core/resources.ts
-@@ -29,6 +29,10 @@ export function formatResourcePath(format: string, resource: string) {
-   return join(resourcePath("formats"), format, resource);
- }
- 
-+export function binaryPath(binary: string): string {
+@@ -54,8 +54,16 @@ export function toolsPath(binary: string): string {
+       }
+     }
+   }
+-
+-  return join(quartoConfig.toolsPath(), binary);
++  if (binary === "pandoc"){
++    const pandoc    = join(quartoConfig.binPath(),binary);
++    const pandocBin = pandoc.concat("-bin");
++	 if(!existsSync(pandoc) && existsSync(pandocBin)){
++      return pandocBin;
++    }else{
++      return pandoc;
++    }
++  }
 +  return join(quartoConfig.binPath(), binary);
-+}
-+
- export function toolsPath(binary: string): string {
-   const displayWarning = () => {
-     warnOnce(
-@@ -59,7 +63,7 @@ export function toolsPath(binary: string): string {
  }
  
  export function pandocBinaryPath(): string {
--  return toolsPath("pandoc");
-+  return binaryPath("pandoc");
- }
- 
- export async function rBinaryPath(binary: string): Promise<string> {
-diff --git a/src/core/run/deno.ts b/src/core/run/deno.ts
-index 2aed4e22..da472c3f 100644
---- a/src/core/run/deno.ts
-+++ b/src/core/run/deno.ts
-@@ -9,7 +9,7 @@ import { existsSync } from "fs/mod.ts";
- import { extname, join } from "path/mod.ts";
- import { quartoCacheDir } from "../appdirs.ts";
- import { execProcess } from "../process.ts";
--import { resourcePath, toolsPath } from "../resources.ts";
-+import { resourcePath, binaryPath } from "../resources.ts";
- import { RunHandler, RunHandlerOptions } from "./types.ts";
- import { removeIfExists } from "../path.ts";
- import { copyTo } from "../copy.ts";
-@@ -38,7 +38,7 @@ export const denoRunHandler: RunHandler = {
-     return await execProcess(
-       {
-         cmd: [
--          toolsPath("deno"),
-+          binaryPath("deno"),
-           "run",
-           "--import-map",
-           importMap,
-diff --git a/src/quarto.ts b/src/quarto.ts
-index 1e5c6187..1451fc1f 100644
---- a/src/quarto.ts
-+++ b/src/quarto.ts
-@@ -52,8 +52,7 @@ export async function quarto(
-     const installed = readInstalledDevConfig();
-     const source = readSourceDevConfig();
-     if (installed == null || !devConfigsEqual(installed, source)) {
--      await reconfigureQuarto(installed, source);
--      Deno.exit(1);
-+      console.log("Quarto thinks it needs reconfigured");
-     }
-   }
- 

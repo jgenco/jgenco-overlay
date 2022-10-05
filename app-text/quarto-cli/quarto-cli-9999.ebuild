@@ -135,10 +135,12 @@ PATCHES="
 "
 DEPEND="
 	>=net-libs/deno-1.25.1
-	>=app-text/pandoc-2.19.2
+	|| (
+		>=app-text/pandoc-2.19.2
+		>=app-text/pandoc-bin-2.19.2
+	)
 	~dev-lang/dart-sass-1.32.8
 	~net-libs/deno-dom-0.1.23_alpha_p20220508
-	dev-lang/lua
 	test? ( >=dev-lang/R-4.1.0 )
 "
 RDEPEND="${DEPEND}"
@@ -173,34 +175,47 @@ src_unpack(){
 	fi
 }
 src_prepare(){
-mkdir -p package/dist/config/
+	#Setup package/bin dir
+	mkdir -p package/dist/config/
+	mkdir -p package/dist/bin/
+	#the quarto files are a custom bash script based on the original
+	#quarto-cli has moved to a rust based prog. that does the same thing
+	#located in package/launcher
 	sed "s#_EPREFIX_#${EPREFIX}# ; s#src/import_map.json#src/dev_import_map.json#" "${FILESDIR}/quarto.combined.eprefix" > "${S}/quarto"
-	sed 's#export QUARTO_BASE_PATH=".*"#export QUARTO_BASE_PATH="'"${S}"'"# ; s#export SCRIPT_PATH=.*#export SCRIPT_PATH="'${S}'/package/dist/bin"#' "${S}/quarto" > "${S}/quarto-sandbox"
-	chmod +x "${S}/quarto-sandbox"
+	sed 's#export QUARTO_BASE_PATH=".*"#export QUARTO_BASE_PATH="'"${S}"'"# ; s#export SCRIPT_PATH=.*#export SCRIPT_PATH="'${S}'/package/dist/bin"#' "${S}/quarto" > "${S}/package/dist/bin/quarto"
+	chmod +x "${S}/package/dist/bin/quarto"
+
+	pushd "${S}/package/dist/bin" > /dev/null
+	mkdir -p tools/deno-x86_64-unknown-linux-gnu
+	ln -s "${EPREFIX}/usr/bin/deno" tools/deno-x86_64-unknown-linux-gnu/deno
+	local pandoc_bin="${EPREFIX}/usr/bin/pandoc"
+	pandoc_bin="${pandoc_bin}$([[ ! -f ${pandoc_bin} ]] && echo '-bin')"
+	ln -s "${pandoc_bin}"                    pandoc
+	ln -s "${EPREFIX}/usr/bin/sass"          sass
+	ln -s "${EPREFIX}/usr/bin/esbuild"       esbuild
+	ln -s "${EPREFIX}/usr/lib64/deno-dom.so" libplugin.so
+	#added for quarto-sandbox for simplicity
+	ln -s "${EPREFIX}/usr/bin/deno"          deno
+	popd > /dev/null
+
+	mkdir -p "${S}/package/dist/config"
 	default
+}
+src_configure(){
+	pushd "${S}/package/src" > /dev/null
+	#disables creating symlink
+	export QUARTO_NO_SYMLINK="TRUE"
+	#With the configuration patch this just write the devConfig for unbundled and testing
+	./quarto-bld configure    --log-level info || die
+	#copy dev-config b/c prepare-dist deletes it
+	cp ${S}/package/dist/config/dev-config ${S}/dev-config
+	popd > /dev/null
+
 }
 src_compile(){
 	#Configuration
 	einfo "Setting Configuration"
 
-		#Setup package/bin dir
-		mkdir -p "${S}/package/dist/bin"
-
-		pushd "${S}/package/dist/bin" > /dev/null
-		mkdir -p tools/deno-x86_64-unknown-linux-gnu
-		ln -s "${EPREFIX}/usr/bin/deno" tools/deno-x86_64-unknown-linux-gnu/deno
-		ln -s "${EPREFIX}/usr/bin/pandoc"        pandoc
-		ln -s "${EPREFIX}/usr/bin/sass"          sass
-		ln -s "${EPREFIX}/usr/bin/esbuild"       esbuild
-		ln -s "${EPREFIX}/usr/lib64/deno-dom.so" libplugin.so
-		#added for deno-sandbox for simplicity
-		ln -s "${EPREFIX}/usr/bin/deno" deno
-		ln -s "${S}/quarto-sandbox" quarto
-		popd > /dev/null
-
-		#End package/bin dir
-
-		mkdir -p "${S}/package/dist/config"
 		export QUARTO_ROOT="${S}"
 		pushd "${S}/package/src"
 
@@ -216,16 +231,9 @@ src_compile(){
 		fi
 		cp "${S}/package/dist/share/version"  "${S}/src/resources/version"
 
-	mkdir -p     "${S}/package/dist/config/"
-	#Create proper dev-config to silence Quarto thinking it needs to be rebuilt is not a problem
-	#or change the patch
-	echo "{}" >  "${S}/package/dist/config/dev-config"
-	touch        "${S}/src/configuration"
-	"${S}/quarto-sandbox" completions bash > _quarto.sh || die "Failed to build bash completion"
+	"${S}/package/dist/bin/quarto" completions bash > _quarto.sh || die "Failed to build bash completion"
 
-	if use test; then
-		install_r_packages ${RENV_TEST_PKGS}
-	fi
+	use test && install_r_packages ${RENV_TEST_PKGS}
 
 	rm tests/bin/python3
 	ln -s "${EPREFIX}/usr/bin/python" tests/bin/python3
@@ -253,14 +261,16 @@ src_install(){
 	einstalldocs
 }
 src_test(){
-	#this only works with bundled libraries
-	#TODO: with deno versioning can be done w/o bundling
+		mkdir -p "${S}/package/dist/config"
+		mv "${S}/dev-config" "${S}/package/dist/config/dev-config"
+
 		pushd "${S}/tests" > /dev/null
 		#this disables renv - it might be nice to use renv
 		rm .Rprofile
 		#this lovely test needs internet access thus fails; so as punishment it breaks a large chunk of tests after it.
 		rm smoke/extensions/install.test.ts
 
+		export QUARTO_ROOT="${S}"
 		export DENO_DIR=${DENO_CACHE}
 		export QUARTO_BASE_PATH=${S}
 		export QUARTO_BIN_PATH=${QUARTO_BASE_PATH}/package/dist/bin/
@@ -284,7 +294,5 @@ src_test(){
 		#On an internet connected terminal
 		#w/o  tinytex 155 passed / 28 failed
 		#with tinytex 178 passed /  5 failed
-		einfo "Some test need to be deleted"
-		einfo "Quarto thinking it needs to be rebuilt is not a problem"
 		popd > /dev/null
 }
