@@ -55,10 +55,12 @@ PATCHES="
 "
 DEPEND="
 	<=net-libs/deno-1.23.0
-	>=app-text/pandoc-2.19.2
+	|| (
+		>=app-text/pandoc-2.19.2
+		>=app-text/pandoc-bin-2.19.2
+	)
 	~dev-lang/dart-sass-1.32.8
 	~net-libs/deno-dom-0.1.17_alpha
-	dev-lang/lua
 "
 RDEPEND="${DEPEND}"
 BDEPEND="
@@ -81,12 +83,13 @@ src_compile(){
 	sed "s#_EPREFIX_#${EPREFIX}#" "${FILESDIR}/quarto.combined.eprefix" |sed "s#src/import_map.json#src/dev_import_map.json#" > "${S}/quarto"
 
 		#Setup package/bin dir
-		mkdir -p "${S}/package/dist/bin"
+		mkdir -p "${S}/package/dist/bin/tools"
 
 		pushd "${S}/package/dist/bin" > /dev/null
-		mkdir tools
-		ln -s "${EPREFIX}/usr/bin/deno" tools/deno
-		ln -s "${EPREFIX}/usr/bin/pandoc"        pandoc
+		local pandoc_bin="${EPREFIX}/usr/bin/pandoc"
+		pandoc_bin="${pandoc_bin}$([[ ! -f ${pandoc_bin} ]] && echo '-bin')"
+		ln -s "${EPREFIX}/usr/bin/deno"          tools/deno
+		ln -s "${pandoc_bin}"                    pandoc
 		ln -s "${EPREFIX}/usr/bin/sass"          sass
 		ln -s "${EPREFIX}/usr/bin/esbuild"       esbuild
 		ln -s "${EPREFIX}/usr/lib64/deno-dom.so" libplugin.so
