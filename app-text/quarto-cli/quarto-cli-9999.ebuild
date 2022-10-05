@@ -217,12 +217,13 @@ src_compile(){
 	#Configuration
 	einfo "Setting Configuration"
 
-		export QUARTO_ROOT="${S}"
-		pushd "${S}/package/src"
+	export QUARTO_ROOT="${S}"
+	pushd "${S}/package/src"
 
-		einfo "Building ${P}..."
-		./quarto-bld prepare-dist --log-level info || die
-		popd
+	einfo "Building ${P}..."
+	./quarto-bld prepare-dist --log-level info || die
+	popd
+
 	[[ "${PV}" == "9999" ]] && MY_PV="99.9.9" || MY_PV=${PV}
 	echo -n "${MY_PV}" > "${S}/package/dist/share/version"
 	echo -n "${MY_PV}" > "${S}/src/resources/version"
@@ -239,13 +240,13 @@ src_compile(){
 	ln -s "${EPREFIX}/usr/bin/python" tests/bin/python3
 }
 src_install(){
-		dobin "${S}/quarto"
-		insinto /usr/share/${PN}/
-		doins -r "${S}/package/dist/share/"*
-		insinto /usr/share/${PN}/bin
-		doins "${S}/package/dist/bin/quarto.js"
-		doins -r "${S}/package/dist/bin/vendor"
-		rm "${ED}/usr/share/${PN}/"{COPYING.md,COPYRIGHT}
+	dobin "${S}/quarto"
+	insinto /usr/share/${PN}/
+	doins -r "${S}/package/dist/share/"*
+	insinto /usr/share/${PN}/bin
+	doins "${S}/package/dist/bin/quarto.js"
+	doins -r "${S}/package/dist/bin/vendor"
+	rm "${ED}/usr/share/${PN}/"{COPYING.md,COPYRIGHT}
 
 	newbashcomp _quarto.sh quarto
 
@@ -256,37 +257,37 @@ src_install(){
 	einstalldocs
 }
 src_test(){
-		mkdir -p "${S}/package/dist/config"
-		mv "${S}/dev-config" "${S}/package/dist/config/dev-config"
+	mkdir -p "${S}/package/dist/config"
+	mv "${S}/dev-config" "${S}/package/dist/config/dev-config"
 
-		pushd "${S}/tests" > /dev/null
-		#this disables renv - it might be nice to use renv
-		rm .Rprofile
-		#this lovely test needs internet access thus fails; so as punishment it breaks a large chunk of tests after it.
-		rm smoke/extensions/install.test.ts
+	pushd "${S}/tests" > /dev/null
+	#this disables renv - it might be nice to use renv
+	rm .Rprofile
+	#this lovely test needs internet access thus fails; so as punishment it breaks a large chunk of tests after it.
+	rm smoke/extensions/install.test.ts
 
-		export QUARTO_ROOT="${S}"
-		export QUARTO_BASE_PATH=${S}
-		export QUARTO_BIN_PATH=${QUARTO_BASE_PATH}/package/dist/bin/
-		export QUARTO_SHARE_PATH=${QUARTO_BASE_PATH}/src/resources/
-		export QUARTO_DEBUG=true
-		export R_LIBS="${R_LIB_PATH}"
-		DENO_OPTS="--unstable --no-config --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/dev_import_map.json"
-		einfo "Starting unit test"
-		deno test ${DENO_OPTS} test.ts unit
+	export QUARTO_ROOT="${S}"
+	export QUARTO_BASE_PATH=${S}
+	export QUARTO_BIN_PATH=${QUARTO_BASE_PATH}/package/dist/bin/
+	export QUARTO_SHARE_PATH=${QUARTO_BASE_PATH}/src/resources/
+	export QUARTO_DEBUG=true
+	export R_LIBS="${R_LIB_PATH}"
+	DENO_OPTS="--unstable --no-config --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/dev_import_map.json"
+	einfo "Starting unit test"
+	deno test ${DENO_OPTS} test.ts unit
 
-		#will need to install/setup
-		# * python libraries - see requirements.txt - not all in portage
-		# * dev-python/jupyter
-		# * install tinytex - not in portage
-		# * it uses a chrome (see if ff will work) based browser to do screen shots - probably not possible
+	#will need to install/setup
+	# * python libraries - see requirements.txt - not all in portage
+	# * dev-python/jupyter
+	# * install tinytex - not in portage
+	# * it uses a chrome (see if ff will work) based browser to do screen shots - probably not possible
 
-		einfo "Starting smoke test"
-		deno test ${DENO_OPTS} test.ts smoke
+	einfo "Starting smoke test"
+	deno test ${DENO_OPTS} test.ts smoke
 
-		#Gentoo sand  148 passed / 32 failed
-		#On an internet connected terminal
-		#w/o  tinytex 155 passed / 28 failed
-		#with tinytex 178 passed /  5 failed
-		popd > /dev/null
+	#Gentoo sand  148 passed / 32 failed
+	#On an internet connected terminal
+	#w/o  tinytex 155 passed / 28 failed
+	#with tinytex 178 passed /  5 failed
+	popd > /dev/null
 }
