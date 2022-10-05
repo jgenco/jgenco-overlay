@@ -161,8 +161,6 @@ install_r_packages(){
 	R_LIBS="${R_LIB_PATH}" Rscript ${R_SCRIPT} || die "Failed to install R packages"
 }
 
-DENO_CACHE="${WORKDIR}/deno_cache"
-
 src_unpack(){
 	if [[ "${PV}" == *9999 ]];then
 		git-r3_src_unpack
@@ -181,15 +179,18 @@ src_prepare(){
 	#the quarto files are a custom bash script based on the original
 	#quarto-cli has moved to a rust based prog. that does the same thing
 	#located in package/launcher
-	sed "s#_EPREFIX_#${EPREFIX}# ; s#src/import_map.json#src/dev_import_map.json#" "${FILESDIR}/quarto.combined.eprefix" > "${S}/quarto"
-	sed 's#export QUARTO_BASE_PATH=".*"#export QUARTO_BASE_PATH="'"${S}"'"# ; s#export SCRIPT_PATH=.*#export SCRIPT_PATH="'${S}'/package/dist/bin"#' "${S}/quarto" > "${S}/package/dist/bin/quarto"
+	sed "s#_EPREFIX_#${EPREFIX}# ; s#src/import_map.json#src/dev_import_map.json#" \
+		"${FILESDIR}/quarto.combined.eprefix" > "${S}/quarto"
+	sed "s#export QUARTO_BASE_PATH=\".*\"#export QUARTO_BASE_PATH=\"${S}\"# ;
+		s#export SCRIPT_PATH=\".*\"#export SCRIPT_PATH=\"${S}/package/dist/bin\"#" \
+		"${S}/quarto" > "${S}/package/dist/bin/quarto"
 	chmod +x "${S}/package/dist/bin/quarto"
 
 	pushd "${S}/package/dist/bin" > /dev/null
 	mkdir -p tools/deno-x86_64-unknown-linux-gnu
 	ln -s "${EPREFIX}/usr/bin/deno" tools/deno-x86_64-unknown-linux-gnu/deno
 	local pandoc_bin="${EPREFIX}/usr/bin/pandoc"
-	pandoc_bin="${pandoc_bin}$([[ ! -f ${pandoc_bin} ]] && echo '-bin')"
+	[[ ! -f ${pandoc_bin} ]] && pandoc_bin="${pandoc_bin}-bin"
 	ln -s "${pandoc_bin}"                    pandoc
 	ln -s "${EPREFIX}/usr/bin/sass"          sass
 	ln -s "${EPREFIX}/usr/bin/esbuild"       esbuild
@@ -208,7 +209,7 @@ src_configure(){
 	#With the configuration patch this just write the devConfig for unbundled and testing
 	./quarto-bld configure    --log-level info || die
 	#copy dev-config b/c prepare-dist deletes it
-	cp ${S}/package/dist/config/dev-config ${S}/dev-config
+	cp "${S}/package/dist/config/dev-config" "${S}/dev-config"
 	popd > /dev/null
 
 }
@@ -220,18 +221,17 @@ src_compile(){
 		pushd "${S}/package/src"
 
 		einfo "Building ${P}..."
-		mkdir -p ${DENO_CACHE}
-		export DENO_DIR=${DENO_CACHE}
 		./quarto-bld prepare-dist --log-level info || die
 		popd
-		if [[ "${PV}" == "9999" ]];then
-			echo -n "99.9.9" > "${S}/package/dist/share/version"
-		else
-			echo -n "${PV}"  > "${S}/package/dist/share/version"
-		fi
-		cp "${S}/package/dist/share/version"  "${S}/src/resources/version"
+	[[ "${PV}" == "9999" ]] && MY_PV="99.9.9" || MY_PV=${PV}
+	echo -n "${MY_PV}" > "${S}/package/dist/share/version"
+	echo -n "${MY_PV}" > "${S}/src/resources/version"
 
 	"${S}/package/dist/bin/quarto" completions bash > _quarto.sh || die "Failed to build bash completion"
+	#>=app-shells/zsh-4.3.5 is what app-shells/gentoo-zsh-completions depends on NOT tested
+	if has_version  ">=app-shells/zsh-4.3.5";then
+		"${S}/package/dist/bin/quarto" completions zsh > _quarto || die "Failed to build zsh completion"
+	fi
 
 	use test && install_r_packages ${RENV_TEST_PKGS}
 
@@ -239,9 +239,6 @@ src_compile(){
 	ln -s "${EPREFIX}/usr/bin/python" tests/bin/python3
 }
 src_install(){
-	#DENO_DIR, QUARTO_* sets vars for quarto to run to build
-	#shell completion file(s)
-	export DENO_DIR=${DENO_CACHE}
 		dobin "${S}/quarto"
 		insinto /usr/share/${PN}/
 		doins -r "${S}/package/dist/share/"*
@@ -252,9 +249,7 @@ src_install(){
 
 	newbashcomp _quarto.sh quarto
 
-	#>=app-shells/zsh-4.3.5 is what app-shells/gentoo-zsh-completions depends on NOT tested
 	if has_version  ">=app-shells/zsh-4.3.5";then
-		deno ${DENO_OPTS} ${QUARTO_TARGET} completions zsh > _quarto || die "Failed to build zsh  comletion"
 		insinto /usr/share/zsh/site-functions
 		doins _quarto
 	fi
@@ -271,7 +266,6 @@ src_test(){
 		rm smoke/extensions/install.test.ts
 
 		export QUARTO_ROOT="${S}"
-		export DENO_DIR=${DENO_CACHE}
 		export QUARTO_BASE_PATH=${S}
 		export QUARTO_BIN_PATH=${QUARTO_BASE_PATH}/package/dist/bin/
 		export QUARTO_SHARE_PATH=${QUARTO_BASE_PATH}/src/resources/
