@@ -82,8 +82,8 @@ renv_0.15.5
 ggplot2_3.3.6
 RSQLite_2.2.17
 "
-
-inherit bash-completion-r1 multiprocessing
+PYTHON_COMPAT=( python3_{8..10} )
+inherit bash-completion-r1 multiprocessing python-any-r1
 #NOTE previews for version x.y are simply x.y.[1..n]
 #     releases simply bump to x.y.n+1  no need to be fancy
 if [[ "${PV}" == *9999 ]];then
@@ -145,6 +145,9 @@ DEPEND="
 "
 RDEPEND="${DEPEND}"
 BDEPEND="
+	test? (
+		${PYTHON_DEPS}
+	)
 	>=dev-util/esbuild-0.15.6
 "
 DOCS=( COPYING.md COPYRIGHT README.md news )
@@ -161,6 +164,9 @@ install_r_packages(){
 	R_LIBS="${R_LIB_PATH}" Rscript ${R_SCRIPT} || die "Failed to install R packages"
 }
 
+pkg_setup(){
+	use test && python-any-r1_pkg_setup
+}
 src_unpack(){
 	if [[ "${PV}" == *9999 ]];then
 		git-r3_src_unpack
@@ -235,9 +241,6 @@ src_compile(){
 	fi
 
 	use test && install_r_packages ${RENV_TEST_PKGS}
-
-	rm tests/bin/python3
-	ln -s "${EPREFIX}/usr/bin/python" tests/bin/python3
 }
 src_install(){
 	dobin "${S}/quarto"
@@ -257,6 +260,9 @@ src_install(){
 	einstalldocs
 }
 src_test(){
+	rm tests/bin/python3
+	ln -s "${EPREFIX}/usr/bin/${EPYTHON}" tests/bin/python3
+
 	mkdir -p "${S}/package/dist/config"
 	mv "${S}/dev-config" "${S}/package/dist/config/dev-config"
 
