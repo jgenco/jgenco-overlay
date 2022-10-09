@@ -538,7 +538,7 @@ CRATES+="${P}"
 # - Nope maybe remove windows deps from the Cargo.{toml,lock} files?
 #update postinstall for security warnings
 
-inherit cargo llvm multiprocessing check-reqs bash-completion-r1
+inherit cargo llvm multiprocessing toolchain-funcs check-reqs bash-completion-r1
 
 DESCRIPTION="A modern runtime for JavaScript and TypeScript"
 HOMEPAGE="https://deno.land/"
@@ -558,8 +558,6 @@ LICENSE="Apache-2.0 MIT 0BSD Apache-2.0 Apache-2.0 Apache-2.0-with-LLVM-exceptio
 SLOT="0"
 KEYWORDS="~amd64"
 BDEPEND="
-	sys-devel/clang
-	sys-devel/lld
 	dev-util/gn
 	dev-util/ninja
 	>=virtual/rust-1.59.0
@@ -586,7 +584,8 @@ src_prepare() {
 	pushd "${ECARGO_VENDOR}/${V8_DIR}" > /dev/null || die "V8 crate not found"
 	eapply "${FILESDIR}/v8-0.43.1-lockfile.patch" \
 		"${FILESDIR}/v8-0.42.0-disable-auto-ccache.patch" \
-		"${FILESDIR}/v8-0.40.2-jobfix.patch"
+		"${FILESDIR}/v8-0.40.2-jobfix.patch" \
+		"${FILESDIR}/v8-0.49.0-enable-gcc.patch"
 	#missing files - arm64 version available
 	#hopefuly fixed next version
 	#https://github.com/denoland/rusty_v8/pull/1063
@@ -599,21 +598,42 @@ src_prepare() {
 	default
 	}
 src_compile() {
+	#inspired by www-client/chromium
+	local gn_conf=""
+	#uses gold instead of lld - make lld optional someday
+	gn_conf+=" use_lld=false"
+	if tc-is-clang; then
+		gb_conf+=" is_clang=true"
+	else
+		gn_conf+=" is_clang=false"
+		gn_conf+=" use_custom_libcxx=false"
+	fi
 	export V8_FROM_SOURCE=1
 	#export SCCACHE=
 	#export CCACHE=
+	#gn_conf+="cc_wrapper=cache_path"
 	export GN=${EPREFIX}/usr/bin/gn
 	export NINJA=${EPREFIX}/usr/bin/ninja
 	export CLANG_BASE_PATH=$(get_llvm_prefix)
 	export NINJA_JOBS=$(makeopts_jobs)
-	#GN_ARGS=
+	export GN_ARGS="${gn_conf}"
+	einfo "GN_ARGS=${GN_ARGS}"
 	cargo_src_compile --locked
-	}
+}
 src_install() {
 	cargo_src_install
 	"${ED}/usr/bin/deno" completions bash > deno_bash_comp
 	newbashcomp deno_bash_comp deno
-	}
+	if ! tc-is-clang ; then
+		#QA Check notes gcc warns about return-local-addr for the following file
+		#${ECARGO_VENDOR}/${v8_dir}/third_party/icu/source/i18n/formattedvalue.cpp:212
+		#https://github.com/unicode-org/icu/blob/main/icu4c/source/i18n/formattedvalue.cpp#L212
+		#the source code mentions this is a false positive
+		#come up with some text to inform the user
+		#TODO unbundle third party libs if possible
+		:
+	fi
+}
 pkg_postinst(){
 	:
 	}
