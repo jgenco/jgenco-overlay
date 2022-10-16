@@ -1876,7 +1876,10 @@ RDEPEND="
 	>=dev-lang/R-3.3.0
 	>=dev-libs/boost-1.78:=
 	>=dev-libs/mathjax-2.7
-	>=app-text/pandoc-2.18
+	|| (
+		>=app-text/pandoc-2.18
+		>=app-text/pandoc-bin-2.18
+	)
 	>=dev-libs/soci-4.0.3[postgres,sqlite]
 	>=dev-libs/libfmt-8.1.1
 	sys-process/lsof
@@ -1957,11 +1960,11 @@ src_unpack(){
 	if [[ "${PV}" == *9999 ]];then
 		if use electron; then
 			#Electron package.json changes alot. This is a known good version
-			EGIT_COMMIT=${ELECTRON_EGIT_COMMIT}
+			#EGIT_COMMIT=${ELECTRON_EGIT_COMMIT}
 			:
 		else
 			#A good last commit when testing a patch
-			#EGIT_COMMIT="21efc9735599542c3e9f5799bb66e18ff6f8fb75" # 2022-09-29
+			#EGIT_COMMIT="98b51d36eed7a3e1d38fbd2097ac64fb4baf197e" # 2022-10-14
 			:
 		fi
 		git-r3_src_unpack
