@@ -56,24 +56,14 @@ index 81cb6239c..297a0b8b1 100644
      const watcher = Deno.watchFs([srcDir], { recursive: true });
      const watchForChanges = async () => {
 diff --git a/src/core/resources.ts b/src/core/resources.ts
-index 1343f9f2a..87adb772e 100644
+index 1343f9f2a..3885c86fa 100644
 --- a/src/core/resources.ts
 +++ b/src/core/resources.ts
-@@ -54,8 +54,16 @@ export function toolsPath(binary: string): string {
-       }
+@@ -55,7 +55,7 @@ export function toolsPath(binary: string): string {
      }
    }
--
+ 
 -  return join(quartoConfig.toolsPath(), binary);
-+  if (binary === "pandoc"){
-+    const pandoc    = join(quartoConfig.binPath(),binary);
-+    const pandocBin = pandoc.concat("-bin");
-+	 if(!existsSync(pandoc) && existsSync(pandocBin)){
-+      return pandocBin;
-+    }else{
-+      return pandoc;
-+    }
-+  }
 +  return join(quartoConfig.binPath(), binary);
  }
  

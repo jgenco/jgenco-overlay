@@ -86,10 +86,8 @@ src_compile(){
 		mkdir -p "${S}/package/dist/bin/tools"
 
 		pushd "${S}/package/dist/bin" > /dev/null
-		local pandoc_bin="${EPREFIX}/usr/bin/pandoc"
-		pandoc_bin="${pandoc_bin}$([[ ! -f ${pandoc_bin} ]] && echo '-bin')"
 		ln -s "${EPREFIX}/usr/bin/deno"          tools/deno
-		ln -s "${pandoc_bin}"                    pandoc
+		ln -s "${EPREFIX}/usr/bin/pandoc"        pandoc
 		ln -s "${EPREFIX}/usr/bin/sass"          sass
 		ln -s "${EPREFIX}/usr/bin/esbuild"       esbuild
 		ln -s "${EPREFIX}/usr/lib64/deno-dom.so" libplugin.so
