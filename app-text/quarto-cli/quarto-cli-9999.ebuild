@@ -134,7 +134,7 @@ PATCHES="
 	${FILESDIR}/quarto-cli-9999-configuration.patch
 "
 DEPEND="
-	>=net-libs/deno-1.25.1
+	>=net-libs/deno-1.25.1 <net-libs/deno-1.26.0
 	|| (
 		>=app-text/pandoc-2.19.2
 		>=app-text/pandoc-bin-2.19.2
@@ -195,9 +195,7 @@ src_prepare(){
 	pushd "${S}/package/dist/bin" > /dev/null
 	mkdir -p tools/deno-x86_64-unknown-linux-gnu
 	ln -s "${EPREFIX}/usr/bin/deno" tools/deno-x86_64-unknown-linux-gnu/deno
-	local pandoc_bin="${EPREFIX}/usr/bin/pandoc"
-	[[ ! -f ${pandoc_bin} ]] && pandoc_bin="${pandoc_bin}-bin"
-	ln -s "${pandoc_bin}"                    pandoc
+	ln -s "${EPREFIX}/usr/bin/pandoc"        pandoc
 	ln -s "${EPREFIX}/usr/bin/sass"          sass
 	ln -s "${EPREFIX}/usr/bin/esbuild"       esbuild
 	ln -s "${EPREFIX}/usr/lib64/deno-dom.so" libplugin.so
