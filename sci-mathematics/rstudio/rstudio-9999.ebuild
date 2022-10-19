@@ -1946,13 +1946,13 @@ DOCS=(CONTRIBUTING.md COPYING INSTALL NEWS.md NOTICE README.md version/news )
 R_LIB_PATH="${WORKDIR}/r_pkgs"
 install_r_packages(){
 	mkdir -p ${R_LIB_PATH}
-	R_SCRIPT="${S}/R_pkg_ins.R"
-	echo -n 'pkgs = c("' >> ${R_SCRIPT}
-	echo  -n ${@}|sed 's/ /","/g' >> ${R_SCRIPT}
-	echo  '")' >> ${R_SCRIPT}
-	echo 'pkgs_files = unique(paste0("'"${DISTDIR}"'/R_",pkgs,".tar.gz"))' >> ${R_SCRIPT}
-	echo 'install.packages(pkgs_files,repos=NULL,Ncpus='$(makeopts_jobs)')' >> ${R_SCRIPT}
-	R_LIBS="${R_LIB_PATH}" Rscript ${R_SCRIPT} || die "Failed to install R packages"
+	local r_script="${S}/R_pkg_ins.R"
+	echo -n 'pkgs = c("' >> ${r_script}
+	echo  -n ${@}|sed 's/ /","/g' >> ${r_script}
+	echo  '")' >> ${r_script}
+	echo 'pkgs_files = unique(paste0("'"${DISTDIR}"'/R_",pkgs,".tar.gz"))' >> ${r_script}
+	echo 'install.packages(pkgs_files,repos=NULL,Ncpus='$(makeopts_jobs)')' >> ${r_script}
+	R_LIBS="${R_LIB_PATH}" Rscript ${r_script} || die "Failed to install R packages"
 }
 
 src_unpack(){
@@ -1988,10 +1988,10 @@ src_unpack(){
 		popd > /dev/null
 
 		#IF bundling electron
-		local ELECTRON_HASH=$(echo -n "https://github.com/electron/electron/releases/download/v${ELECTRON_VERSION}" |sha256sum |sed "s/ .*//")
-		mkdir -p "${WORKDIR}/.cache/electron/${ELECTRON_HASH}"
-		#NOTE  might need to create ${WORKDIR}/.cache/electron/${ELECTRON_HASH}/SHASUMS256.txt in the future
-		ln -s "${DISTDIR}/electron-v${ELECTRON_VERSION}-linux-x64.zip" "${WORKDIR}/.cache/electron/${ELECTRON_HASH}/electron-v${ELECTRON_VERSION}-linux-x64.zip"
+		local electron_hash=$(echo -n "https://github.com/electron/electron/releases/download/v${ELECTRON_VERSION}" |sha256sum |sed "s/ .*//")
+		mkdir -p "${WORKDIR}/.cache/electron/${electron_hash}"
+		#NOTE  might need to create ${WORKDIR}/.cache/electron/${electron_hash}/SHASUMS256.txt in the future
+		ln -s "${DISTDIR}/electron-v${ELECTRON_VERSION}-linux-x64.zip" "${WORKDIR}/.cache/electron/${electron_hash}/electron-v${ELECTRON_VERSION}-linux-x64.zip"
 
 #		This is commented out b/c commit 821341dd0fcf1f6376b74f0647c8fee7eb68a977
 #		breaks seperating electron from R saving this code for the future
@@ -2006,18 +2006,18 @@ src_unpack(){
 #		popd > /dev/null
 #
 #		#so far it seems happy to have only the file electron which it will rename
-#		local ELECTRON_HASH=$(echo -n "https://github.com/electron/electron/releases/download/v${ELECTRON_VERSION}" |sha256sum |sed "s/ .*//")
-#		mkdir -p "${WORKDIR}/.cache/electron/${ELECTRON_HASH}"
+#		local electron_hash=$(echo -n "https://github.com/electron/electron/releases/download/v${ELECTRON_VERSION}" |sha256sum |sed "s/ .*//")
+#		mkdir -p "${WORKDIR}/.cache/electron/${electron_hash}"
 #		touch electron
-#		zip -0 "${WORKDIR}/.cache/electron/${ELECTRON_HASH}/electron-v${ELECTRON_VERSION}-linux-x64.zip" electron
+#		zip -0 "${WORKDIR}/.cache/electron/${electron_hash}/electron-v${ELECTRON_VERSION}-linux-x64.zip" electron
 
-		local NODEJS_VERSION=$(node -v) || die "Node version not found"
-		NODEJS_VERSION=${NODEJS_VERSION#v}
-		mkdir -p "${WORKDIR}/.cache/node-gyp/${NODEJS_VERSION}/include"
-		ln -s "/usr/include/node" "${WORKDIR}/.cache/node-gyp/${NODEJS_VERSION}/include/node"
+		local nodejs_version=$(node -v) || die "Node version not found"
+		nodejs_version=${nodejs_version#v}
+		mkdir -p "${WORKDIR}/.cache/node-gyp/${nodejs_version}/include"
+		ln -s "/usr/include/node" "${WORKDIR}/.cache/node-gyp/${nodejs_version}/include/node"
 		#This tells it the headers where installed
 		#Don't know what 9 is
-		echo "9" > "${WORKDIR}/.cache/node-gyp/${NODEJS_VERSION}/installVersion"
+		echo "9" > "${WORKDIR}/.cache/node-gyp/${nodejs_version}/installVersion"
 	fi
 
 	ln -s "${EPREFIX}/usr/share/hunspell" "${S}/dependencies/dictionaries" || die "Failed to link dictionaries"
@@ -2052,8 +2052,8 @@ src_prepare(){
 		CMakeGlobals.txt src/cpp/desktop/CMakeLists.txt || die
 
 	if  use panmirror;then
-		PANMIRROR_SRC_HASH=$(sha1sum "${S}/src/gwt/panmirror/src/editor/package.json")
-		if [[ ${PANMIRROR_PACKAGE_HASH} != ${PANMIRROR_SRC_HASH:0:40} ]];then
+		local panmirror_src_hash=$(sha1sum "${S}/src/gwt/panmirror/src/editor/package.json")
+		if [[ ${PANMIRROR_PACKAGE_HASH} != ${panmirror_src_hash:0:40} ]];then
 			die "Panmirror Hash doesn't match"
 		else
 			yarn_src_prepare_gyp "${FILESDIR}/node-gyp-${NODE_GYP_VER}-9999-yarn.lock"
@@ -2070,8 +2070,8 @@ src_prepare(){
 	fi
 
 	if  use electron;then
-		ELECTRON_SRC_HASH=$(sha1sum "${S}/src/node/desktop/package.json")
-		if [[ ${ELECTRON_PACKAGE_HASH} != ${ELECTRON_SRC_HASH:0:40} ]];then
+		local electron_src_hash=$(sha1sum "${S}/src/node/desktop/package.json")
+		if [[ ${ELECTRON_PACKAGE_HASH} != ${electron_src_hash:0:40} ]];then
 			die "Electron Hash doesn't match"
 		else
 			eapply "${FILESDIR}/${PN}-${PV}-electron-package.patch"
@@ -2101,16 +2101,16 @@ src_configure() {
 	#Instead of using RSTUDIO_TARGET set RSTUDIO_{SERVER,DESKTOP,ELECTRON} manualy
 	#This allows ELECTRON with SERVER
 	#RSTUDIO_TARGET is set to true to bypass a test to see if undefined
-	RSTUDIO_SERVER=FALSE
-	RSTUDIO_DESKTOP=FALSE
-	RSTUDIO_ELECTRON=FALSE
+	local rstudio_server=FALSE
+	local rstudio_desktop=FALSE
+	local rstudio_electron=FALSE
 	if use server; then
-		RSTUDIO_SERVER=TRUE
+		rstudio_server=TRUE
 	fi
 	if use electron; then
-		RSTUDIO_ELECTRON=TRUE
+		rstudio_electron=TRUE
 	elif use qt5; then
-		RSTUDIO_DESKTOP=TRUE
+		rstudio_desktop=TRUE
 	fi
 	# FIXME: GWT_COPY is helpful because it allows us to call ant ourselves
 	# (rather than using the custom_target defined in src/gwt/CMakeLists.txt),
@@ -2122,9 +2122,9 @@ src_configure() {
 	local mycmakeargs=(
 		-DRSTUDIO_INSTALL_SUPPORTING="${EPREFIX}/usr/share/${PN}"
 		-DRSTUDIO_TARGET=TRUE
-		-DRSTUDIO_SERVER=${RSTUDIO_SERVER}
-		-DRSTUDIO_DESKTOP=${RSTUDIO_DESKTOP}
-		-DRSTUDIO_ELECTRON=${RSTUDIO_ELECTRON}
+		-DRSTUDIO_SERVER=${rstudio_server}
+		-DRSTUDIO_DESKTOP=${rstudio_desktop}
+		-DRSTUDIO_ELECTRON=${rstudio_electron}
 		-DRSTUDIO_UNIT_TESTS_DISABLED=$(usex test OFF ON)
 		-DRSTUDIO_USE_SYSTEM_BOOST=ON
 		-DGWT_BUILD=OFF
@@ -2165,14 +2165,14 @@ src_compile(){
 	export EANT_BUILD_TARGET="build"
 	export ANT_OPTS="-Duser.home=${T} -Djava.util.prefs.userRoot=${T}"
 
-	local GWT_MAIN_MODULE="RStudio"
+	local gwt_main_module="RStudio"
 	if use electron || use qt5; then
 		if ! use server;then
-			GWT_MAIN_MODULE="RStudioDesktop"
+			gwt_main_module="RStudioDesktop"
 		fi
 	else
 		if  use server;then
-			GWT_MAIN_MODULE="RStudioServer"
+			gwt_main_module="RStudioServer"
 		fi
 	fi
 
@@ -2184,7 +2184,7 @@ src_compile(){
 		-Dwww.dir="www"
 		-Dextras.dir="extras"
 		-Dlib.dir="lib"
-		-Dgwt.main.module="org.rstudio.studio.${GWT_MAIN_MODULE}"
+		-Dgwt.main.module="org.rstudio.studio.${gwt_main_module}"
 		# These are added as improvements, but are not strictly necessary
 		# -Dgwt.extra.args='-incremental' # actually, it fails to build with # this
 		-DlocalWorkers=$(makeopts_jobs)
@@ -2194,10 +2194,10 @@ src_compile(){
 	java-pkg-2_src_compile
 	cmake_src_compile
 
-	R_PKGS=()
-	use test   &&            R_PKGS+=(${R_TESTTHAT_PKGS[@]})
-	use doc && use quarto && R_PKGS+=(${R_RMARKDOWN_PKGS[@]})
-	[ ${#R_PKGS[@]} -gt 0 ] && install_r_packages ${R_PKGS[@]}
+	local r_pkgs=()
+	use test   &&            r_pkgs+=(${R_TESTTHAT_PKGS[@]})
+	use doc && use quarto && r_pkgs+=(${R_RMARKDOWN_PKGS[@]})
+	[ ${#r_pkgs[@]} -gt 0 ] && install_r_packages ${r_pkgs[@]}
 
 	#NOTE curently not in the build system
 	if use doc && use quarto;then
