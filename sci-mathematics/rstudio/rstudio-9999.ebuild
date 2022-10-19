@@ -688,10 +688,10 @@ zenscroll@4.0.2
 #####End   of PANMIRROR package list#####
 
 #####Start of ELECTRON  package list#####
-ELECTRON_PACKAGE_HASH="13743c55267d1bda98415d7873cb216f3f8a28ee"
-ELECTRON_VERSION="19.0.10"
+ELECTRON_PACKAGE_HASH="e6432da17882bdae6ba3ccc50cee37b7fb081645"
+ELECTRON_VERSION="19.1.3"
 ELECTRON_VERSION_MAJ="19"
-ELECTRON_EGIT_COMMIT="21efc9735599542c3e9f5799bb66e18ff6f8fb75"
+ELECTRON_EGIT_COMMIT="4ab102e7eb8cdbeb171fb3345fa0cd136330c8dc"
 RELECTRON_NODEJS_DEPS="
 abbrev@1.1.1
 accepts@1.3.8
@@ -892,7 +892,7 @@ dot-prop@6.0.1
 duplexer3@0.1.4
 ecc-jsbn@0.1.2
 ee-first@1.1.1
-electron@19.0.10
+electron@19.1.3
 @electron-forge/async-ora@6.0.0-beta.64
 @electron-forge/cli@6.0.0-beta.64
 @electron-forge/core@6.0.0-beta.64
@@ -1658,7 +1658,6 @@ yarn-or-npm@3.0.1
 yauzl@2.10.0
 yn@3.1.1
 yocto-queue@0.1.0
-
 "
 #####End   of NODEJS package list#####
 
