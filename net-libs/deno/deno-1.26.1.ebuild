@@ -59,6 +59,7 @@ CRATES="
 	clap_complete-3.1.2
 	clap_complete_fig-3.1.5
 	clap_lex-0.1.1
+	clipboard-win-4.4.2
 	codespan-reporting-0.11.1
 	console-0.15.2
 	const-oid-0.9.0
@@ -222,6 +223,7 @@ CRATES="
 	inplace_it-0.3.5
 	instant-0.1.12
 	io-lifetimes-0.7.3
+	ipconfig-0.3.0
 	ipnet-2.5.0
 	is-macro-0.2.1
 	itertools-0.10.5
@@ -521,6 +523,19 @@ CRATES="
 	wgpu-types-0.13.2
 	which-4.3.0
 	widestring-0.5.1
+	winapi-0.3.9
+	winapi-i686-pc-windows-gnu-0.4.0
+	winapi-util-0.1.5
+	winapi-x86_64-pc-windows-gnu-0.4.0
+	windows-sys-0.36.1
+	windows_aarch64_msvc-0.36.1
+	windows_i686_gnu-0.36.1
+	windows_i686_msvc-0.36.1
+	windows_x86_64_gnu-0.36.1
+	windows_x86_64_msvc-0.36.1
+	winreg-0.7.0
+	winreg-0.10.1
+	winres-0.1.12
 	x25519-dalek-2.0.0-pre.1
 	xattr-0.2.3
 	yansi-0.5.1
@@ -531,14 +546,61 @@ CRATES="
 	zstd-safe-5.0.2+zstd.1.5.2
 	zstd-sys-2.0.1+zstd.1.5.2
 "
-CRATES+="${P}"
+CRATES_TEST="
+	async-stream-0.3.3
+	async-stream-impl-0.3.3
+	console-0.15.1
+	crossbeam-utils-0.8.11
+	ctr-0.9.1
+	ecdsa-0.14.7
+	errno-0.1.8
+	glob-0.3.0
+	hashlink-0.8.0
+	iana-time-zone-0.1.48
+	itertools-0.10.4
+	jobserver-0.1.24
+	kernel32-sys-0.2.2
+	lock_api-0.4.8
+	napi-build-1.2.1
+	napi-sys-2.2.2
+	proc-macro2-1.0.43
+	pty-0.2.2
+	reqwest-0.11.11
+	signature-1.6.3
+	smallvec-1.9.0
+	sourcemap-6.1.0
+	swc_config-0.1.2
+	swc_visit-0.5.2
+	swc_visit_macros-0.5.3
+	syn-1.0.99
+	thiserror-1.0.35
+	thiserror-impl-1.0.35
+	time-0.3.14
+	tokio-stream-0.1.9
+	tracing-attributes-0.1.22
+	tracing-core-0.1.29
+	trybuild-1.0.64
+	webpki-roots-0.22.4
+	winapi-0.2.8
+	winapi-build-0.1.1
+"
+CRATES+=" ${P}"
+
 #NOTE: update deno.tera for long term changes
 
 inherit cargo llvm multiprocessing toolchain-funcs check-reqs bash-completion-r1
 
+IUSE="test"
+RESTRICT="!test? ( test )"
+
 DESCRIPTION="A modern runtime for JavaScript and TypeScript"
 HOMEPAGE="https://deno.land/"
 SRC_URI="$(cargo_crate_uris)"
+SRC_URI+=" test? (
+	https://github.com/denoland/deno/archive/refs/tags/v${PV}.tar.gz -> deno_${PV}.tar.gz
+	https://github.com/denoland/deno_std/archive/refs/tags/0.153.0.tar.gz -> deno_std@0.153.0.tar.gz
+	$(cargo_crate_uris ${CRATES_TEST})
+	)"
 
 # License set may be more restrictive as OR is not respected
 # use cargo-license for a more accurate license picture
@@ -571,6 +633,18 @@ function find_crate(){
 	done
 	die "Crate $1 not found"
 }
+src_unpack(){
+	if use test ;then
+		unpack deno_${PV}.tar.gz
+		mv "${WORKDIR}/deno-${PV}"{,_src}
+		A=${A/deno_${PV}.tar.gz/}
+		unpack deno_std-0.153.tar.gz
+		rmdir "${WORKDIR}/deno-1.26.1_src/test_util/std"
+		mv "${WORKDIR}/deno_std-0.153.0/" "${WORKDIR}/deno-1.26.1_src/test_util/std"
+		A=${A/deno_std-0.153.tar.gz/}
+	fi
+	cargo_src_unpack
+}
 src_prepare() {
 	pushd "${ECARGO_VENDOR}/$(find_crate ^v8-[0-9])" > /dev/null || die "V8 crate folder not found"
 	eapply "${FILESDIR}/v8-0.43.1-lockfile.patch" \
@@ -579,9 +653,11 @@ src_prepare() {
 		"${FILESDIR}/v8-0.49.0-enable-gcc.patch"
 	popd > /dev/null
 
-	#Remove windows only crates - windows_.*,winapi*,winres,winreg,clipboard-win,ipconfig
-	einfo "Removing Windows requirements from crates..."
-	local cargo_files=($(find "${WORKDIR}" -name "Cargo.toml"))
+	#Remove windows only crates - windows_.*,winapi*,winres,winreg,clipboard-win,ipconfiga
+	#this code has been disabled after src_test was created
+	#probably too much work to do
+	#einfo "Removing Windows requirements from crates..."
+	#local cargo_files=($(find "${WORKDIR}" -name "Cargo.toml"))
 	awk_pgrm='BEGIN {cfgwin=0}
 {
 if (/target."cfg\(windows\)/) {cfgwin=1}
@@ -592,14 +668,15 @@ if(dxwin && /^\]$/){dxwin=0}
 if(/^$/) {cfgwin=0}
 }'
 	for cargo_file in ${cargo_files[@]}; do
-		cp $cargo_file{,.bak}
-		awk "${awk_pgrm}" ${cargo_file} > ${cargo_file}.new   || die "Failed to fix(awk) ${cargo_file}"
-		mv ${cargo_file}.new ${cargo_file}
-		sed -i "/ \"winapi/d;/ \"windows-sys/d" ${cargo_file} || die "Failed to fix(sed) ${cargo_file}"
+		#cp $cargo_file{,.bak}
+		#awk "${awk_pgrm}" ${cargo_file} > ${cargo_file}.new   || die "Failed to fix(awk) ${cargo_file}"
+		#mv ${cargo_file}.new ${cargo_file}
+		#sed -i "/ \"winapi/d;/ \"windows-sys/d" ${cargo_file} || die "Failed to fix(sed) ${cargo_file}"
+		:
 	done
-	sed -i "/ \"normpath\"/d" "${ECARGO_VENDOR}/$(find_crate swc_ecma_loader-)/Cargo.toml"    || die "Failed to fix swc_ecma_loader"
-	sed -i "/\"ipconfig\"/d"  "${ECARGO_VENDOR}/$(find_crate trust-dns-resolver-)/Cargo.toml" || die "Failed to fix trust-dns-resolver"
-	sed -i "/\"dx1[0-9]\"/d"  "${ECARGO_VENDOR}/$(find_crate wgpu-core-)/Cargo.toml"          || die "Failed to fix wgpu-core"
+	#sed -i "/ \"normpath\"/d" "${ECARGO_VENDOR}/$(find_crate swc_ecma_loader-)/Cargo.toml"    || die "Failed to fix swc_ecma_loader"
+	#sed -i "/\"ipconfig\"/d"  "${ECARGO_VENDOR}/$(find_crate trust-dns-resolver-)/Cargo.toml" || die "Failed to fix trust-dns-resolver"
+	#sed -i "/\"dx1[0-9]\"/d"  "${ECARGO_VENDOR}/$(find_crate wgpu-core-)/Cargo.toml"          || die "Failed to fix wgpu-core"
 
 	mkdir "${S}/napi_sym"
 	ln -s "${ECARGO_VENDOR}/$(find_crate napi_sym-)/symbol_exports.json" "${S}/napi_sym" || die "Failed to link missing napi_sym file"
@@ -646,7 +723,30 @@ src_install() {
 		#TODO unbundle third party libs if possible
 		:
 	fi
-	}
+}
+src_test(){
+	pushd "${WORKDIR}/deno-1.26.1_src/test_util" || die "Failed to change dir to test_util"
+	cargo_src_configure
+	cargo_src_compile
+	#cargo run & $server_pid=$!
+	../target/release/test_server &
+	local server_pid=$!
+	echo "PID:${server_pid}"
+	popd
+
+	#add detection of server running
+	sleep 60
+
+	pushd "${WORKDIR}/deno-1.26.1_src"
+	#note some test need external network
+	"${S}/target/release/deno" test --allow-all --unstable --location=http://js-unit-tests/foo/bar cli/tests/unit/
+	popd
+
+	einfo "Killing server..."
+	kill ${server_pid}
+	einfo "Server killed"
+
+}
 pkg_postinst(){
 	:
-	}
+}
