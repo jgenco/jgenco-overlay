@@ -18,17 +18,21 @@ esac
 
 if [[ ! ${_DENO_ECLASS} ]]; then
 _DENO_ECLASS=1
+DENO_SRC="${WORKDIR}/deno_src"
+DENO_CACHE="${WORKDIR}/deno_cache"
+export DENO_DIR=${DENO_CACHE}
+
 DENO_LINE_REGEX="((@.*/)?[^@]*)@(([^@ ]*))? +(.*) +(.*) +(.*) +(.*)"
 deno_build_src_uri(){
 	for (( i = 0; i < ${#DENO_LIBS[@]}; i++ ));do
-		[[ ${DENO_LIBS[$i]} =~ ${LINE_REGEX} ]]
+		[[ ${DENO_LIBS[$i]} =~ ${DENO_LINE_REGEX} ]]
 		PACKAGE=${BASH_REMATCH[1]}
 		VERSION=${BASH_REMATCH[4]}
 		URL="${BASH_REMATCH[5]/_VER_/${VERSION}}"
 		START_FOLDER=${BASH_REMATCH[6]/_VER_/${VERSION}}
 		ACTION=${BASH_REMATCH[7]}
 		SOURCE=${BASH_REMATCH[8]}
-		FILENAME="${PACKAGE/\//_}@${VERSION}.tar.gz"
+		FILENAME="deno_${PACKAGE/\//_}@${VERSION}.tar.gz"
 
 		if [[ ${URL} =~ "https://" ]];then
 			echo "${URL} -> ${FILENAME#@}"
@@ -47,7 +51,7 @@ deno_src_unpack(){
 	mkdir ${DENO_SRC}
 	for (( i = 0; i < ${#DENO_LIBS[@]}; i++ ));do
 		if [[ ${DENO_LIBS[$i]} == "" ]];then continue; fi;
-		[[ ${DENO_LIBS[$i]} =~ ${LINE_REGEX} ]]
+		[[ ${DENO_LIBS[$i]} =~ ${DENO_LINE_REGEX} ]]
 		PACKAGE=${BASH_REMATCH[1]}
 		VERSION=${BASH_REMATCH[4]}
 		START_FOLDER=${BASH_REMATCH[6]/_VER_/${VERSION#v}}
@@ -70,7 +74,7 @@ deno_build_src(){
 
 	for (( i = 0; i < ${#DENO_LIBS[@]}; i++ ));do
 		if [[ ${DENO_LIBS[$i]} == "" ]];then continue; fi;
-		[[ ${DENO_LIBS[$i]} =~ ${LINE_REGEX} ]]
+		[[ ${DENO_LIBS[$i]} =~ ${DENO_LINE_REGEX} ]]
 		PACKAGE=${BASH_REMATCH[1]}
 		VERSION=${BASH_REMATCH[4]}
 		START_FOLDER=${BASH_REMATCH[6]/_VER_/${VERSION#v}}
