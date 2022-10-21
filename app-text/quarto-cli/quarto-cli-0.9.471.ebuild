@@ -12,7 +12,6 @@ RESTRICT="mirror"
 IUSE="bundle"
 
 #package@version url unpack_folder action from
-LINE_REGEX="((@.*/)?[^@]*)@(([^@ ]*))? +(.*) +(.*) +(.*) +(.*)"
 DENO_LIBS=(
 "std@0.138.0 https://github.com/denoland/deno_std/archive/refs/tags/_VER_.tar.gz deno_std-_VER_ NA NA"
 "cliffy@v0.24.2 https://github.com/c4spar/deno-cliffy/archive/refs/tags/_VER_.tar.gz deno-cliffy-_VER_ NA NA"
@@ -102,9 +101,6 @@ DEPEND="
 RDEPEND="${DEPEND}"
 BDEPEND=""
 
-DENO_SRC="${WORKDIR}/deno_src"
-DENO_CACHE="${WORKDIR}/deno_cache"
-
 src_unpack(){
 	if [[ "${PV}" == *9999 ]];then
 		git-r3_src_unpack
@@ -135,32 +131,32 @@ src_compile(){
 	#Configuration
 	einfo "Setting Configuration"
 	mkdir -p package/dist/config/
-	sed "s#_EPREFIX_#${EPREFIX}#" ${FILESDIR}/quarto.combined.eprefix > ${S}/quarto
+	sed "s#_EPREFIX_#${EPREFIX}#" "${FILESDIR}/quarto.combined.eprefix" > "${S}/quarto"
 
 	if use bundle;then
 		#Setup package/bin dir
-		mkdir -p ${S}/package/dist/bin
+		mkdir -p "${S}/package/dist/bin"
 
-		pushd ${S}/package/dist/bin > /dev/null
+		pushd "${S}/package/dist/bin" > /dev/null
 		mkdir tools
-		ln -s ${EPREFIX}/usr/bin/deno tools/deno
-		ln -s ${EPREFIX}/usr/bin/pandoc        pandoc
-		ln -s ${EPREFIX}/usr/bin/sass          sass
-		ln -s ${EPREFIX}/usr/bin/esbuild       esbuild
-		ln -s ${EPREFIX}/usr/lib64/deno-dom.so libplugin.so
+		ln -s "${EPREFIX}/usr/bin/deno" tools/deno
+		ln -s "${EPREFIX}/usr/bin/pandoc"        pandoc
+		ln -s "${EPREFIX}/usr/bin/sass"          sass
+		ln -s "${EPREFIX}/usr/bin/esbuild"       esbuild
+		ln -s "${EPREFIX}/usr/lib64/deno-dom.so" libplugin.so
 		popd > /dev/null
 
 		#End package/bin dir
 
-		mkdir -p ${S}/package/dist/config
+		mkdir -p "${S}/package/dist/config"
 		export QUARTO_ROOT_DIR="${S}"
-		pushd ${S}/package/src
+		pushd "${S}/package/src"
 
 		einfo "Building ${P}..."
 		export DENO_DIR=${DENO_CACHE}
 		./quarto-bld prepare-dist --log-level info || die
 		popd
-		echo -n "${PV}"  > ${S}/package/dist/share/version
+		echo -n "${PV}"  > "${S}/package/dist/share/version"
 	else
 		#deno -v |sed "s/deno //"
 		DENO=`grep     "export DENO="     configuration |sed "s/.*=//"`
@@ -172,7 +168,7 @@ src_compile(){
 		DARTSASS=`grep "export DARTSASS=" configuration |sed "s/.*=//"`
 		#esbuild --version
 		ESBUILD=`grep  "export ESBUILD="  configuration |sed "s/.*=//"`
-		QUARTO_MD5=`md5sum ${S}/quarto`
+		QUARTO_MD5=`md5sum "${S}/quarto"`
 		#QUARTO_MD5=`grep  "export QUARTO_MD5="  configuration |sed "s/.*=//"`
 
 		echo -n "{\"deno\": \"${DENO}\",\"deno_dom\": \"${DENO_DOM}\",\"pandoc\": \"${PANDOC}\",\"dartsass\": \"${DARTSASS}\",\"esbuild\": \"${ESBUILD}\",\"script\": \"${QUARTO_MD5:0:32}\"}" > package/dist/config/dev-config
@@ -180,28 +176,28 @@ src_compile(){
 		echo -n "${PV}"  > src/resources/version
 	fi
 	rm tests/bin/python3
-	ln -s ${EPREFIX}/usr/bin/python tests/bin/python3
+	ln -s "${EPREFIX}/usr/bin/python" tests/bin/python3
 }
 src_install(){
 	if use bundle;then
-		dobin ${S}/quarto
+		dobin "${S}/quarto"
 		insinto /usr/share/${PN}/
-		doins -r ${S}/package/dist/share/*
+		doins -r "${S}/package/dist/share/"*
 		insinto /usr/share/${PN}/bin
-		doins ${S}/package/dist/bin/quarto.js
-		doins -r ${S}/package/dist/bin/vendor
+		doins "${S}/package/dist/bin/quarto.js"
+		doins -r "${S}/package/dist/bin/vendor"
 	else
-		dobin ${S}/quarto
+		dobin "${S}/quarto"
 		insinto /usr/share/${PN}/
 		doins -r *
-		dosym -r ${EPREFIX}/usr/share/${PN}/src/resources/version ${EPREFIX}/usr/share/${PN}/version
+		dosym -r "${EPREFIX}/usr/share/${PN}/src/resources/version" "${EPREFIX}/usr/share/${PN}/version"
 	fi
 
 }
 src_test(){
 	#this only works with bundled libraries
 	if use bundle;then
-		pushd ${S}/tests > /dev/null
+		pushd "${S}/tests" > /dev/null
 		export DENO_DIR=${DENO_CACHE}
 		echo "${DENO_DIR}"
 		export QUARTO_BASE_PATH=${S}
