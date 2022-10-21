@@ -64,13 +64,22 @@ CRATES="
 	windows_x86_64_msvc-0.36.1
 "
 
-inherit cargo
+inherit cargo deno
 
+DENO_LIBS=(
+"std@0.97.0 https://github.com/denoland/deno_std/archive/refs/tags/_VER_.tar.gz deno_std-_VER_ NA NA"
+"plug@0.4.0 https://github.com/denosaurs/plug/archive/refs/tags/_VER_.tar.gz plug-_VER_ NA NA"
+"cache@0.2.13 https://github.com/denosaurs/cache/archive/refs/tags/_VER_.tar.gz cache-_VER_ NA NA"
+)
+
+IUSE="test"
+RESTRICT="!test? ( test )"
 DESCRIPTION="Deno-DOM Plugin"
 HOMEPAGE="https://deno.land/x/deno_dom"
 P_VER="$(ver_cut 1-4)-artifacts"
 SRC_URI="$(cargo_crate_uris) "
-SRC_URI+="https://github.com/b-fuze/deno-dom/archive/refs/tags/v${P_VER/_/-}.tar.gz -> deno-dom-${PV}.tgz"
+SRC_URI+=" https://github.com/b-fuze/deno-dom/archive/refs/tags/v${P_VER/_/-}.tar.gz -> deno-dom-${PV}.tgz"
+SRC_URI+=" test? ( $(deno_build_src_uri) )"
 S=${WORKDIR}/${PN}-${P_VER/_/-}
 
 # License set may be more restrictive as OR is not respected
@@ -78,12 +87,33 @@ S=${WORKDIR}/${PN}-${P_VER/_/-}
 LICENSE="MIT Apache-2.0 Apache-2.0 Apache-2.0-with-LLVM-exceptions Boost-1.0 MIT Unicode-DFS-2016"
 SLOT="0"
 KEYWORDS="~amd64"
+PATCHES=("${FILESDIR}/deno-dom-0.1.23-test-fix.patch")
+src_unpack(){
+	cargo_src_unpack
+	use test && deno_src_unpack
+}
 src_compile(){
 	pushd html-parser/plugin > /dev/null
 	cargo_src_compile
 	popd > /dev/null
-	mv target/release/libplugin.so ${PN}.so
+	cp target/release/libplugin.so ${PN}.so
+
+	DENO_IMPORT_LIST="${FILESDIR}/deno-dom-0.1.23.imports"
+	use test && deno_build_src && deno_build_cache
 }
 src_install(){
 	dolib.so ${PN}.so
+}
+src_test(){
+	export DENO_DOM_PLUGIN=${S}/target/release/libplugin.so
+	#set plug version to 0.4.0 - newer ones seem not to work
+	sed -i "s#https://deno.land/x/plug/mod.ts#https://deno.land/x/plug@0.4.0/mod.ts#" deno-dom-native.ts
+	#standardize deno_std to version 0.97.0
+	sed -i -E "s#std@0.[0-9]{2}.0#std@0.97.0#" test/wpt.ts test/wpt-runner.ts test/units.ts test/units/*
+	sed -i "s#https://deno.land/std/testing/asserts.ts#https://deno.land/std@0.97.0/testing/asserts.ts#" test/units/comments-outside-html-test.ts
+	deno test --unstable -A  native.test.ts
+	#Quoting README.md: WPT tests are still a WIP, passed tests likely haven't actually passed.
+	#requires downloading a version of wpt @ https://github.com/web-platform-tests/wpt
+	#replace ${S}/wpt
+	#deno test --allow-read --allow-net wasm.test.ts -- --wpt
 }
