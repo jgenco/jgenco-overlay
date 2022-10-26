@@ -688,10 +688,10 @@ zenscroll@4.0.2
 #####End   of PANMIRROR package list#####
 
 #####Start of ELECTRON  package list#####
-ELECTRON_PACKAGE_HASH="e6432da17882bdae6ba3ccc50cee37b7fb081645"
+ELECTRON_PACKAGE_HASH="9cdd2c4bd607dfa6dea348a9240cb88b84f61a06"
 ELECTRON_VERSION="19.1.3"
 ELECTRON_VERSION_MAJ="19"
-ELECTRON_EGIT_COMMIT="4ab102e7eb8cdbeb171fb3345fa0cd136330c8dc"
+ELECTRON_EGIT_COMMIT="040ad6c4782cc9aebd26f76caf4f62156d0f2767"
 RELECTRON_NODEJS_DEPS="
 abbrev@1.1.1
 accepts@1.3.8
@@ -1046,6 +1046,7 @@ glob-parent@5.1.2
 glob-parent@6.0.2
 glob-promise@4.2.2
 glob-to-regexp@0.4.1
+glossy@0.1.7
 got@11.8.5
 got@9.6.0
 graceful-fs@4.2.10
@@ -1547,6 +1548,7 @@ typescript@4.7.4
 @types/express@4.17.13
 @types/express-serve-static-core@4.17.28
 @types/glob@7.2.0
+@types/glossy@0.1.0
 @types/html-minifier-terser@6.1.0
 @types/http-cache-semantics@4.0.1
 @types/http-proxy@1.17.9
@@ -1574,6 +1576,7 @@ typescript@4.7.4
 @types/sinonjs__fake-timers@8.1.2
 @types/sockjs@0.3.33
 @types/uuid@8.3.4
+@types/winston-syslog@2.4.0
 @types/ws@8.5.3
 @types/yauzl@2.10.0
 @ungap/promise-all-settled@1.1.2
@@ -1581,6 +1584,7 @@ unique-filename@1.1.1
 unique-slug@2.0.2
 universalify@0.1.2
 universalify@2.0.0
+unix-dgram@2.0.4
 unpipe@1.0.0
 uri-js@4.4.1
 url-parse-lax@3.0.0
@@ -1631,6 +1635,7 @@ wide-align@1.1.5
 wildcard@2.0.0
 winston@3.8.1
 winston-daily-rotate-file@4.7.1
+winston-syslog@2.6.0
 winston-transport@4.5.0
 word-wrap@1.2.3
 workerpool@6.2.0
@@ -1659,7 +1664,7 @@ yauzl@2.10.0
 yn@3.1.1
 yocto-queue@0.1.0
 "
-#####End   of NODEJS package list#####
+#####End   of ELECTRON package list#####
 
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2

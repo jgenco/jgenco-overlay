@@ -1,11 +1,11 @@
 diff --git a/src/node/desktop/package.json b/src/node/desktop/package.json
-index 89a456d618..3e6c7b4d78 100644
+index ad2f933f6e..bbb23e203c 100644
 --- a/src/node/desktop/package.json
 +++ b/src/node/desktop/package.json
-@@ -36,28 +36,17 @@
-     "@types/properties-reader": "2.1.1",
+@@ -37,28 +37,17 @@
      "@types/sinon": "10.0.13",
      "@types/uuid": "8.3.4",
+     "@types/winston-syslog": "2.4.0",
 -    "@typescript-eslint/eslint-plugin": "5.34.0",
 -    "@typescript-eslint/parser": "5.34.0",
      "@vercel/webpack-asset-relocator-loader": "1.7.3",
