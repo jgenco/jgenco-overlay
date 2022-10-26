@@ -1854,9 +1854,11 @@ fi
 
 #node_gyp and panmirror are seperate lines
 #buffers@0.1.1 = MIT/X11
-LICENSE="AGPL-3 BSD MIT Apache-2.0 Boost-1.0 CC-BY-4.0
+LICENSE="AGPL-3 BSD MIT Apache-2.0 Boost-1.0 CC-BY-4.0 MIT GPL-3 ISC
+test? ( EPL-1.0 )
 panmirror? ( BSD-2 ISC MIT )
-panmirror? ( || ( AFL-2.1 BSD ) || ( MIT Apache-2.0 ) 0BSD Apache-2.0 BSD BSD-2 ISC LGPL-3 MIT PYTHON Unlicense )"
+panmirror? ( || ( AFL-2.1 BSD ) || ( MIT Apache-2.0 ) 0BSD Apache-2.0 BSD BSD-2 ISC LGPL-3 MIT PYTHON Unlicense )
+electron? ( MIT Apache-2.0 BSD )"
 
 build_r_src_uri(){
 	for RPKG in ${@}; do
@@ -1939,9 +1941,8 @@ PATCHES=(
 	"${FILESDIR}/${PN}-1.4.1106-server-paths.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-package-build.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-pandoc_path_fix.patch"
-	"${FILESDIR}/${PN}-2022.07.0.548-node_path.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
-	"${FILESDIR}/${PN}-2022.07.0.548-electron_path.patch"
+	"${FILESDIR}/${PN}-9999-node_electron_cmake.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-reenable-sandbox.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-libfmt.patch"
 	"${FILESDIR}/${PN}-9999-hunspell.patch"
@@ -2033,6 +2034,8 @@ src_prepare(){
 
 	ln -s "${EPREFIX}/usr/share/mathjax" "${S}/dependencies/mathjax-27"
 
+	#SUSE has a good list of software bundled with rstudio
+	#https://build.opensuse.org/package/view_file/openSUSE:Factory/rstudio/rstudio.spec
 	#Remove Bundled deps ln -s to system libraries - see /src/gwt/.classpath
 	#gin and aopalliance
 	rm "${S}/src/gwt/lib/gin/2.1.2/"* -R
@@ -2041,6 +2044,7 @@ src_prepare(){
 	for JAR in gin guice-assistedinject-3.0 guice-3.0 ;do
 		ln -s "${EPREFIX}/usr/share/gin-2.1/lib/${JAR}.jar" "${S}/src/gwt/lib/gin/2.1.2/${JAR}.jar" || die "linking to ${JAR} failed"
 	done
+
 	#gwt - they bundle a custom gwt build @github rstudio/gwt tree v1.4
 	#validation-api
 	rm "${S}/src/gwt/lib/gwt/gwt-rstudio/validation-api-"*.jar
@@ -2048,6 +2052,7 @@ src_prepare(){
 		"${S}/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA.jar" || die "linking to validation-api.jar"
 	ln -s "${EPREFIX}/usr/share/validation-api-1.0/sources/validation-api-src.zip" \
 		"${S}/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA-sources.jar" || die "linking to validation-api-src.zip"
+
 	#todo lib/junit-4.9b3.jar dev-java/junit - only for testing
 	#todo create elemental2
 
