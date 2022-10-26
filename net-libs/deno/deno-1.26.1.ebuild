@@ -615,9 +615,12 @@ BDEPEND="
 	dev-util/gn
 	dev-util/ninja
 	>=virtual/rust-1.59.0
+	test? (
+		net-misc/curl
+	)
 "
 pkg_pretend() {
-	#This used 4.5GB using 3750M for safety
+	#This used 4.5GB using 4800M for safety
 	CHECKREQS_DISK_BUILD="4800M"
 	check-reqs_pkg_pretend
 	}
@@ -638,7 +641,7 @@ src_unpack(){
 		unpack deno_${PV}.tar.gz
 		mv "${WORKDIR}/deno-${PV}"{,_src}
 		A=${A/deno_${PV}.tar.gz/}
-		unpack deno_std-0.153.tar.gz
+		unpack deno_std@0.153.0.tar.gz
 		rmdir "${WORKDIR}/deno-1.26.1_src/test_util/std"
 		mv "${WORKDIR}/deno_std-0.153.0/" "${WORKDIR}/deno-1.26.1_src/test_util/std"
 		A=${A/deno_std-0.153.tar.gz/}
@@ -682,7 +685,8 @@ if(/^$/) {cfgwin=0}
 	ln -s "${ECARGO_VENDOR}/$(find_crate napi_sym-)/symbol_exports.json" "${S}/napi_sym" || die "Failed to link missing napi_sym file"
 
 	default
-	}
+	use test && eapply -d "${WORKDIR}/deno-${PV}_src" -- "${FILESDIR}/deno-1.26.1-fix_disable_tests.patch"
+}
 src_compile() {
 	#inspired by www-client/chromium
 	local gn_conf=""
@@ -709,6 +713,11 @@ src_compile() {
 	export GN_ARGS="${gn_conf}"
 	einfo "GN_ARGS=${GN_ARGS}"
 	cargo_src_compile --offline
+	if use test;then
+		pushd "${WORKDIR}/deno-1.26.1_src/test_util" > /dev/null || die "Failed to change dir to test_util"
+		cargo_src_compile
+		popd > /dev/null
+	fi
 	}
 src_install() {
 	cargo_src_install
@@ -726,26 +735,38 @@ src_install() {
 }
 src_test(){
 	pushd "${WORKDIR}/deno-1.26.1_src/test_util" || die "Failed to change dir to test_util"
-	cargo_src_configure
-	cargo_src_compile
-	#cargo run & $server_pid=$!
+	einfo "Starting test_server..."
 	../target/release/test_server &
 	local server_pid=$!
-	echo "PID:${server_pid}"
+	echo "Test server PID:${server_pid}"
 	popd
 
-	#add detection of server running
-	sleep 60
+	local count=0
+	while true;do
+		curl --key cli/tests/testdata/tls/localhost.key --cert cli/tests/testdata/tls/localhost.crt --cacert cli/tests/testdata/tls/RootCA.crt https://localhost:4557/ 2> /dev/null
+		local error=$?
+		#error 7 = Failed to connect
+		[[ $error -ne 7 ]] && break
+		[[ $count -eq 12 ]] && die "Server failed to start"
+		count=$(($count +1))
+		sleep 5;
+	done
 
-	pushd "${WORKDIR}/deno-1.26.1_src"
-	#note some test need external network
+	pushd "${WORKDIR}/deno-1.26.1_src" > /dev/null
+	export DENO_DIR="${T}/deno_dir"
+	mkdir -p "${DENO_DIR}"
+	#GPU test fails even under a normal user. I assume this is a hardware problem on my end
 	"${S}/target/release/deno" test --allow-all --unstable --location=http://js-unit-tests/foo/bar cli/tests/unit/
-	popd
+	popd >/dev/null
 
 	einfo "Killing server..."
 	kill ${server_pid}
 	einfo "Server killed"
 
+	#WPT - test
+	#unpack wpt into test_util/wpt
+	#update /etc/hosts file with output from python3 ./test_util/wpt/wpt make-hosts-file
+	#deno run --allow-env --allow-net --allow-read --allow-run --allow-write --unstable --lock=tools/deno.lock.json ./tools/wpt.ts run --release --binary="${S}/target/release/deno"
 }
 pkg_postinst(){
 	:
