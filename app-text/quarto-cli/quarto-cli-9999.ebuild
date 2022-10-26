@@ -134,7 +134,7 @@ PATCHES="
 	${FILESDIR}/quarto-cli-9999-configuration.patch
 "
 DEPEND="
-	>=net-libs/deno-1.25.1 <net-libs/deno-1.26.0
+	>=net-libs/deno-1.25.2 <net-libs/deno-1.26.0
 	|| (
 		>=app-text/pandoc-2.19.2
 		>=app-text/pandoc-bin-2.19.2
