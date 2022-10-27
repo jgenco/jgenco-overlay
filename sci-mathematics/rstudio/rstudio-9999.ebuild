@@ -1931,6 +1931,8 @@ BDEPEND="
 	=dev-java/validation-api-1.0*:1.0[source]
 	<=virtual/jdk-11:=
 	electron? ( app-arch/unzip )
+	dev-cpp/websocketpp
+	dev-libs/rapidjson
 "
 PV_RELEASE="2022.07.0.548"
 PATCHES=(
@@ -1946,6 +1948,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2022.07.0.548-reenable-sandbox.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-libfmt.patch"
 	"${FILESDIR}/${PN}-9999-hunspell.patch"
+	"${FILESDIR}/${PN}-9999-add-support-for-RapidJSON.patch"
 )
 DOCS=(CONTRIBUTING.md COPYING INSTALL NEWS.md NOTICE README.md version/news )
 
@@ -2055,6 +2058,18 @@ src_prepare(){
 
 	#todo lib/junit-4.9b3.jar dev-java/junit - only for testing
 	#todo create elemental2
+
+	#clang-c/websocketpp/rapidjson - from SUSE
+	#unbundle clang-c
+	#rm -r ${S}/usr/share/rstudio/resources/app/bin/rsession
+
+	#unbundle websocketpp
+	rm -r ${S}/src/cpp/ext/websocketpp/
+	ln -s ${PREFIX}/usr/include/websocketpp ${S}/src/cpp/ext/websocketpp || die "Failed to bundle websocketpp"
+
+	#unbundle rapidjson
+	rm -r ${S}/src/cpp/shared_core/include/shared_core/json/rapidjson/
+	ln -s ${EPREFIX}/usr/include/rapidjson ${S}/src/cpp/shared_core/include/shared_core/json/rapidjson || die "failed to bundle rapidjson"
 
 	# make sure icons and mime stuff are with prefix
 	sed -i \
