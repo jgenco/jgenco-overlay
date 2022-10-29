@@ -48,7 +48,7 @@ fi
 
 LICENSE="GPL-2+ MIT ZLIB BSD Apache-2.0 ISC || ( MIT GPL-3 )"
 SLOT="0"
-KEYWORDS=""
+KEYWORDS="~amd64"
 PATCHES="
 	${FILESDIR}/quarto-cli-1.1.141-pathfixes.patch
 	${FILESDIR}/quarto-cli-1.1.141-configuration.patch
