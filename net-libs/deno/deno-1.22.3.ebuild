@@ -541,7 +541,7 @@ SRC_URI="$(cargo_crate_uris)"
 #     webpki = ISC
 LICENSE="Apache-2.0 0BSD Apache-2.0 Apache-2.0-with-LLVM-exceptions Artistic-2 BSD BSD-2 Boost-1.0 CC0-1.0 ISC MIT MPL-2.0 Unlicense ZLIB"
 SLOT="0"
-KEYWORDS=""
+KEYWORDS="~amd64"
 BDEPEND="
 	sys-devel/clang
 	sys-devel/lld
@@ -569,10 +569,10 @@ src_prepare() {
 		fi
 	done
 	pushd "${WORKDIR}/cargo_home/gentoo/${V8_DIR}" > /dev/null || die "V8 crate not found"
-	patch -p1 < ${FILESDIR}/v8-0.43.1-lockfile.patch || die
-	patch -p1 < ${FILESDIR}/v8-0.42.0-disable-auto-ccache.patch || die
-	patch -p1 < ${FILESDIR}/v8-0.40.2-jobfix.patch   || die
-	patch -p1 < ${FILESDIR}/v8-0.43.1-clang_llvm14.patch || die
+	patch -p1 < "${FILESDIR}/v8-0.43.1-lockfile.patch" || die
+	patch -p1 < "${FILESDIR}/v8-0.42.0-disable-auto-ccache.patch" || die
+	patch -p1 < "${FILESDIR}/v8-0.40.2-jobfix.patch"   || die
+	patch -p1 < "${FILESDIR}/v8-0.43.1-clang_llvm14.patch" || die
 	popd > /dev/null
 	default
 	}
@@ -589,7 +589,7 @@ src_compile() {
 	}
 src_install() {
 	cargo_src_install
-	${ED}/usr/bin/deno completions bash > deno_bash_comp
+	"${ED}/usr/bin/deno" completions bash > deno_bash_comp
 	newbashcomp deno_bash_comp deno
 	}
 pkg_postinst(){
