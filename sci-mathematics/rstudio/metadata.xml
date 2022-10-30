@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-	<maintainer type="person">
-		<email>gienah@gentoo.org</email>
-		<name>Mark Wright</name>
-	</maintainer>
 	<longdescription lang="en">
 		RStudio is an integrated development environment (IDE) for R. It can
 		run it on a desktop or even over the web using RStudio Server.
@@ -16,6 +12,7 @@
 		<flag name="system_dictionaries">Uses system hunspell dictionaries instead of using RStudio's prebuild ones</flag>
 		<flag name="electron">Enables Electron GUI - Experimental</flag>
 		<flag name="doc">Builds User Guide - requires building R pkgs rmarkdown and ggplot2</flag>
+		<flag name="clang">Uses system clang for clang diagnostics</flag>
 	</use>
 	<upstream>
 		<remote-id type="github">rstudio/rstudio</remote-id>

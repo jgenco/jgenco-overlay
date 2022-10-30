@@ -3,7 +3,7 @@
 
 EAPI=8
 
-inherit cmake java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm yarn
+inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm yarn prefix
 
 #####Start of GYP package list#####
 NODE_GYP_VER="9.1.0"
@@ -1833,7 +1833,7 @@ QT_SLOT=5
 
 SLOT="0"
 KEYWORDS=""
-IUSE="server electron +qt5 test debug quarto panmirror doc"
+IUSE="server electron +qt5 test debug quarto panmirror doc clang"
 REQUIRED_USE="!server? ( ^^ ( electron qt5 ) )"
 
 DESCRIPTION="IDE for the R language"
@@ -1920,6 +1920,9 @@ RDEPEND="
 	electron? (
 		>=net-libs/nodejs-16.14.0[npm]
 	)
+	clang? (
+		sys-devel/clang
+	)
 	app-text/hunspell
 	"
 
@@ -1949,7 +1952,9 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2022.07.0.548-libfmt.patch"
 	"${FILESDIR}/${PN}-9999-hunspell.patch"
 	"${FILESDIR}/${PN}-9999-add-support-for-RapidJSON.patch"
+	"${FILESDIR}/${PN}-9999-system-clang.patch"
 )
+
 DOCS=(CONTRIBUTING.md COPYING INSTALL NEWS.md NOTICE README.md version/news )
 
 R_LIB_PATH="${WORKDIR}/r_pkgs"
@@ -2059,17 +2064,18 @@ src_prepare(){
 	#todo lib/junit-4.9b3.jar dev-java/junit - only for testing
 	#todo create elemental2
 
-	#clang-c/websocketpp/rapidjson - from SUSE
+	#clang-c/websocketpp/rapidjson - inspired by SUSE
 	#unbundle clang-c
-	#rm -r ${S}/usr/share/rstudio/resources/app/bin/rsession
+	use clang && rm -r "${S}/src/cpp/core/include/core/libclang/clang-c"
+	eprefixify src/cpp/core/libclang/LibClang.cpp
 
 	#unbundle websocketpp
-	rm -r ${S}/src/cpp/ext/websocketpp/
-	ln -s ${PREFIX}/usr/include/websocketpp ${S}/src/cpp/ext/websocketpp || die "Failed to bundle websocketpp"
+	rm -r "${S}/src/cpp/ext/websocketpp/"
+	ln -s "${PREFIX}/usr/include/websocketpp" "${S}/src/cpp/ext/websocketpp" || die "Failed to bundle websocketpp"
 
 	#unbundle rapidjson
-	rm -r ${S}/src/cpp/shared_core/include/shared_core/json/rapidjson/
-	ln -s ${EPREFIX}/usr/include/rapidjson ${S}/src/cpp/shared_core/include/shared_core/json/rapidjson || die "failed to bundle rapidjson"
+	rm -r "${S}/src/cpp/shared_core/include/shared_core/json/rapidjson/"
+	ln -s "${EPREFIX}/usr/include/rapidjson" "${S}/src/cpp/shared_core/include/shared_core/json/rapidjson" || die "failed to bundle rapidjson"
 
 	# make sure icons and mime stuff are with prefix
 	sed -i \
@@ -2160,6 +2166,9 @@ src_configure() {
 		-DQUARTO_ENABLED=$(usex quarto TRUE FALSE)
 		-DRSTUDIO_USE_SYSTEM_SOCI=TRUE
 	)
+
+	use clang && mycmakeargs+=( -DSYSTEM_LIBCLANG_PATH=$(get_llvm_prefix))
+
 	if use electron; then
 		mycmakeargs+=( -DRSTUDIO_INSTALL_FREEDESKTOP="ON" )
 	elif use qt5 ; then
