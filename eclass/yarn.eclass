@@ -85,10 +85,26 @@ yarn_build_cache(){
 _EOF_
 	done
 	einfo "Finished building Yarn cache"
+	touch ${YARN_CONFIG}
 }
 yarn_set_config(){
 	[[ -z $1 || -z $2 ]]  && die "Missing argument(s) for yarn_set_config"
 	yarn config set ${1} ${2} ${YARN_CMD_OPTIONS} || die "Failed to set ${1}"
+}
+yarn_set_gyp_file(){
+	local node_gyp_file_temp=""
+	local bin_path="bin/node-gyp.js"
+
+	if [[ -z $1 ]];then
+		node_gyp_file_temp="/usr/$(get_libdir)/node_modules/node-gyp/${bin_path}"
+		[[ -f "${node_gyp_file_temp}" ]] &&	NODE_GYP_FILE="${node_gyp_file_temp}" || die "Failed to find system node-gyp bin"
+	else
+		[[ ! -d $1 ]] && die "${1} NOT a directory"
+
+		node_gyp_file_temp="${1}/${bin_path}"
+		[[ -f "${node_gyp_file_temp}" ]] && NODE_GYP_FILE="${node_gyp_file_temp}" || die "Failed to find ${node_gyp_file_temp}"
+	fi
+	einfo "node-gyp file located at ${NODE_GYP_FILE}"
 }
 yarn_src_prepare_gyp(){
 	[[ ! -f ${NODE_GYP_DIR}/package.json ]] && die "Node Gyp ${NODE_GYP_DIR}/package.json not found"
@@ -107,12 +123,12 @@ yarn_src_compile_gyp(){
 	[[ $NODE_GYP_VER} != "" ]] || return
 
 	einfo "Building node-gyp@${NODE_GYP_VER}"
-	pushd ${NODE_GYP_DIR}
+	pushd ${NODE_GYP_DIR} > /dev/null
 	echo "yarn-offline-mirror \"${YARN_FILES_DIR}\"" > ${YARN_CONFIG}
 	
 	yarn_src_compile
 	if [[ -f bin/node-gyp.js ]]; then
-		NODE_GYP_FILE="${NODE_GYP_DIR}/bin/node-gyp.js"
+		yarn_set_gyp_file ${NODE_GYP_DIR}
 	else
 		die "Failed to find Node GYP"
 	fi
