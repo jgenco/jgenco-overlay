@@ -3,689 +3,7 @@
 
 EAPI=8
 
-inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm yarn prefix
-
-#####Start of GYP package list#####
-NODE_GYP_VER="9.1.0"
-NODE_GYP_SKEIN="
-node-gyp@9.1.0
-@gar/promisify@1.1.3
-@npmcli/fs@2.1.2
-@npmcli/move-file@2.0.1
-@tootallnate/once@2.0.0
-abbrev@1.1.1
-agent-base@6.0.2
-agentkeepalive@4.2.1
-aggregate-error@3.1.0
-ansi-regex@5.0.1
-aproba@2.0.0
-are-we-there-yet@3.0.1
-balanced-match@1.0.2
-brace-expansion@1.1.11
-brace-expansion@2.0.1
-cacache@16.1.2
-chownr@2.0.0
-clean-stack@2.2.0
-color-support@1.1.3
-concat-map@0.0.1
-console-control-strings@1.1.0
-debug@4.3.4
-delegates@1.0.0
-depd@1.1.2
-emoji-regex@8.0.0
-encoding@0.1.13
-env-paths@2.2.1
-err-code@2.0.3
-fs-minipass@2.1.0
-fs.realpath@1.0.0
-gauge@4.0.4
-glob@7.2.3
-glob@8.0.3
-graceful-fs@4.2.10
-has-unicode@2.0.1
-http-cache-semantics@4.1.0
-http-proxy-agent@5.0.0
-https-proxy-agent@5.0.1
-humanize-ms@1.2.1
-iconv-lite@0.6.3
-imurmurhash@0.1.4
-indent-string@4.0.0
-infer-owner@1.0.4
-inflight@1.0.6
-inherits@2.0.4
-ip@2.0.0
-is-fullwidth-code-point@3.0.0
-is-lambda@1.0.1
-isexe@2.0.0
-lru-cache@6.0.0
-lru-cache@7.13.2
-make-fetch-happen@10.2.1
-minimatch@3.1.2
-minimatch@5.1.0
-minipass-collect@1.0.2
-minipass-fetch@2.1.0
-minipass-flush@1.0.5
-minipass-pipeline@1.2.4
-minipass-sized@1.0.3
-minipass@3.3.4
-minizlib@2.1.2
-mkdirp@1.0.4
-ms@2.1.2
-ms@2.1.3
-negotiator@0.6.3
-nopt@5.0.0
-npmlog@6.0.2
-once@1.4.0
-p-map@4.0.0
-path-is-absolute@1.0.1
-promise-inflight@1.0.1
-promise-retry@2.0.1
-readable-stream@3.6.0
-retry@0.12.0
-rimraf@3.0.2
-safe-buffer@5.2.1
-safer-buffer@2.1.2
-semver@7.3.7
-set-blocking@2.0.0
-signal-exit@3.0.7
-smart-buffer@4.2.0
-socks-proxy-agent@7.0.0
-socks@2.7.0
-ssri@9.0.1
-string-width@4.2.3
-string_decoder@1.3.0
-strip-ansi@6.0.1
-tar@6.1.11
-unique-filename@1.1.1
-unique-slug@2.0.2
-util-deprecate@1.0.2
-which@2.0.2
-wide-align@1.1.5
-wrappy@1.0.2
-yallist@4.0.0
-"
-#####End   of GYP package list#####
-
-#####Start of Panmirror package list#####
-PANMIRROR_PACKAGE_HASH="01870a825d8ff1afede4893aec445ee5fa254314"
-PANMIRROR_SKEIN="
-@babel/code-frame@7.18.6
-@babel/helper-module-imports@7.18.6
-@babel/helper-validator-identifier@7.18.6
-@babel/highlight@7.18.6
-@babel/runtime@7.18.6
-@babel/types@7.18.7
-@emotion/babel-utils@0.6.10
-@emotion/hash@0.6.6
-@emotion/is-prop-valid@0.6.8
-@emotion/memoize@0.6.6
-@emotion/serialize@0.9.1
-@emotion/stylis@0.7.1
-@emotion/unitless@0.6.7
-@emotion/utils@0.8.2
-@mapbox/node-pre-gyp@1.0.9
-@textlint/ast-node-types@4.4.3
-@types/ace@0.0.43
-@types/diff-match-patch@1.0.32
-@types/js-yaml@4.0.5
-@types/lodash.debounce@4.0.7
-@types/lodash.orderby@4.6.7
-@types/lodash.uniqby@4.7.7
-@types/lodash@4.14.182
-@types/node@18.0.0
-@types/node@14.18.21
-@types/orderedmap@1.0.0
-@types/parse-json@4.0.0
-@types/pinyin@2.10.0
-@types/prop-types@15.7.5
-@types/prosemirror-commands@1.0.4
-@types/prosemirror-dropcursor@1.0.3
-@types/prosemirror-gapcursor@1.0.4
-@types/prosemirror-history@1.0.3
-@types/prosemirror-inputrules@1.0.4
-@types/prosemirror-keymap@1.0.4
-@types/prosemirror-model@1.16.2
-@types/prosemirror-schema-list@1.0.3
-@types/prosemirror-state@1.3.0
-@types/prosemirror-transform@1.4.2
-@types/prosemirror-view@1.23.3
-@types/react-dom@17.0.17
-@types/react-window@1.8.5
-@types/react@18.0.14
-@types/react@17.0.47
-@types/scheduler@0.16.2
-@types/unzip@0.1.1
-@types/zenscroll@4.0.1
-abbrev@1.1.1
-accepts@1.3.8
-acorn-jsx@4.1.1
-acorn@5.7.4
-agent-base@6.0.2
-ajax-request@1.2.3
-ajv@6.12.6
-ansi-escapes@3.2.0
-ansi-regex@3.0.1
-ansi-regex@5.0.1
-ansi-styles@3.2.1
-ansi-styles@4.3.0
-ansi@0.3.1
-anymatch@1.3.2
-app-root-path@1.4.0
-app-root-path@2.2.1
-aproba@2.0.0
-are-we-there-yet@2.0.0
-arg@4.1.3
-argparse@2.0.1
-arr-diff@2.0.0
-arr-diff@4.0.0
-arr-flatten@1.1.0
-arr-union@3.1.0
-array-flatten@1.1.1
-array-unique@0.2.1
-array-unique@0.3.2
-asn1@0.2.6
-assert-plus@1.0.0
-assign-symbols@1.0.0
-async-each@1.0.3
-asynckit@0.4.0
-atob@2.1.2
-aws-sign2@0.7.0
-aws4@1.11.0
-babel-plugin-emotion@9.2.11
-babel-plugin-macros@2.8.0
-babel-plugin-syntax-jsx@6.18.0
-babel-runtime@6.26.0
-balanced-match@1.0.2
-base16@1.0.0
-base64-img@1.0.4
-base64-js@1.5.1
-base@0.11.2
-bcrypt-pbkdf@1.0.2
-biblatex-csl-converter@2.0.4
-binary-extensions@1.13.1
-binary@0.3.0
-bindings@1.5.0
-body-parser@1.20.0
-boundary@1.0.1
-bowser@2.11.0
-brace-expansion@1.1.11
-braces@1.8.5
-braces@2.3.2
-buffer-from@1.1.2
-buffers@0.1.1
-bytes@3.1.2
-cache-base@1.0.1
-call-bind@1.0.2
-callsites@3.1.0
-caseless@0.12.0
-chain-able@1.0.1
-chain-able@3.0.0
-chainsaw@0.1.0
-chalk@2.4.2
-chardet@0.4.2
-chokidar@1.7.0
-chownr@2.0.0
-class-utils@0.3.6
-clean-css@4.2.4
-cli-cursor@2.1.0
-cli-width@2.2.1
-clipboard@2.0.11
-cliui@7.0.4
-collection-visit@1.0.0
-color-convert@1.9.3
-color-convert@2.0.1
-color-name@1.1.3
-color-name@1.1.4
-color-support@1.1.3
-combined-stream@1.0.8
-commander@2.20.3
-commander@1.1.1
-component-emitter@1.3.0
-concat-map@0.0.1
-concat-stream@1.6.2
-concat-stream@2.0.0
-console-control-strings@1.1.0
-content-disposition@0.5.4
-content-type@1.0.4
-convert-source-map@1.8.0
-cookie-signature@1.0.6
-cookie@0.5.0
-copy-descriptor@0.1.1
-core-js@2.6.12
-core-util-is@1.0.2
-core-util-is@1.0.3
-cosmiconfig@6.0.0
-create-emotion-styled@9.2.8
-create-emotion@9.2.12
-create-react-context@0.1.6
-csstype@2.6.20
-csstype@3.1.0
-dashdash@1.14.1
-debug@2.6.9
-debug@4.3.4
-decode-uri-component@0.2.0
-deep-is@0.1.4
-define-property@0.2.5
-define-property@1.0.0
-define-property@2.0.2
-delayed-stream@1.0.0
-delegate@3.2.0
-delegates@1.0.0
-depd@2.0.0
-destroy@1.2.0
-detect-libc@2.0.1
-diff-match-patch@1.0.5
-diff@4.0.2
-ecc-jsbn@0.1.2
-ee-first@1.1.1
-emoji-regex@8.0.0
-emotion@9.2.12
-encodeurl@1.0.2
-error-ex@1.3.2
-es6-object-assign@1.1.0
-escalade@3.1.1
-escape-html@1.0.3
-escape-string-regexp@1.0.5
-escodegen@1.14.3
-esprima@4.0.1
-estraverse@4.3.0
-esutils@2.0.3
-etag@1.8.1
-exec-sh@0.2.2
-expand-brackets@0.1.5
-expand-brackets@2.1.4
-expand-range@1.8.2
-express@4.18.1
-extend-shallow@2.0.1
-extend-shallow@3.0.2
-extend@3.0.2
-external-editor@2.2.0
-extglob@0.3.2
-extglob@2.0.4
-extsprintf@1.3.0
-extsprintf@1.4.1
-fast-deep-equal@3.1.3
-fast-json-stable-stringify@2.1.0
-fast-levenshtein@2.0.6
-fast-xml-parser@3.21.1
-figures@2.0.0
-file-match@1.0.2
-file-system@2.2.2
-file-uri-to-path@1.0.0
-filename-regex@2.0.1
-fill-range@2.2.4
-fill-range@4.0.0
-finalhandler@1.2.0
-find-root@1.1.0
-fliplog@0.3.13
-for-in@1.0.2
-for-own@0.1.5
-forever-agent@0.6.1
-form-data@2.3.3
-forwarded@0.2.0
-fragment-cache@0.2.1
-fresh@0.5.2
-fs-extra@7.0.1
-fs-minipass@2.1.0
-fs.realpath@1.0.0
-fsevents@1.2.13
-fstream@0.1.31
-function-bind@1.1.1
-fuse-box@3.7.1
-fuse-concat-with-sourcemaps@1.0.5
-fuse.js@6.6.2
-gauge@3.0.2
-get-caller-file@2.0.5
-get-intrinsic@1.1.2
-get-value@2.0.6
-getopts@2.3.0
-getpass@0.1.7
-glob-base@0.3.0
-glob-parent@2.0.0
-glob@7.2.3
-good-listener@1.2.2
-graceful-fs@4.2.10
-graceful-fs@3.0.12
-har-schema@2.0.0
-har-validator@5.1.5
-has-flag@3.0.0
-has-symbols@1.0.3
-has-unicode@2.0.1
-has-value@0.3.1
-has-value@1.0.0
-has-values@0.1.4
-has-values@1.0.0
-has@1.0.3
-html@1.0.0
-http-errors@2.0.0
-http-signature@1.2.0
-https-proxy-agent@5.0.1
-iconv-lite@0.4.24
-ie-array-find-polyfill@1.1.0
-ieee754@1.2.1
-import-fresh@3.3.0
-inflight@1.0.6
-inherits@2.0.4
-inquirer@3.3.0
-ipaddr.js@1.9.1
-is-accessor-descriptor@0.1.6
-is-accessor-descriptor@1.0.0
-is-arrayish@0.2.1
-is-binary-path@1.0.1
-is-buffer@1.1.6
-is-core-module@2.9.0
-is-data-descriptor@0.1.4
-is-data-descriptor@1.0.0
-is-descriptor@0.1.6
-is-descriptor@1.0.2
-is-dotfile@1.0.3
-is-equal-shallow@0.1.3
-is-extendable@0.1.1
-is-extendable@1.0.1
-is-extglob@1.0.0
-is-fullwidth-code-point@2.0.0
-is-fullwidth-code-point@3.0.0
-is-glob@2.0.1
-is-number@2.1.0
-is-number@3.0.0
-is-number@4.0.0
-is-plain-object@2.0.4
-is-posix-bracket@0.1.1
-is-primitive@2.0.0
-is-typedarray@1.0.0
-is-windows@1.0.2
-isarray@0.0.1
-isarray@1.0.0
-isobject@2.1.0
-isobject@3.0.1
-isstream@0.1.2
-js-tokens@4.0.0
-js-yaml@4.1.0
-jsbn@0.1.1
-jsesc@0.5.0
-json-parse-even-better-errors@2.3.1
-json-schema-traverse@0.4.1
-json-schema@0.4.0
-json-stringify-safe@5.0.1
-jsondiffpatch@0.3.11
-jsonfile@4.0.0
-jsprim@1.4.2
-keypress@0.1.0
-kind-of@3.2.2
-kind-of@4.0.0
-kind-of@5.1.0
-kind-of@6.0.3
-lego-api@1.0.8
-levn@0.3.0
-lines-and-columns@1.2.4
-lodash._getnative@3.9.1
-lodash.curry@4.1.1
-lodash.debounce@3.1.1
-lodash.debounce@4.0.8
-lodash.flow@3.5.0
-lodash.orderby@4.6.0
-lodash.uniqby@4.7.0
-lodash@4.17.21
-loose-envify@1.4.0
-lru-cache@6.0.0
-make-dir@3.1.0
-make-error@1.3.6
-map-cache@0.2.2
-map-visit@1.0.0
-match-stream@0.0.2
-math-random@1.0.4
-media-typer@0.3.0
-memoize-one@5.2.1
-merge-descriptors@1.0.1
-merge@1.2.1
-methods@1.1.2
-micromatch@2.3.11
-micromatch@3.1.10
-mime-db@1.52.0
-mime-types@2.1.35
-mime@1.6.0
-mimic-fn@1.2.0
-minimatch@3.1.2
-minimist@1.2.6
-minipass@3.3.4
-minizlib@2.1.2
-mixin-deep@1.3.2
-mkdirp@0.5.6
-mkdirp@1.0.4
-ms@2.0.0
-ms@2.1.2
-ms@2.1.3
-mustache@2.3.2
-mute-stream@0.0.7
-nan@2.16.0
-nanomatch@1.2.13
-nanoseconds@0.1.0
-natives@1.1.6
-negotiator@0.6.3
-node-addon-api@3.2.1
-node-fetch@2.6.7
-nodejieba@2.5.2
-nopt@5.0.0
-nopt@1.0.10
-normalize-path@2.1.1
-npmlog@5.0.1
-oauth-sign@0.9.0
-object-assign@4.1.1
-object-copy@0.1.0
-object-inspect@1.12.2
-object-visit@1.0.1
-object.omit@2.0.1
-object.pick@1.3.0
-object_values@0.1.2
-on-finished@2.4.1
-once@1.4.0
-onetime@2.0.1
-optionator@0.8.3
-options@0.0.6
-orderedmap@1.1.1
-orderedmap@1.1.8
-orderedmap@2.0.0
-os-tmpdir@1.0.2
-over@0.0.5
-parent-module@1.0.1
-parse-glob@3.0.4
-parse-json@5.2.0
-parseurl@1.3.3
-pascalcase@0.1.1
-path-is-absolute@1.0.1
-path-parse@1.0.7
-path-to-regexp@0.1.7
-path-type@4.0.0
-performance-now@2.1.0
-pinyin@2.11.2
-posix-character-classes@0.1.1
-postcss@6.0.23
-prelude-ls@1.1.2
-preserve@0.2.0
-pretty-time@0.2.0
-prettysize@0.0.3
-process-nextick-args@2.0.1
-prop-types@15.8.1
-prosemirror-changeset@2.1.2
-prosemirror-commands@1.1.10
-prosemirror-dev-tools@2.1.1
-prosemirror-dropcursor@1.3.5
-prosemirror-gapcursor@1.1.5
-prosemirror-history@1.2.0
-prosemirror-inputrules@1.1.3
-prosemirror-keymap@1.1.4
-prosemirror-keymap@1.2.0
-prosemirror-model@1.14.3
-prosemirror-model@1.18.1
-prosemirror-schema-list@1.1.5
-prosemirror-state@1.3.4
-prosemirror-state@1.4.1
-prosemirror-tables@1.1.1
-prosemirror-transform@1.3.2
-prosemirror-transform@1.6.0
-prosemirror-utils@0.9.6
-prosemirror-view@1.20.1
-prosemirror-view@1.26.3
-proxy-addr@2.0.7
-psl@1.8.0
-pullstream@0.4.1
-punycode@2.1.1
-pure-color@1.3.0
-qs@6.10.3
-qs@6.5.3
-randomatic@3.1.1
-range-parser@1.2.1
-raw-body@2.5.1
-react-base16-styling@0.5.3
-react-dock@0.2.4
-react-dom@17.0.2
-react-emotion@9.2.12
-react-is@16.13.1
-react-json-tree@0.11.2
-react-window@1.8.7
-react@17.0.2
-readable-stream@2.3.7
-readable-stream@3.6.0
-readable-stream@1.0.34
-readdirp@2.2.1
-realm-utils@1.0.9
-regenerate-unicode-properties@9.0.0
-regenerate@1.4.2
-regenerator-runtime@0.11.1
-regenerator-runtime@0.13.9
-regex-cache@0.4.4
-regex-not@1.0.2
-regexpu-core@4.8.0
-regjsgen@0.5.2
-regjsparser@0.7.0
-remove-trailing-separator@1.1.0
-repeat-element@1.1.4
-repeat-string@1.6.1
-request@2.88.2
-require-directory@2.1.1
-resolve-from@4.0.0
-resolve-url@0.2.1
-resolve@1.22.1
-restore-cursor@2.0.0
-ret@0.1.15
-rimraf@2.7.1
-rimraf@3.0.2
-rope-sequence@1.3.3
-run-async@2.4.1
-rx-lite-aggregates@4.0.8
-rx-lite@4.0.8
-safe-buffer@5.2.1
-safe-buffer@5.1.2
-safe-regex@1.1.0
-safer-buffer@2.1.2
-scheduler@0.20.2
-select@1.1.2
-semver@6.3.0
-semver@7.3.7
-send@0.18.0
-sentence-splitter@3.2.2
-serve-static@1.15.0
-set-blocking@2.0.0
-set-value@2.0.1
-setimmediate@1.0.5
-setprototypeof@1.2.0
-shorthash@0.0.2
-side-channel@1.0.4
-signal-exit@3.0.7
-slice-stream@1.0.0
-snapdragon-node@2.1.1
-snapdragon-util@3.0.1
-snapdragon@0.8.2
-source-map-resolve@0.5.3
-source-map-support@0.5.21
-source-map-url@0.4.1
-source-map@0.5.7
-source-map@0.6.1
-source-map@0.7.4
-sourcemap-blender@1.0.5
-split-string@3.1.0
-sshpk@1.17.0
-static-extend@0.1.2
-statuses@2.0.1
-stream-browserify@2.0.2
-string-width@4.2.3
-string-width@2.1.1
-string_decoder@1.3.0
-string_decoder@0.10.31
-string_decoder@1.1.1
-strip-ansi@4.0.0
-strip-ansi@6.0.1
-strnum@1.0.5
-structured-source@3.0.2
-stylis-rule-sheet@0.0.10
-stylis@3.5.4
-supports-color@5.5.0
-supports-preserve-symlinks-flag@1.0.0
-tar@6.1.11
-terser@4.8.0
-thenby@1.3.4
-through@2.3.8
-tiny-emitter@2.1.0
-tlite@0.1.9
-tmp@0.0.33
-to-fast-properties@2.0.0
-to-object-path@0.3.0
-to-regex-range@2.1.1
-to-regex@3.0.2
-toidentifier@1.0.1
-touch@2.0.2
-tough-cookie@2.5.0
-tr46@0.0.3
-transliteration@2.2.0
-traverse@0.3.9
-ts-node@8.10.2
-tslib@1.14.1
-tunnel-agent@0.6.0
-tweetnacl@0.14.5
-type-check@0.3.2
-type-is@1.6.18
-typedarray@0.0.6
-typescript@3.8.3
-uglify-js@3.16.1
-ultron@1.0.2
-unicode-canonical-property-names-ecmascript@2.0.0
-unicode-match-property-ecmascript@2.0.0
-unicode-match-property-value-ecmascript@2.0.0
-unicode-property-aliases-ecmascript@2.0.0
-union-value@1.0.1
-universalify@0.1.2
-unpipe@1.0.0
-unset-value@1.0.0
-unstated@2.1.1
-unzip@0.1.11
-uri-js@4.4.1
-urix@0.1.0
-use@3.1.1
-util-deprecate@1.0.2
-utils-extend@1.0.8
-utils-merge@1.0.1
-uuid@3.4.0
-vary@1.1.2
-verror@1.10.0
-w3c-keyname@2.2.2
-w3c-keyname@2.2.4
-watch@1.0.2
-webidl-conversions@3.0.1
-whatwg-url@5.0.0
-wide-align@1.1.5
-word-wrap@1.2.3
-wrap-ansi@7.0.0
-wrappy@1.0.2
-ws@1.1.5
-y18n@5.0.8
-yallist@4.0.0
-yaml@1.10.2
-yargs-parser@20.2.9
-yargs@16.2.0
-yn@3.1.1
-zenscroll@4.0.2
-"
-#####End   of PANMIRROR package list#####
+inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm prefix
 
 #####Start of ELECTRON  package list#####
 ELECTRON_PACKAGE_HASH="9cdd2c4bd607dfa6dea348a9240cb88b84f61a06"
@@ -1846,17 +1164,25 @@ if [[ "${PV}" == *9999 ]];then
 	EGIT_REPO_URI="https://github.com/rstudio/${PN}"
 	EGIT_BRANCH="main"
 
+	RSTUDIO_BINARY_FILENAME="rstudio-2022.12.0-preview-298-amd64-debian.tar.gz"
+	RSTUDIO_BINARY_DIR="${WORKDIR}/${RSTUDIO_BINARY_FILENAME/preview-/preview+}"
+	RSTUDIO_BINARY_DIR=${RSTUDIO_BINARY_DIR/%-amd64-debian.tar.gz}
+	#https://dailies.rstudio.com/rstudio/elsbeth-geranium/electron/bionic-amd64-xcopy/
+	SRC_URI="panmirror? ( https://s3.amazonaws.com/rstudio-ide-build/electron/jammy/amd64/${RSTUDIO_BINARY_FILENAME} ) "
 else
 	RSTUDIO_SOURCE_FILENAME="v$(ver_rs 3 "+").tar.gz"
 	S="${WORKDIR}/${PN}-$(ver_rs 3 "-")"
-	SRC_URI="https://github.com/rstudio/rstudio/archive/${RSTUDIO_SOURCE_FILENAME} "
+	SRC_URI="https://github.com/rstudio/rstudio/archive/${RSTUDIO_SOURCE_FILENAME} -> ${P}.tar.gz "
+
+	#https://posit.co/download/rstudio-desktop/
+	RSTUDIO_BINARY_FILENAME="rstudio-$(ver_rs 3 "-")-x86_64-fedora.tar.gz"
+	RSUTDIO_BINARY_DIR="${WORKDIR}/rstudio-$(ver_rs 3 "+")"
+	SRC_URI+="panmirror? ( https://download1.rstudio.org/desktop/centos7/x86_64/${RSTUDIO_BINARY_FILENAME} ) "
 fi
 
-#node_gyp and panmirror are seperate lines
 #buffers@0.1.1 = MIT/X11
 LICENSE="AGPL-3 BSD MIT Apache-2.0 Boost-1.0 CC-BY-4.0 MIT GPL-3 ISC
 test? ( EPL-1.0 )
-panmirror? ( BSD-2 ISC MIT )
 panmirror? ( || ( AFL-2.1 BSD ) || ( MIT Apache-2.0 ) 0BSD Apache-2.0 BSD BSD-2 ISC LGPL-3 MIT PYTHON Unlicense )
 electron? ( MIT Apache-2.0 BSD )"
 
@@ -1865,7 +1191,7 @@ build_r_src_uri(){
 		echo "https://cloud.r-project.org/src/contrib/${RPKG}.tar.gz -> R_${RPKG}.tar.gz "
 	done
 }
-SRC_URI+="panmirror? ( $(npm_build_src_uri ${NODE_GYP_SKEIN}) $(npm_build_src_uri ${PANMIRROR_SKEIN}) ) "
+
 SRC_URI+="electron?  ( $(npm_build_src_uri ${RELECTRON_NODEJS_DEPS}) ) "
 SRC_URI+="quarto? ( doc? ( $(build_r_src_uri ${R_RMARKDOWN_PKGS} ) ) ) "
 SRC_URI+="test?          ( $(build_r_src_uri ${R_TESTTHAT_PKGS} ) ) "
@@ -1913,10 +1239,6 @@ RDEPEND="
 		)
 	)
 	quarto? ( >=app-text/quarto-cli-0.9.230 )
-	panmirror? (
-		sys-apps/yarn
-		>=net-libs/nodejs-16.14.0
-	)
 	electron? (
 		>=net-libs/nodejs-16.14.0[npm]
 	)
@@ -1953,6 +1275,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-9999-hunspell.patch"
 	"${FILESDIR}/${PN}-9999-add-support-for-RapidJSON.patch"
 	"${FILESDIR}/${PN}-9999-system-clang.patch"
+	"${FILESDIR}/${PN}-2022.07.0.548.panmirror_disable.patch"
 )
 
 DOCS=(CONTRIBUTING.md COPYING INSTALL NEWS.md NOTICE README.md version/news )
@@ -1984,9 +1307,8 @@ src_unpack(){
 	else
 		unpack ${P}.tar.gz
 	fi
-
+	use panmirror && unpack ${RSTUDIO_BINARY_FILENAME}
 	npm_src_unpack
-	use panmirror && yarn_build_cache ${NODE_GYP_SKEIN} ${PANMIRROR_SKEIN}
 	use electron  &&  npm_build_cache ${RELECTRON_NODEJS_DEPS}
 
 	if use electron; then
@@ -2082,24 +1404,6 @@ src_prepare(){
 		-e "s:/usr:${EPREFIX}/usr:g" \
 		CMakeGlobals.txt src/cpp/desktop/CMakeLists.txt || die
 
-	if  use panmirror;then
-		local panmirror_src_hash=$(sha1sum "${S}/src/gwt/panmirror/src/editor/package.json")
-		if [[ ${PANMIRROR_PACKAGE_HASH} != ${panmirror_src_hash:0:40} ]];then
-			die "Panmirror Hash doesn't match"
-		else
-			yarn_src_prepare_gyp "${FILESDIR}/node-gyp-${NODE_GYP_VER}-9999-yarn.lock"
-
-			eapply  "${FILESDIR}/${PN}-${PV_RELEASE}-panmirror-package.patch"
-			#npm_fix_lock_path  "${FILESDIR}/${PN}-${PV_RELEASE}-panmirror-yarn.lock" "${S}/src/gwt/panmirror/src/editor/yarn.lock" "Panmirror's"
-			#this is a temporary patch; next release build w/o __GENTOO_PATH__ use native urls
-			#caution this could pick up base64 with the pattern ++/
-			sed  -E  "s#file://__GENTOO_PATH__/((@[^+]+)\+)?(.*)@(.*).tgz#https://registry.yarnpkg.com/\2++/\3/-/\3-\4.tgz#; s#/\+\+/#++/#;s#\+\+/#/#" \
-				"${FILESDIR}/rstudio-${PV_RELEASE}-panmirror-yarn.lock" > "${S}/src/gwt/panmirror/src/editor/yarn.lock"
-		fi
-	else
-		eapply "${FILESDIR}/${PN}-2022.07.0.548.panmirror_disable.patch"
-	fi
-
 	if  use electron;then
 		local electron_src_hash=$(sha1sum "${S}/src/node/desktop/package.json")
 		if [[ ${ELECTRON_PACKAGE_HASH} != ${electron_src_hash:0:40} ]];then
@@ -2181,20 +1485,6 @@ src_configure() {
 	cmake_src_configure
 }
 src_compile(){
-	if use panmirror;then
-		# Building NODE-GYP
-		yarn_src_compile_gyp
-		# Finished Building node-gyp
-
-		# Building PANMIRROR
-		einfo "Building PANMIRROR"
-		pushd "${S}/src/gwt/panmirror/src/editor" > /dev/null
-		yarn_set_config ignore-engines true
-		yarn_src_compile
-		popd > /dev/null
-		#Finished Building PANMIRROR
-	fi
-
 	export EANT_BUILD_XML="src/gwt/build.xml"
 	export EANT_BUILD_TARGET="build"
 	export ANT_OPTS="-Duser.home=${T} -Djava.util.prefs.userRoot=${T}"
@@ -2243,6 +1533,11 @@ src_compile(){
 
 src_install() {
 	cmake_src_install
+	if use panmirror;then
+		insinto /usr/share/rstudio/www/js
+		doins -r "${RSTUDIO_BINARY_DIR}/resources/app/www/js/panmirror"
+	fi
+
 	if use server ;then
 		dopamd src/cpp/server/extras/pam/rstudio
 		newinitd "${FILESDIR}/rstudio-server" rstudio-server
