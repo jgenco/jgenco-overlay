@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "node-addon-api": "^5.0.0",
+    "node-system-fonts": "^1.0.1",
+    "unix-dgram": "^2.0.6"
+  }
+}

@@ -39,15 +39,17 @@ index 4e1ac4ee26..11221eec25 100644
           <arg value="${panmirror.target}"/>
           <env key="NODE_PATH" path="${env.NODE_PATH}:/opt/rstudio-tools/panmirror/node_modules"/>
 diff --git a/src/node/desktop/CMakeLists.txt b/src/node/desktop/CMakeLists.txt
-index da724c6e1f..b6ebbc4519 100644
+index 2198295bb1..70c9816591 100644
 --- a/src/node/desktop/CMakeLists.txt
 +++ b/src/node/desktop/CMakeLists.txt
-@@ -167,6 +168,8 @@ else()
+@@ -167,7 +167,9 @@ else()
           ${CMAKE_COMMAND} -E env
           "PATH=${MODIFIED_PATH}"
           "MAKEFLAGS="
+-         ${NPM} run package
 +	 "HOME=$ENV{WORKDIR}"
 +	 "XDG_CACHE_HOME=$ENV{WORKDIR}/.cache"
-          ${NPM} run package
++         ${NPM} install
     )
  
+ endif()
