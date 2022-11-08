@@ -275,7 +275,7 @@ RDEPEND="
 			>=dev-qt/qtxmlpatterns-${QT_VER}:${QT_SLOT}
 		)
 	)
-	quarto? ( >=app-text/quarto-cli-0.9.230 )
+	quarto? ( >=app-text/quarto-cli-1.1.251 )
 	electron? (
 		>=net-libs/nodejs-16.14.0[npm]
 	)
