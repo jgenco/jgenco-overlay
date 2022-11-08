@@ -1292,6 +1292,17 @@ install_r_packages(){
 	R_LIBS="${R_LIB_PATH}" Rscript ${r_script} || die "Failed to install R packages"
 }
 
+pkg_setup(){
+	use electron && QA_PREBUILT="
+	usr/share/${PN}/rstudio
+	usr/share/${PN}/chrome-sandbox
+	usr/share/${PN}/chrome_crashpad_handler
+	usr/share/${PN}/lib*
+	"
+	llvm_pkg_setup
+	java-pkg-2_pkg_setup
+}
+
 src_unpack(){
 	if [[ "${PV}" == *9999 ]];then
 		if use electron; then
