@@ -231,8 +231,8 @@ build_r_src_uri(){
 }
 
 SRC_URI+="electron?  ( $(npm_build_src_uri ${ELECTRON_NODEJS_DEPS}) ) "
-SRC_URI+="quarto? ( doc? ( $(build_r_src_uri ${R_RMARKDOWN_PKGS} ) ) ) "
-SRC_URI+="test?          ( $(build_r_src_uri ${R_TESTTHAT_PKGS} ) ) "
+SRC_URI+="doc?       ( $(build_r_src_uri ${R_RMARKDOWN_PKGS}) ) "
+SRC_URI+="test?      ( $(build_r_src_uri ${R_TESTTHAT_PKGS}) ) "
 
 #If not using system electron modify unpack also
 SRC_URI+="electron?  (
@@ -252,7 +252,7 @@ RDEPEND="
 	>=dev-libs/soci-4.0.3[postgres,sqlite]
 	>=dev-libs/libfmt-8.1.1
 	sys-process/lsof
-	>=dev-cpp/yaml-cpp-0.7.0_p1
+	=dev-cpp/yaml-cpp-0.7.0-r2
 	<=virtual/jdk-11:=
 	server? (
 		acct-user/rstudio-server
@@ -295,6 +295,7 @@ BDEPEND="
 	electron? ( app-arch/unzip )
 	dev-cpp/websocketpp
 	dev-libs/rapidjson
+	doc? ( >=app-text/quarto-cli-1.1.251 )
 "
 PV_RELEASE="2022.07.0.548"
 PATCHES=(
@@ -538,12 +539,12 @@ src_compile(){
 	cmake_src_compile
 
 	local r_pkgs=()
-	use test   &&            r_pkgs+=(${R_TESTTHAT_PKGS[@]})
-	use doc && use quarto && r_pkgs+=(${R_RMARKDOWN_PKGS[@]})
+	use test && r_pkgs+=(${R_TESTTHAT_PKGS[@]})
+	use doc  && r_pkgs+=(${R_RMARKDOWN_PKGS[@]})
 	[ ${#r_pkgs[@]} -gt 0 ] && install_r_packages ${r_pkgs[@]}
 
 	#NOTE curently not in the build system
-	if use doc && use quarto;then
+	if use doc;then
 		pushd "${S}/docs/user/rstudio"
 		R_LIBS="${R_LIB_PATH}" quarto render || die " Quarto failed to render user quide"
 		popd
@@ -606,7 +607,7 @@ src_install() {
 	rm "${ED}/usr/share/${PN}/"{COPYING,INSTALL,NOTICE,SOURCE,VERSION,README.md}
 
 	einstalldocs
-	if use quarto && use doc;then
+	if use doc;then
 		mv "${S}/docs/user/rstudio/"{_site,user_guide}
 		dodoc -r  docs/user/rstudio/user_guide
 	fi
