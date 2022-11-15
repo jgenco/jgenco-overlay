@@ -656,31 +656,6 @@ src_prepare() {
 		"${FILESDIR}/v8-0.49.0-enable-gcc.patch"
 	popd > /dev/null
 
-	#Remove windows only crates - windows_.*,winapi*,winres,winreg,clipboard-win,ipconfiga
-	#this code has been disabled after src_test was created
-	#probably too much work to do
-	#einfo "Removing Windows requirements from crates..."
-	#local cargo_files=($(find "${WORKDIR}" -name "Cargo.toml"))
-	awk_pgrm='BEGIN {cfgwin=0}
-{
-if (/target."cfg\(windows\)/) {cfgwin=1}
-if (/\[target."cfg\(target_os = \\"windows\\"\)"/){cfgwin=1}
-if (/dx1. = \[/){dxwin=1}
-if(!cfgwin && !dxwin){print}
-if(dxwin && /^\]$/){dxwin=0}
-if(/^$/) {cfgwin=0}
-}'
-	for cargo_file in ${cargo_files[@]}; do
-		#cp $cargo_file{,.bak}
-		#awk "${awk_pgrm}" ${cargo_file} > ${cargo_file}.new   || die "Failed to fix(awk) ${cargo_file}"
-		#mv ${cargo_file}.new ${cargo_file}
-		#sed -i "/ \"winapi/d;/ \"windows-sys/d" ${cargo_file} || die "Failed to fix(sed) ${cargo_file}"
-		:
-	done
-	#sed -i "/ \"normpath\"/d" "${ECARGO_VENDOR}/$(find_crate swc_ecma_loader-)/Cargo.toml"    || die "Failed to fix swc_ecma_loader"
-	#sed -i "/\"ipconfig\"/d"  "${ECARGO_VENDOR}/$(find_crate trust-dns-resolver-)/Cargo.toml" || die "Failed to fix trust-dns-resolver"
-	#sed -i "/\"dx1[0-9]\"/d"  "${ECARGO_VENDOR}/$(find_crate wgpu-core-)/Cargo.toml"          || die "Failed to fix wgpu-core"
-
 	mkdir "${S}/napi_sym"
 	ln -s "${ECARGO_VENDOR}/$(find_crate napi_sym-)/symbol_exports.json" "${S}/napi_sym" || die "Failed to link missing napi_sym file"
 
