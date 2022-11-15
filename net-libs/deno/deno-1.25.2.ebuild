@@ -543,10 +543,6 @@ inherit cargo llvm multiprocessing toolchain-funcs check-reqs bash-completion-r1
 DESCRIPTION="A modern runtime for JavaScript and TypeScript"
 HOMEPAGE="https://deno.land/"
 SRC_URI="$(cargo_crate_uris)"
-MISSING_V8_FILES=(x64.profile)
-for missing in ${MISSING_V8_FILES[@]}; do
-	SRC_URI+=" https://github.com/denoland/v8/raw/1f7df8c39451f3d53e9acef4b7b0476cf4f5eb66/tools/builtins-pgo/${missing} -> v8_0.49.0_${missing}"
-done
 
 # License set may be more restrictive as OR is not respected
 # use cargo-license for a more accurate license picture
@@ -586,15 +582,6 @@ src_prepare() {
 		"${FILESDIR}/v8-0.42.0-disable-auto-ccache.patch" \
 		"${FILESDIR}/v8-0.40.2-jobfix.patch" \
 		"${FILESDIR}/v8-0.49.0-enable-gcc.patch"
-	#missing files - arm64 version available
-	#hopefuly fixed next version
-	#https://github.com/denoland/rusty_v8/pull/1063
-	#https://github.com/Homebrew/homebrew-core/pull/108838
-	mkdir -p v8/tools/builtins-pgo/ || die "Failed to make missing dir"
-	for missing in ${MISSING_V8_FILES[@]}; do
-		cp "${DISTDIR}/v8_0.49.0_${missing}" v8/tools/builtins-pgo/${missing} || die "Failed to copy missing file"
-	done
-	popd > /dev/null
 	default
 	}
 src_compile() {
@@ -608,6 +595,10 @@ src_compile() {
 		gn_conf+=" is_clang=false"
 		gn_conf+=" use_custom_libcxx=false"
 	fi
+	#They didn't include the pgo files tools/builtins-pgo/{x64,arm64}.profile
+	#https://github.com/denoland/rusty_v8/pull/1063
+	#https://github.com/Homebrew/homebrew-core/pull/108838
+	gn_conf+=" v8_builtins_profiling_log_file=\"\""
 	export V8_FROM_SOURCE=1
 	#export SCCACHE=
 	#export CCACHE=
