@@ -82,7 +82,7 @@ renv_0.15.5
 ggplot2_3.3.6
 RSQLite_2.2.17
 "
-PYTHON_COMPAT=( python3_{8..10} )
+PYTHON_COMPAT=( python3_{8..11} )
 inherit bash-completion-r1 multiprocessing python-any-r1
 #NOTE previews for version x.y are simply x.y.[1..n]
 #     releases simply bump to x.y.n+1  no need to be fancy
@@ -134,7 +134,7 @@ PATCHES="
 	${FILESDIR}/quarto-cli-9999-configuration.patch
 "
 DEPEND="
-	>=net-libs/deno-1.25.2 <net-libs/deno-1.26.0
+	>=net-libs/deno-1.26.1 <net-libs/deno-1.27.0
 	|| (
 		>=app-text/pandoc-2.19.2
 		>=app-text/pandoc-bin-2.19.2
