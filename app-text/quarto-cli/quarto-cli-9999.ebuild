@@ -130,8 +130,8 @@ LICENSE="GPL-2+ MIT ZLIB BSD Apache-2.0 ISC || ( MIT GPL-3 )"
 SLOT="0"
 KEYWORDS=""
 PATCHES="
-	${FILESDIR}/quarto-cli-9999-pathfixes.patch
-	${FILESDIR}/quarto-cli-9999-configuration.patch
+	${FILESDIR}/quarto-cli-1.2.269-pathfixes.patch
+	${FILESDIR}/quarto-cli-1.2.269-configuration.patch
 "
 DEPEND="
 	>=net-libs/deno-1.26.1 <net-libs/deno-1.27.0
