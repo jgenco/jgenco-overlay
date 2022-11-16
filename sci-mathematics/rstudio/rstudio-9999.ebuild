@@ -275,7 +275,7 @@ RDEPEND="
 			>=dev-qt/qtxmlpatterns-${QT_VER}:${QT_SLOT}
 		)
 	)
-	quarto? ( >=app-text/quarto-cli-1.1.251 )
+	quarto? ( >=app-text/quarto-cli-1.2.269 )
 	electron? (
 		>=net-libs/nodejs-16.14.0[npm]
 	)
@@ -295,7 +295,7 @@ BDEPEND="
 	electron? ( app-arch/unzip )
 	dev-cpp/websocketpp
 	dev-libs/rapidjson
-	doc? ( >=app-text/quarto-cli-1.1.251 )
+	doc? ( >=app-text/quarto-cli-1.2.269 )
 "
 PV_RELEASE="2022.07.0.548"
 PATCHES=(
