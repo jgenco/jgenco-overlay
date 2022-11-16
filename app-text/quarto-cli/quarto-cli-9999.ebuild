@@ -131,7 +131,7 @@ SLOT="0"
 KEYWORDS=""
 PATCHES="
 	${FILESDIR}/quarto-cli-1.2.269-pathfixes.patch
-	${FILESDIR}/quarto-cli-1.2.269-configuration.patch
+	${FILESDIR}/quarto-cli-9999-configuration.patch
 "
 DEPEND="
 	>=net-libs/deno-1.26.1 <net-libs/deno-1.27.0
