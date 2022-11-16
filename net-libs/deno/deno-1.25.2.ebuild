@@ -559,13 +559,13 @@ BDEPEND="
 	>=virtual/rust-1.59.0
 "
 pkg_pretend() {
-	#This used 3.5GB using 3750M for safety
-	CHECKREQS_DISK_BUILD="3750M"
+	#This used 4.5GB using 4750M for safety
+	CHECKREQS_DISK_BUILD="4750M"
 	check-reqs_pkg_pretend
 	}
 
 pkg_setup() {
-	CHECKREQS_DISK_BUILD="3750M"
+	CHECKREQS_DISK_BUILD="4750M"
 	check-reqs_pkg_setup
 	}
 
