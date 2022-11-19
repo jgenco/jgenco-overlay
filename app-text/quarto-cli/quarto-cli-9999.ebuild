@@ -269,6 +269,10 @@ src_test(){
 	rm .Rprofile
 	#this lovely test needs internet access thus fails; so as punishment it breaks a large chunk of tests after it.
 	rm smoke/extensions/install.test.ts
+	#check test is for dev builds
+	[[ "${PV}" != *9999 ]] && rm smoke/env/check.test.ts
+	#install test runs 'quarto list' which requires internet access
+	rm smoke/env/install.test.ts
 
 	export QUARTO_ROOT="${S}"
 	export QUARTO_BASE_PATH=${S}
@@ -276,6 +280,8 @@ src_test(){
 	export QUARTO_SHARE_PATH=${QUARTO_BASE_PATH}/src/resources/
 	export QUARTO_DEBUG=true
 	export R_LIBS="${R_LIB_PATH}"
+	#add QUARTO_BIN_PATH so the test can find the newly built quarto
+	export PATH="${QUARTO_BIN_PATH}:${PATH}"
 	DENO_OPTS="--unstable --no-config --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/dev_import_map.json"
 	einfo "Starting unit test"
 	deno test ${DENO_OPTS} test.ts unit
