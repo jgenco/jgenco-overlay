@@ -204,8 +204,8 @@ if [[ "${PV}" == *9999 ]];then
 	RSTUDIO_BINARY_DIR="${WORKDIR}/${RSTUDIO_BINARY_FILENAME/preview-/preview+}"
 	RSTUDIO_BINARY_DIR=${RSTUDIO_BINARY_DIR/%-amd64-debian.tar.gz}
 	#https://dailies.rstudio.com/rstudio/elsbeth-geranium/electron/bionic-amd64-xcopy/
-	SRC_URI="panmirror? ( https://s3.amazonaws.com/rstudio-ide-build/electron/jammy/amd64/${RSTUDIO_BINARY_FILENAME} ) "
-	SRC_URI="electron?  ( https://s3.amazonaws.com/rstudio-ide-build/electron/jammy/amd64/${RSTUDIO_BINARY_FILENAME} ) "
+	SRC_URI+="panmirror? ( https://s3.amazonaws.com/rstudio-ide-build/electron/jammy/amd64/${RSTUDIO_BINARY_FILENAME} ) "
+	SRC_URI+="electron?  ( https://s3.amazonaws.com/rstudio-ide-build/electron/jammy/amd64/${RSTUDIO_BINARY_FILENAME} ) "
 else
 	RSTUDIO_SOURCE_FILENAME="v$(ver_rs 3 "+").tar.gz"
 	S="${WORKDIR}/${PN}-$(ver_rs 3 "-")"
