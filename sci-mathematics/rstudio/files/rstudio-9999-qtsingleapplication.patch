@@ -1,0 +1,64 @@
+diff --git a/src/cpp/desktop/CMakeLists.txt b/src/cpp/desktop/CMakeLists.txt
+index 8adc98f3f8..3cce6bcd3a 100644
+--- a/src/cpp/desktop/CMakeLists.txt
++++ b/src/cpp/desktop/CMakeLists.txt
+@@ -144,6 +144,13 @@ if(NOT RSTUDIO_ELECTRON)
+    get_filename_component(QT_LIBRARY_PATH "${QT_BIN_DIR}/../lib"     ABSOLUTE CACHE)
+    get_filename_component(QT_INSTALL_PATH "${QT_BIN_DIR}/.."         ABSOLUTE CACHE)
+ 
++  find_path(QTSINGLEAPPLIB_INCLUDE_DIR NAMES QtSingleApplication
++    PATH_SUFFIXES QtSolutions
++    PATHS
++    /usr/include/qt5)
++  find_library(QTSINGLEAPPLIB Qt5Solutions_SingleApplication-2.6
++	  libQt5Solutions_SingleApplication-2.6 REQUIRED)
++
+    # disable clang warnings for qt sources
+    if(APPLE)
+       add_definitions(-Wno-unused-private-field
+@@ -162,7 +169,6 @@ if(NOT RSTUDIO_ELECTRON)
+ 
+    set(MOC_DESKTOP_HEADER_FILES ${DESKTOP_HEADER_FILES})
+    list(REMOVE_ITEM MOC_DESKTOP_HEADER_FILES
+-      ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/qtsingleapplication/qtlockedfile.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/DesktopDetectRHome.hpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/DesktopOptions.hpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/DesktopRVersion.hpp
+@@ -232,8 +238,6 @@ if(NOT RSTUDIO_ELECTRON)
+       DesktopSynctex.cpp
+       DesktopJobLauncherOverlay.cpp
+       RemoteDesktopSessionLauncherOverlay.cpp
+-      3rdparty/qtsingleapplication/qtsingleapplication.cpp
+-      3rdparty/qtsingleapplication/qtlocalpeer.cpp
+    )
+ 
+    if(WIN32)
+@@ -290,6 +294,7 @@ if(NOT RSTUDIO_ELECTRON)
+       ${OPENSSL_INCLUDE_DIR}
+       ${CMAKE_CURRENT_SOURCE_DIR}
+       ${CMAKE_CURRENT_BINARY_DIR}
++      ${QTSINGLEAPPLIB_INCLUDE_DIR}
+       ${EXT_SOURCE_DIR}
+       ${SESSION_SOURCE_DIR}/include
+       ${TESTS_INCLUDE_DIR}
+@@ -405,6 +398,7 @@ if(NOT RSTUDIO_ELECTRON)
+       target_link_libraries(rstudio
+          ${RSTUDIO_QTMODULES}
+          ${QT_LIBRARIES}
++         ${QTSINGLEAPPLIB}
+          ${Boost_LIBRARIES}
+          rstudio-core
+          ${CRASHPAD_LIBRARIES}
+diff --git a/src/cpp/desktop/DesktopPosixApplication.hpp b/src/cpp/desktop/DesktopPosixApplication.hpp
+index ec73e22094..fc66b1cbdc 100644
+--- a/src/cpp/desktop/DesktopPosixApplication.hpp
++++ b/src/cpp/desktop/DesktopPosixApplication.hpp
+@@ -16,7 +16,7 @@
+ #ifndef DESKTOP_POSIX_APPLICATION_HPP
+ #define DESKTOP_POSIX_APPLICATION_HPP
+ 
+-#include "3rdparty/qtsingleapplication/QtSingleApplication"
++#include <QtSingleApplication>
+ 
+ #include "DesktopApplicationLaunch.hpp"
+ 

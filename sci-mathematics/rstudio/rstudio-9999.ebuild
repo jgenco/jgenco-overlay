@@ -225,8 +225,8 @@ panmirror? ( || ( AFL-2.1 BSD ) || ( MIT Apache-2.0 ) 0BSD Apache-2.0 BSD BSD-2 
 electron? ( MIT Apache-2.0 BSD )"
 
 build_r_src_uri(){
-	for RPKG in ${@}; do
-		echo "https://cloud.r-project.org/src/contrib/${RPKG}.tar.gz -> R_${RPKG}.tar.gz "
+	for rpkg in ${@}; do
+		echo "https://cloud.r-project.org/src/contrib/${rpkg}.tar.gz -> R_${rpkg}.tar.gz "
 	done
 }
 
@@ -236,7 +236,8 @@ SRC_URI+="test?      ( $(build_r_src_uri ${R_TESTTHAT_PKGS}) ) "
 
 #If not using system electron modify unpack also
 SRC_URI+="electron?  (
-		https://www.electronjs.org/headers/v${ELECTRON_VERSION}/node-v${ELECTRON_VERSION}-headers.tar.gz    -> electron-v${ELECTRON_VERSION}-headers.tar.gz
+		https://www.electronjs.org/headers/v${ELECTRON_VERSION}/node-v${ELECTRON_VERSION}-headers.tar.gz
+			-> electron-v${ELECTRON_VERSION}-headers.tar.gz
 		) "
 RESTRICT="mirror !test? ( test )"
 
@@ -273,6 +274,7 @@ RDEPEND="
 			>=dev-qt/qtwebengine-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtxml-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtxmlpatterns-${QT_VER}:${QT_SLOT}
+			dev-qt/qtsingleapplication
 		)
 	)
 	quarto? ( >=app-text/quarto-cli-1.2.269 )
@@ -314,6 +316,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-9999-add-support-for-RapidJSON.patch"
 	"${FILESDIR}/${PN}-9999-system-clang.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548.panmirror_disable.patch"
+	"${FILESDIR}/${PN}-9999-qtsingleapplication.patch"
 )
 
 DOCS=(CONTRIBUTING.md COPYING INSTALL NEWS.md NOTICE README.md version/news )
@@ -366,7 +369,7 @@ src_unpack(){
 		pushd    "${WORKDIR}/.electron-gyp" > /dev/null
 
 		unpack electron-v${ELECTRON_VERSION}-headers.tar.gz
-		mv node_headers ${ELECTRON_VERSION} || die
+		mv node_headers ${ELECTRON_VERSION} || die "Failed to move electron headers"
 		#It only been 9 so far
 		echo "9" > ${ELECTRON_VERSION}/installVersion
 
@@ -385,16 +388,19 @@ src_prepare(){
 	#https://build.opensuse.org/package/view_file/openSUSE:Factory/rstudio/rstudio.spec
 	#Remove Bundled deps ln -s to system libraries - see /src/gwt/.classpath
 	#gin and aopalliance
-	rm "${S}/src/gwt/lib/gin/2.1.2/"* -R
-	ln -s "${EPREFIX}/usr/share/aopalliance-1/lib/aopalliance.jar" "${S}/src/gwt/lib/gin/2.1.2/aopalliance.jar"  || die "linking to aopalliance.jar failed"
-	ln -s "${EPREFIX}/usr/share/javax-inject/lib/javax-inject.jar" "${S}/src/gwt/lib/gin/2.1.2/javax-inject.jar" || die "linking to javax-inject.jar failed"
-	for JAR in gin guice-assistedinject-3.0 guice-3.0 ;do
-		ln -s "${EPREFIX}/usr/share/gin-2.1/lib/${JAR}.jar" "${S}/src/gwt/lib/gin/2.1.2/${JAR}.jar" || die "linking to ${JAR} failed"
+	rm "${S}/src/gwt/lib/gin/2.1.2/"* -R || die "Failed to remove bundled jin"
+	ln -s "${EPREFIX}/usr/share/aopalliance-1/lib/aopalliance.jar" "${S}/src/gwt/lib/gin/2.1.2/aopalliance.jar" \
+			|| die "linking to aopalliance.jar failed"
+	ln -s "${EPREFIX}/usr/share/javax-inject/lib/javax-inject.jar" "${S}/src/gwt/lib/gin/2.1.2/javax-inject.jar" \
+			|| die "linking to javax-inject.jar failed"
+	for jar in gin guice-assistedinject-3.0 guice-3.0 ;do
+		ln -s "${EPREFIX}/usr/share/gin-2.1/lib/${jar}.jar" "${S}/src/gwt/lib/gin/2.1.2/${jar}.jar" \
+			|| die "linking to ${JAR} failed"
 	done
 
 	#gwt - they bundle a custom gwt build @github rstudio/gwt tree v1.4
 	#validation-api
-	rm "${S}/src/gwt/lib/gwt/gwt-rstudio/validation-api-"*.jar
+	rm "${S}/src/gwt/lib/gwt/gwt-rstudio/validation-api-"*.jar || die "Failed to remove validation-api jars"
 	ln -s "${EPREFIX}/usr/share/validation-api-1.0/lib/validation-api.jar" \
 		"${S}/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA.jar" || die "linking to validation-api.jar"
 	ln -s "${EPREFIX}/usr/share/validation-api-1.0/sources/validation-api-src.zip" \
@@ -405,7 +411,7 @@ src_prepare(){
 
 	#clang-c/websocketpp/rapidjson - inspired by SUSE
 	#unbundle clang-c
-	use clang && rm -r "${S}/src/cpp/core/include/core/libclang/clang-c"
+	use clang && rm -r "${S}/src/cpp/core/include/core/libclang/clang-c" || die "Failed to remove bundled clang headers"
 	eprefixify src/cpp/core/libclang/LibClang.cpp
 
 	#unbundle websocketpp
@@ -413,13 +419,22 @@ src_prepare(){
 	ln -s "${PREFIX}/usr/include/websocketpp" "${S}/src/cpp/ext/websocketpp" || die "Failed to bundle websocketpp"
 
 	#unbundle rapidjson
-	rm -r "${S}/src/cpp/shared_core/include/shared_core/json/rapidjson/"
-	ln -s "${EPREFIX}/usr/include/rapidjson" "${S}/src/cpp/shared_core/include/shared_core/json/rapidjson" || die "failed to bundle rapidjson"
+	rm -r "${S}/src/cpp/shared_core/include/shared_core/json/rapidjson/" || die "Failed to remove bundled rapidjson files"
+	ln -s "${EPREFIX}/usr/include/rapidjson" "${S}/src/cpp/shared_core/include/shared_core/json/rapidjson" \
+		|| die "failed to bundle rapidjson"
+
+	#unbundle qtsingleapplication
+	#the original ebuild had a complex grep/sed to fix library name for cmake
+	#I don't know what it was but now it doesn't change anything
+	rm -r "${S}/src/cpp/desktop/3rdparty" || die "Failed to unbundle qtsingleapplication"
+
+	#unbundle fmt
+	rm -r "${S}/src/cpp/ext/fmt" || die "Failed to unbundle libfmt"
 
 	# make sure icons and mime stuff are with prefix
 	sed -i \
 		-e "s:/usr:${EPREFIX}/usr:g" \
-		CMakeGlobals.txt src/cpp/desktop/CMakeLists.txt || die
+		CMakeGlobals.txt src/cpp/desktop/CMakeLists.txt || die "Failed to change to eprefix"
 
 	if  use electron;then
 		local electron_src_hash=$(sha1sum "${S}/src/node/desktop/package.json")
@@ -617,14 +632,15 @@ src_test() {
 	export EANT_TEST_TARGET="unittest"
 	java-pkg-2_src_test
 
-	mkdir -p "${HOME}/.local/share/rstudio" || die
-	cd "${BUILD_DIR}/src/cpp" || die
+	mkdir -p "${HOME}/.local/share/rstudio" || die "Failed to make .local dir"
+	pushd "${BUILD_DIR}/src/cpp" || die "Failed to change to ${BUILD_DIR}/src/cpp"
 	#--scope core,rserver,rsession,r
 	R_LIBS="${R_LIB_PATH}" ./rstudio-tests || die
 	#FAIL 9 | WARN 0 | SKIP 1 | PASS 1030
 	#FAIL = probably simply need packages purr, flexdashboard, and shiny installed
 	#       also 4 quarto FAILs
 	#SKIP = test-document-apis.R - NYI
+	popd
 }
 
 pkg_preinst() {
