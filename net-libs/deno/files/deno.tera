@@ -13,24 +13,38 @@ CRATES="
 {{ crate }}
 {%- endfor -%}"
 {%- endblock %}
-CRATES+="${P}"
 #NOTE: update deno.tera for long term changes
-#To update: download deno crate from https://crates.io/api/v1/crates/${PN}/${PV}/download
-#or https://github.com/denoland/deno/tree/main/cli
-#Run cargo ebuild -T deno.tera
-#Windows crates can be removed(deno-1.26.1) but may be alot of work in the future
-#update postinstall for security warnings
+{#
+#To update: download @ https://github.com/denoland/deno
+#cd cli
+#cargo ebuild -T deno.tera
+#set DENO_STD_VER=https://github.com/denoland/deno/tree/main/test_util std/version.ts
+#set CHECKREQS_DISK_BUILD
+#TODO
 #Use ninja-utils eclass to support dev-util/samurai?
 #remove GN var?
 #make sys-devel/lld optional?
 # * GN_ARGS=" use_lld=false"                works with deno-1.22.3
 # * GN_ARGS=" use_lld=false use_gold=false" works with deno-1.25.2
+#add support for ccache/sccache
+#}
+
+DENO_STD_VER=""
 
 inherit {% block inherit -%}cargo{%- endblock %} llvm multiprocessing toolchain-funcs check-reqs bash-completion-r1
 
+IUSE="test"
+RESTRICT="mirror !test? ( test )"
+
 DESCRIPTION="A modern runtime for JavaScript and TypeScript"
 HOMEPAGE="https://deno.land/"
+
 SRC_URI={%- block src_uri -%}{% raw -%}"$(cargo_crate_uris)"{%- endraw %}{%- endblock %}
+SRC_URI+="
+	https://github.com/denoland/deno/archive/refs/tags/v${PV}.tar.gz -> deno-${PV}.tar.gz
+	test? (
+		https://github.com/denoland/deno_std/archive/refs/tags/${DENO_STD_VER}.tar.gz -> deno_std@${DENO_STD_VER}.tar.gz
+	)"
 
 # License set may be more restrictive as OR is not respected
 # use cargo-license for a more accurate license picture
@@ -44,31 +58,45 @@ KEYWORDS={%- block keyword -%}"~amd64"{%- endblock %}
 BDEPEND="
 	dev-util/gn
 	dev-util/ninja
-	>=virtual/rust-1.59.0
+	>=virtual/rust-1.60.0
+	test? (
+		net-misc/curl
+	)
 "
+PATCHES=(
+	"${FILESDIR}/deno-1.28.2-fix_disable_tests.patch"
+)
+DOCS=(Releases.md)
 {% block variables -%}
 {%- endblock %}
 
 {%- block phases -%}
 {%- endblock -%}
-function find_crate(){
-	[[ ${#} -ne 1 ]] && die "No crate name provided"
+function find_crate() {
+{% raw %}	[[ ${#} -ne 1 ]] && die "No crate name provided"{% endraw %}
 	for crate in ${CRATES};do
 		[[ ${crate} =~ ${1} ]] && echo "${crate}" && return
 	done
 	die "Crate $1 not found"
 }
 pkg_pretend() {
-	#This used 3.5GB using 3750M for safety
-	CHECKREQS_DISK_BUILD="3750M"
+	#This used 5.1GB using 5.25G for safety
+	#Next time look into adding RAM req.
+	CHECKREQS_DISK_BUILD="5.25G"
 	check-reqs_pkg_pretend
 	}
 
 pkg_setup() {
-	CHECKREQS_DISK_BUILD="3750M"
+	CHECKREQS_DISK_BUILD="5.25G"
 	check-reqs_pkg_setup
 	}
-
+src_unpack() {
+	cargo_src_unpack
+	if use test; then
+		rmdir "${S}/test_util/std" || die "Failed to remove ${S}/test_util/std"
+		mv "${WORKDIR}/deno_std-${DENO_STD_VER}/" "${S}/test_util/std" || die "Failed to move deno-std into position"
+	fi
+}
 src_prepare() {
 	pushd "${ECARGO_VENDOR}/$(find_crate ^v8-[0-9])" > /dev/null || die "V8 crate folder not found"
 	eapply "${FILESDIR}/v8-0.43.1-lockfile.patch" \
@@ -76,8 +104,9 @@ src_prepare() {
 		"${FILESDIR}/v8-0.40.2-jobfix.patch" \
 		"${FILESDIR}/v8-0.49.0-enable-gcc.patch"
 	popd > /dev/null
+
 	default
-	}
+}
 src_compile() {
 	#inspired by www-client/chromium
 	local gn_conf=""
@@ -90,6 +119,11 @@ src_compile() {
 		gn_conf+=" use_custom_libcxx=false"
 	fi
 
+	#They didn't include the pgo files tools/builtins-pgo/{x64,arm64}.profile
+	#https://github.com/denoland/rusty_v8/pull/1063
+	#https://github.com/Homebrew/homebrew-core/pull/108838
+	gn_conf+=" v8_builtins_profiling_log_file=\"\""
+
 	export V8_FROM_SOURCE=1
 	#export SCCACHE=
 	#export CCACHE=
@@ -99,14 +133,78 @@ src_compile() {
 	export NINJA_JOBS=$(makeopts_jobs)
 	export GN_ARGS="${gn_conf}"
 	einfo "GN_ARGS=${GN_ARGS}"
-	cargo_src_compile --locked
-	}
-src_install() {
-	cargo_src_install
-	"${ED}/usr/bin/deno" completions bash > deno_bash_comp
-	newbashcomp deno_bash_comp deno
-	}
-pkg_postinst(){
-	:
-	}
 
+	pushd cli > /dev/null || die "Failed to change dir cli"
+	cargo_src_compile --locked
+	popd > /dev/null
+
+	if use test;then
+		pushd "${S}/test_util" > /dev/null || die "Failed to change dir to test_util"
+		cargo_src_compile --locked
+		popd > /dev/null
+	fi
+
+}
+src_install() {
+	pushd ${S}/cli
+	cargo_src_install
+	popd
+
+	"${ED}/usr/bin/deno" completions bash > deno_bash_comp || die "Failed to create bash completion file"
+	newbashcomp deno_bash_comp deno
+}
+
+pkg_postinst(){
+	if ! tc-is-clang ; then
+		#--When cargo_src_compile -vv
+		#QA Check notes gcc warns about return-local-addr for the following file
+		#${ECARGO_VENDOR}/${v8_dir}/third_party/icu/source/i18n/formattedvalue.cpp:212
+		#https://github.com/unicode-org/icu/blob/main/icu4c/source/i18n/formattedvalue.cpp#L212
+		#the source code mentions this is a false positive
+		#come up with some text to inform the user
+		#TODO unbundle third party libs(ICU) if possible
+		:
+	fi
+}
+
+src_test() {
+	pushd "${S}/test_util" > /dev/null || die "Failed to change dir to test_util"
+	einfo "Starting test_server..."
+	../target/release/test_server &
+	local server_pid=$!
+	echo "Test server PID:${server_pid}"
+	popd
+
+	local count=0
+	while true;do
+		curl \
+			--key cli/tests/testdata/tls/localhost.key \
+			--cert cli/tests/testdata/tls/localhost.crt \
+			--cacert cli/tests/testdata/tls/RootCA.crt https://localhost:4557/ 2> /dev/null
+		local error=$?
+		#when the server is not running curl will give error 7 (Failed to connect)
+		#when the server is     running curl will give a different error
+		[[ $error -ne 7 ]] && break
+		[[ $count -eq 12 ]] && die "Server failed to start"
+		count=$(($count +1))
+		sleep 5;
+	done
+
+	pushd "${S}" > /dev/null || die "Failed to change dir to deno root directory"
+	#Next time try XDG_RUNTIME_DIR(or other XDG) instead of DENO_DIR + patch
+	export DENO_DIR="${T}/deno_dir"
+	mkdir -p "${DENO_DIR}"
+	#GPU test fails even under a normal user. I assume this is a hardware problem on my end
+	"${S}/target/release/deno" test --allow-all --unstable --location=http://js-unit-tests/foo/bar cli/tests/unit/
+	popd >/dev/null
+
+	einfo "Killing server..."
+	kill ${server_pid}
+	einfo "Server killed"
+
+	#WPT - test
+	#unpack wpt into test_util/wpt
+	#update /etc/hosts file with output from python3 ./test_util/wpt/wpt make-hosts-file
+	#deno run --allow-env --allow-net --allow-read --allow-run --allow-write --unstable \
+	#--lock=tools/deno.lock.json ./tools/wpt.ts run --release --binary="${S}/target/release/deno"
+}
