@@ -4,6 +4,7 @@ changes to /tmp/badfilename.txt to get the correct error
 set DENO_DIR so it has a place to store files.
 tls_test.ts: ignore test that access the external network
 stat_test.ts:200(not changed) still fails as Deno.stat().birthtime returns 0
+   this fails with the official deno binary from denoland/deno and 5.15.74-gentoo
 diff --git a/cli/tests/unit/chmod_test.ts b/cli/tests/unit/chmod_test.ts
 index 70ab62c84..4c9faa9bd 100644
 --- a/cli/tests/unit/chmod_test.ts
