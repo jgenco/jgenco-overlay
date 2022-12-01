@@ -134,7 +134,7 @@ PATCHES="
 	${FILESDIR}/quarto-cli-9999-configuration.patch
 "
 DEPEND="
-	>=net-libs/deno-1.26.1 <net-libs/deno-1.27.0
+	>=net-libs/deno-1.28.2 <net-libs/deno-1.29.0
 	|| (
 		>=app-text/pandoc-2.19.2
 		>=app-text/pandoc-bin-2.19.2
@@ -211,11 +211,10 @@ src_configure(){
 	#disables creating symlink
 	export QUARTO_NO_SYMLINK="TRUE"
 	#With the configuration patch this just write the devConfig for unbundled and testing
-	./quarto-bld configure    --log-level info || die
+	./quarto-bld configure    --log-level info || die "Failed to run configure"
 	#copy dev-config b/c prepare-dist deletes it
 	cp "${S}/package/dist/config/dev-config" "${S}/dev-config"
 	popd > /dev/null
-
 }
 src_compile(){
 	#Configuration
@@ -225,7 +224,7 @@ src_compile(){
 	pushd "${S}/package/src"
 
 	einfo "Building ${P}..."
-	./quarto-bld prepare-dist --log-level info || die
+	./quarto-bld prepare-dist --log-level info || die "Failed to run prepare-dist"
 	popd
 
 	[[ "${PV}" == "9999" ]] && MY_PV="99.9.9" || MY_PV=${PV}
@@ -258,7 +257,7 @@ src_install(){
 	einstalldocs
 }
 src_test(){
-	rm tests/bin/python3
+	rm tests/bin/python3 || die "Failed to delete tests/bin/python3"
 	ln -s "${EPREFIX}/usr/bin/${EPYTHON}" tests/bin/python3
 
 	mkdir -p "${S}/package/dist/config"
@@ -266,13 +265,13 @@ src_test(){
 
 	pushd "${S}/tests" > /dev/null
 	#this disables renv - it might be nice to use renv
-	rm .Rprofile
+	rm .Rprofile || die "Failed to delete .Rprofile"
 	#this lovely test needs internet access thus fails; so as punishment it breaks a large chunk of tests after it.
-	rm smoke/extensions/install.test.ts
+	rm smoke/extensions/install.test.ts || die "Failed to delete smoke/extensions/install.test.ts"
 	#check test is for dev builds
 	[[ "${PV}" != *9999 ]] && rm smoke/env/check.test.ts
 	#install test runs 'quarto list' which requires internet access
-	rm smoke/env/install.test.ts
+	rm smoke/env/install.test.ts || die "Failed to delete smoke/env/install.test.ts"
 
 	export QUARTO_ROOT="${S}"
 	export QUARTO_BASE_PATH=${S}
