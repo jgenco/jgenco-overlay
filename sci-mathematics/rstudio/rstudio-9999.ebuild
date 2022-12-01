@@ -187,8 +187,8 @@ QT_SLOT=5
 
 SLOT="0"
 KEYWORDS=""
-IUSE="server electron +qt5 test debug quarto panmirror doc clang"
-REQUIRED_USE="!server? ( ^^ ( electron qt5 ) )"
+IUSE="server electron +qt5 qt6 test debug quarto panmirror doc clang"
+REQUIRED_USE="!server? ( ^^ ( electron qt5 qt6 ) )"
 
 DESCRIPTION="IDE for the R language"
 HOMEPAGE="
@@ -274,7 +274,13 @@ RDEPEND="
 			>=dev-qt/qtwebengine-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtxml-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtxmlpatterns-${QT_VER}:${QT_SLOT}
-			dev-qt/qtsingleapplication
+			~dev-qt/qtsingleapplication-2.6.1_p20171024
+		)
+		qt6? (
+			dev-qt/qtbase:6
+			dev-qt/qtwebchannel:6
+			dev-qt/qtwebengine:6
+			dev-qt/qt5compat
 		)
 	)
 	quarto? ( >=app-text/quarto-cli-1.2.269 )
@@ -316,7 +322,6 @@ PATCHES=(
 	"${FILESDIR}/${PN}-9999-add-support-for-RapidJSON.patch"
 	"${FILESDIR}/${PN}-9999-system-clang.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548.panmirror_disable.patch"
-	"${FILESDIR}/${PN}-9999-qtsingleapplication.patch"
 )
 
 DOCS=(CONTRIBUTING.md COPYING INSTALL NEWS.md NOTICE README.md version/news )
@@ -352,7 +357,7 @@ src_unpack(){
 			:
 		else
 			#A good last commit when testing a patch
-			#EGIT_COMMIT="98b51d36eed7a3e1d38fbd2097ac64fb4baf197e" # 2022-10-14
+			#EGIT_COMMIT="6d3e5ccb94c3cc1f1d4bf2fcf6044d93bb9b9723" # 2022-11-29
 			:
 		fi
 		git-r3_src_unpack
@@ -411,7 +416,9 @@ src_prepare(){
 
 	#clang-c/websocketpp/rapidjson - inspired by SUSE
 	#unbundle clang-c
-	use clang && rm -r "${S}/src/cpp/core/include/core/libclang/clang-c" || die "Failed to remove bundled clang headers"
+	if use clang; then
+		rm -r "${S}/src/cpp/core/include/core/libclang/clang-c" || die "Failed to remove bundled clang headers"
+	fi
 	eprefixify src/cpp/core/libclang/LibClang.cpp
 
 	#unbundle websocketpp
@@ -422,11 +429,17 @@ src_prepare(){
 	rm -r "${S}/src/cpp/shared_core/include/shared_core/json/rapidjson/" || die "Failed to remove bundled rapidjson files"
 	ln -s "${EPREFIX}/usr/include/rapidjson" "${S}/src/cpp/shared_core/include/shared_core/json/rapidjson" \
 		|| die "failed to bundle rapidjson"
-
-	#unbundle qtsingleapplication
-	#the original ebuild had a complex grep/sed to fix library name for cmake
-	#I don't know what it was but now it doesn't change anything
-	rm -r "${S}/src/cpp/desktop/3rdparty" || die "Failed to unbundle qtsingleapplication"
+	if ! use qt6;then
+		#unbundle qtsingleapplication
+		#the original ebuild had a complex grep/sed to fix library name for cmake
+		#I don't know what it was but now it doesn't change anything
+		rm -r "${S}/src/cpp/desktop/3rdparty" || die "Failed to unbundle qtsingleapplication"
+		eapply "${FILESDIR}/${PN}-9999-qtsingleapplication.patch"
+	else
+		#qtsingleapplication I belive needs updated for QT6 not tested.
+		sed -i "s/QT5/QT6/g;s/Qt5/Qt6/g" "${S}/src/cpp/desktop/CMakeLists.txt"
+		eapply "${FILESDIR}/rstudio-9999-qt6-cmake.patch" "${FILESDIR}/rstudio-9999-qt6-desktop.patch"
+	fi
 
 	#unbundle fmt
 	rm -r "${S}/src/cpp/ext/fmt" || die "Failed to unbundle libfmt"
@@ -479,7 +492,7 @@ src_configure() {
 	fi
 	if use electron; then
 		rstudio_electron=TRUE
-	elif use qt5; then
+	elif use qt5 || use qt6; then
 		rstudio_desktop=TRUE
 	fi
 	# FIXME: GWT_COPY is helpful because it allows us to call ant ourselves
@@ -510,6 +523,10 @@ src_configure() {
 
 	if use electron; then
 		mycmakeargs+=( -DRSTUDIO_INSTALL_FREEDESKTOP="ON" )
+	elif use qt6 ; then
+		local qmake_path="$(qt5_get_bindir)/qmake"
+		mycmakeargs+=( -DQT_QMAKE_EXECUTABLE=${qmake_path/5/6}
+						-DRSTUDIO_INSTALL_FREEDESKTOP="ON" )
 	elif use qt5 ; then
 		mycmakeargs+=( -DQT_QMAKE_EXECUTABLE="$(qt5_get_bindir)/qmake"
 						-DRSTUDIO_INSTALL_FREEDESKTOP="ON" )
@@ -525,7 +542,7 @@ src_compile(){
 	export ANT_OPTS="-Duser.home=${T} -Djava.util.prefs.userRoot=${T}"
 
 	local gwt_main_module="RStudio"
-	if use electron || use qt5; then
+	if use electron || use qt5 || use qt6; then
 		if ! use server;then
 			gwt_main_module="RStudioDesktop"
 		fi
@@ -648,7 +665,7 @@ pkg_preinst() {
 }
 
 pkg_postinst() {
-	if use electron || use qt5;then
+	if use electron || use qt5 || use qt6;then
 		xdg_desktop_database_update
 		xdg_mimeinfo_database_update
 		xdg_icon_cache_update

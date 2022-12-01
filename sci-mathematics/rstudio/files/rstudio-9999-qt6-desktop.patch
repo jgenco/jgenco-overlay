@@ -1,0 +1,591 @@
+This was a quick patch for QT6.3 then updated to QT6.4
+diff --git a/src/cpp/desktop/3rdparty/qtsingleapplication/qtlocalpeer.cpp b/src/cpp/desktop/3rdparty/qtsingleapplication/qtlocalpeer.cpp
+index 36d66d19d6..497c273ef4 100644
+--- a/src/cpp/desktop/3rdparty/qtsingleapplication/qtlocalpeer.cpp
++++ b/src/cpp/desktop/3rdparty/qtsingleapplication/qtlocalpeer.cpp
+@@ -43,6 +43,7 @@
+ #include <QCoreApplication>
+ #include <QDataStream>    // Patch for building against Qt 5.5.1
+ #include <QTime>
++#include <QRegExp>
+ 
+ #if defined(Q_OS_WIN)
+ #include <QLibrary>
+@@ -78,7 +79,9 @@ QtLocalPeer::QtLocalPeer(QObject* parent, const QString &appId)
+ #endif
+         prefix = id.section(QLatin1Char('/'), -1);
+     }
+-    prefix.remove(QRegExp(QString::fromUtf8("[^a-zA-Z]")));
++    QRegExp regex(QString::fromUtf8("[^a-zA-Z]"));
++    prefix = regex.removeIn(prefix);
++
+     prefix.truncate(6);
+ 
+     QByteArray idc = id.toUtf8();
+diff --git a/src/cpp/desktop/DesktopDownloadItemHelper.cpp b/src/cpp/desktop/DesktopDownloadItemHelper.cpp
+index 002980f5e7..91de403bb0 100644
+--- a/src/cpp/desktop/DesktopDownloadItemHelper.cpp
++++ b/src/cpp/desktop/DesktopDownloadItemHelper.cpp
+@@ -21,27 +21,30 @@ namespace rstudio {
+ namespace desktop {
+ 
+ DownloadHelper* DownloadHelper::manageDownload(
+-      QWebEngineDownloadItem* item,
++      QWebEngineDownloadRequest* item,
+       const QString& path)
+ {
+    DownloadHelper* helper = new DownloadHelper(item);
+-   item->setPath(path);
++   QFileInfo filepath = QFileInfo(path);
++   item->setDownloadDirectory(filepath.dir().absolutePath());
++   item->setDownloadFileName(filepath.fileName());
+    item->accept();
+    return helper;
+ }
+ 
+-DownloadHelper::DownloadHelper(QWebEngineDownloadItem* item)
++DownloadHelper::DownloadHelper(QWebEngineDownloadRequest* item)
+ {
+-   connect(item, &QWebEngineDownloadItem::downloadProgress,
+-           this,  &DownloadHelper::onDownloadProgress);
++//Replace w {total,received]byteschanged if needed
++//   connect(item, &QWebEngineDownloadRequest::downloadProgress,
++//           this,  &DownloadHelper::onDownloadProgress);
+    
+-   connect(item, &QWebEngineDownloadItem::finished,
++   connect(item, &QWebEngineDownloadRequest::isFinishedChanged,
+            this, &DownloadHelper::onFinished);
+    
+-   connect(item, &QWebEngineDownloadItem::isPausedChanged,
++   connect(item, &QWebEngineDownloadRequest::isPausedChanged,
+            this, &DownloadHelper::onPausedChanged);
+    
+-   connect(item, &QWebEngineDownloadItem::stateChanged,
++   connect(item, &QWebEngineDownloadRequest::stateChanged,
+            this, &DownloadHelper::onStateChanged);
+ }
+ 
+@@ -51,14 +54,14 @@ void DownloadHelper::onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal)
+ 
+ void DownloadHelper::onFinished()
+ {
+-   deleteLater();
++      deleteLater();
+ }
+ 
+-void DownloadHelper::onPausedChanged(bool isPaused)
++void DownloadHelper::onPausedChanged()
+ {
+ }
+ 
+-void DownloadHelper::onStateChanged(QWebEngineDownloadItem::DownloadState state)
++void DownloadHelper::onStateChanged(QWebEngineDownloadRequest::DownloadState state)
+ {
+ }
+ 
+diff --git a/src/cpp/desktop/DesktopDownloadItemHelper.hpp b/src/cpp/desktop/DesktopDownloadItemHelper.hpp
+index 729d6e7fc2..89a6590fb8 100644
+--- a/src/cpp/desktop/DesktopDownloadItemHelper.hpp
++++ b/src/cpp/desktop/DesktopDownloadItemHelper.hpp
+@@ -18,7 +18,9 @@
+ 
+ #include <QObject>
+ 
+-#include <QWebEngineDownloadItem>
++#include <QWebEngineDownloadRequest>
++#include <QFileInfo>
++#include <QDir>
+ 
+ namespace rstudio {
+ namespace desktop {
+@@ -30,19 +32,19 @@ class DownloadHelper : public QObject
+ public:
+    
+    // NOTE: DownloadHelper automatically frees itself after the download
+-   // is finished, in response to &QWebEngineDownloadItem::finished() signal
++   // is finished, in response to &QWebEngineDownloadRequest::finished() signal
+    static DownloadHelper* manageDownload(
+-         QWebEngineDownloadItem* item,
++         QWebEngineDownloadRequest* item,
+          const QString& path);
+    
+ public Q_SLOTS:
+    void onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal);
+    void onFinished();
+-   void onPausedChanged(bool isPaused);
+-   void onStateChanged(QWebEngineDownloadItem::DownloadState state);
++   void onPausedChanged();
++   void onStateChanged(QWebEngineDownloadRequest::DownloadState state);
+    
+ private:
+-   DownloadHelper(QWebEngineDownloadItem* item);
++   DownloadHelper(QWebEngineDownloadRequest* item);
+ };
+ 
+ } // namespace desktop
+diff --git a/src/cpp/desktop/DesktopGwtCallback.cpp b/src/cpp/desktop/DesktopGwtCallback.cpp
+index 2ddac7d2fa..efb0837b0e 100644
+--- a/src/cpp/desktop/DesktopGwtCallback.cpp
++++ b/src/cpp/desktop/DesktopGwtCallback.cpp
+@@ -125,7 +125,7 @@ Synctex& GwtCallback::synctex()
+ void GwtCallback::printText(QString text)
+ {
+    QPrinter printer;
+-   printer.setPageMargins(1.0, 1.0, 1.0, 1.0, QPrinter::Inch);
++   printer.setPageMargins(QMarginsF(1.0, 1.0, 1.0, 1.0), QPageLayout::Inch);
+ 
+    QPrintPreviewDialog dialog(&printer);
+    dialog.setWindowModality(Qt::WindowModal);
+@@ -159,8 +159,8 @@ void GwtCallback::paintPrintText(QPrinter* printer)
+     int y = 0;
+ 
+     // compute page boundaries (used as bounds when painting on page)
+-    int pageWidth = printer->pageRect().width();
+-    int pageHeight = printer->pageRect().height();
++    int pageWidth  = printer->pageLayout().paintRectPixels(printer->resolution()).width();
++    int pageHeight = printer->pageLayout().paintRectPixels(printer->resolution()).height();
+     QRect pageRect(0, 0, pageWidth, pageHeight);
+ 
+     // start drawing line-by-line
+@@ -679,7 +679,7 @@ void GwtCallback::openMinimalWindow(QString name,
+       
+       // ensure minimal windows can be closed with Ctrl+W (Cmd+W on macOS)
+       QAction* closeWindow = new QAction(browser);
+-      closeWindow->setShortcut(Qt::CTRL + Qt::Key_W);
++      closeWindow->setShortcut(Qt::CTRL | Qt::Key_W);
+       connect(closeWindow, &QAction::triggered,
+               browser, &BrowserWindow::close);
+       browser->addAction(closeWindow);
+diff --git a/src/cpp/desktop/DesktopInputDialog.cpp b/src/cpp/desktop/DesktopInputDialog.cpp
+index 9f147b28ad..e113ab0761 100644
+--- a/src/cpp/desktop/DesktopInputDialog.cpp
++++ b/src/cpp/desktop/DesktopInputDialog.cpp
+@@ -65,8 +65,8 @@ void InputDialog::setTextValue(const QString& value)
+ 
+ void InputDialog::setSelection(int offset, int length)
+ {
+-   offset = std::min(offset, textValue().size());
+-   length = std::min(length,
++   offset = qMin(offset, textValue().size());
++   length = qMin(length,
+                      textValue().size() - offset);
+ 
+    ui->lineEdit->setSelection(offset, length);
+diff --git a/src/cpp/desktop/DesktopMain.cpp b/src/cpp/desktop/DesktopMain.cpp
+index 953b4b8749..a90947bbe8 100644
+--- a/src/cpp/desktop/DesktopMain.cpp
++++ b/src/cpp/desktop/DesktopMain.cpp
+@@ -412,17 +412,17 @@ void initializeRenderingEngine(std::vector<char*>* pArguments)
+    if (engine == QStringLiteral("desktop"))
+    {
+       QCoreApplication::setAttribute(Qt::AA_UseDesktopOpenGL);
+-      QQuickWindow::setSceneGraphBackend(QSGRendererInterface::OpenGL);
++      QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
+    }
+    else if (engine == QStringLiteral("gles"))
+    {
+       QCoreApplication::setAttribute(Qt::AA_UseOpenGLES);
+-      QQuickWindow::setSceneGraphBackend(QSGRendererInterface::OpenGL);
++      QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
+    }
+    else if (engine == QStringLiteral("software"))
+    {
+       QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
+-      QQuickWindow::setSceneGraphBackend(QSGRendererInterface::Software);
++      QQuickWindow::setGraphicsApi(QSGRendererInterface::Software);
+       
+       // allow WebGL rendering with the software renderer
+       static char enableWebglSoftwareRendering[] = "--enable-webgl-software-rendering";
+@@ -541,7 +541,7 @@ int main(int argc, char* argv[])
+          LOG_ERROR(error);
+ 
+       // set application attributes
+-      QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
++      //QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+ 
+       // don't synthesize mouse events for unhandled tablet events,
+       // as this causes tablet clicks to be duplicated (effectively
+diff --git a/src/cpp/desktop/DesktopMainWindow.hpp b/src/cpp/desktop/DesktopMainWindow.hpp
+index 55561ac469..3c56519b1e 100644
+--- a/src/cpp/desktop/DesktopMainWindow.hpp
++++ b/src/cpp/desktop/DesktopMainWindow.hpp
+@@ -22,6 +22,8 @@
+ #include <QtGui>
+ #include <QSessionManager>
+ 
++#include <QWebEngineHttpRequest>
++
+ #include <core/Thread.hpp>
+ 
+ #include "DesktopInfo.hpp"
+diff --git a/src/cpp/desktop/DesktopMenuCallback.cpp b/src/cpp/desktop/DesktopMenuCallback.cpp
+index d069ed289b..2fa35c2be1 100644
+--- a/src/cpp/desktop/DesktopMenuCallback.cpp
++++ b/src/cpp/desktop/DesktopMenuCallback.cpp
+@@ -143,7 +143,7 @@ QAction* MenuCallback::addCustomAction(QString commandId,
+                label,
+                this,
+                SIGNAL(zoomActualSize()),
+-               QKeySequence(Qt::CTRL + Qt::Key_0));
++               QKeySequence(Qt::CTRL | Qt::Key_0));
+    }
+    else if (commandId == QStringLiteral("zoomIn"))
+    {
+@@ -177,7 +177,7 @@ QAction* MenuCallback::addCustomAction(QString commandId,
+                label,
+                this,
+                SLOT(actionInvoked()),
+-               QKeySequence(Qt::META + Qt::Key_Tab));
++               QKeySequence(Qt::META | Qt::Key_Tab));
+    }
+    else if (commandId == QStringLiteral("previousTab"))
+    {
+@@ -186,7 +186,7 @@ QAction* MenuCallback::addCustomAction(QString commandId,
+                label,
+                this,
+                SLOT(actionInvoked()),
+-               QKeySequence(Qt::SHIFT + Qt::META + Qt::Key_Tab));
++               QKeySequence(Qt::SHIFT | Qt::META | Qt::Key_Tab));
+    }
+ #endif
+ #ifdef Q_OS_LINUX
+@@ -196,7 +196,7 @@ QAction* MenuCallback::addCustomAction(QString commandId,
+                                             label,
+                                             this,
+                                             SLOT(actionInvoked()),
+-                                            QKeySequence(Qt::CTRL +
++                                            QKeySequence(Qt::CTRL |
+                                                          Qt::Key_PageDown));
+    }
+    else if (commandId == QString::fromUtf8("previousTab"))
+@@ -205,7 +205,7 @@ QAction* MenuCallback::addCustomAction(QString commandId,
+                                             label,
+                                             this,
+                                             SLOT(actionInvoked()),
+-                                            QKeySequence(Qt::CTRL +
++                                            QKeySequence(Qt::CTRL |
+                                                          Qt::Key_PageUp));
+    }
+ #endif
+@@ -281,7 +281,7 @@ void MenuCallback::addCommand(QString commandId,
+    }
+    else if (commandId == QStringLiteral("pasteWithIndentDummy"))
+    {
+-      keySequence = QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_V);
++      keySequence = QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_V);
+    }
+    else if (commandId == QStringLiteral("selectAllDummy"))
+    {
+@@ -468,7 +468,7 @@ WindowMenu::WindowMenu(QWidget *parent) : QMenu(QString::fromUtf8("&Window"), pa
+ {
+    // NOTE: CTRL means META on macOS
+    pMinimize_ = addAction(QString::fromUtf8("Minimize"));
+-   pMinimize_->setShortcut(Qt::CTRL + Qt::Key_M);
++   pMinimize_->setShortcut(Qt::CTRL | Qt::Key_M);
+    connect(pMinimize_, SIGNAL(triggered()),
+            this, SLOT(onMinimize()));
+ 
+diff --git a/src/cpp/desktop/DesktopOptions.cpp b/src/cpp/desktop/DesktopOptions.cpp
+index d65d68af92..2b9d9f3ff1 100644
+--- a/src/cpp/desktop/DesktopOptions.cpp
++++ b/src/cpp/desktop/DesktopOptions.cpp
+@@ -30,7 +30,6 @@
+ #include <QtGui>
+ 
+ #include <QApplication>
+-#include <QDesktopWidget>
+ 
+ #include <boost/algorithm/string/classification.hpp>
+ #include <boost/algorithm/string/split.hpp>
+diff --git a/src/cpp/desktop/DesktopSatelliteWindow.cpp b/src/cpp/desktop/DesktopSatelliteWindow.cpp
+index 123420b17c..e31c70a80f 100644
+--- a/src/cpp/desktop/DesktopSatelliteWindow.cpp
++++ b/src/cpp/desktop/DesktopSatelliteWindow.cpp
+@@ -43,9 +43,9 @@ SatelliteWindow::SatelliteWindow(MainWindow* pMainWindow, QString name, WebPage*
+    // satellites don't have a menu, so connect zoom keyboard shortcuts
+    // directly
+    // NOTE: CTRL implies META on macOS
+-   QShortcut* zoomActualSizeShortcut = new QShortcut(Qt::CTRL + Qt::Key_0, this);
++   QShortcut* zoomActualSizeShortcut = new QShortcut(Qt::CTRL | Qt::Key_0, this);
+ #ifdef Q_OS_MAC
+-   QShortcut* zoomInShortcut = new QShortcut(Qt::CTRL + Qt::Key_Equal, this);
++   QShortcut* zoomInShortcut = new QShortcut(Qt::CTRL | Qt::Key_Equal, this);
+ #else
+    QShortcut* zoomInShortcut = new QShortcut(QKeySequence::ZoomIn, this);
+ #endif
+diff --git a/src/cpp/desktop/DesktopSecondaryWindow.cpp b/src/cpp/desktop/DesktopSecondaryWindow.cpp
+index 85d1703020..56b351474c 100644
+--- a/src/cpp/desktop/DesktopSecondaryWindow.cpp
++++ b/src/cpp/desktop/DesktopSecondaryWindow.cpp
+@@ -17,7 +17,6 @@
+ 
+ #include <QApplication>
+ #include <QToolBar>
+-#include <QDesktopWidget>
+ 
+ namespace rstudio {
+ namespace desktop {
+diff --git a/src/cpp/desktop/DesktopUtils.cpp b/src/cpp/desktop/DesktopUtils.cpp
+index 22e556321a..f7c7c23ec8 100644
+--- a/src/cpp/desktop/DesktopUtils.cpp
++++ b/src/cpp/desktop/DesktopUtils.cpp
+@@ -434,7 +434,7 @@ void openUrl(const QUrl& url)
+ 
+ QFileDialog::Options standardFileDialogOptions()
+ {
+-   return nullptr;
++   return QFileDialog::Options();
+ }
+ 
+ #endif
+diff --git a/src/cpp/desktop/DesktopWebPage.cpp b/src/cpp/desktop/DesktopWebPage.cpp
+index fa0f8a3c24..d955290b59 100644
+--- a/src/cpp/desktop/DesktopWebPage.cpp
++++ b/src/cpp/desktop/DesktopWebPage.cpp
+@@ -64,21 +64,23 @@ void onLinkHovered(const QString& url)
+    s_hoveredUrl = url;
+ }
+ 
+-void handlePdfDownload(QWebEngineDownloadItem* downloadItem,
++void handlePdfDownload(QWebEngineDownloadRequest* downloadItem,
+                        const QString& downloadPath)
+ {
+    QObject::connect(
+-            downloadItem, &QWebEngineDownloadItem::finished,
++            downloadItem, &QWebEngineDownloadRequest::isFinishedChanged,
+             [=]()
+    {
+       desktop::openFile(downloadPath);
+    });
+    
+-   downloadItem->setPath(downloadPath);
++   QFileInfo filepath = QFileInfo(downloadPath);
++   downloadItem->setDownloadDirectory(filepath.dir().absolutePath());
++   downloadItem->setDownloadFileName(filepath.fileName());
+    downloadItem->accept();
+ }
+ 
+-void onPdfDownloadRequested(QWebEngineDownloadItem* downloadItem)
++void onPdfDownloadRequested(QWebEngineDownloadRequest* downloadItem)
+ {
+    QString scratchDir =
+          QString::fromStdString(options().scratchTempDir().getAbsolutePath());
+@@ -109,17 +111,20 @@ void onPdfDownloadRequested(QWebEngineDownloadItem* downloadItem)
+       return handlePdfDownload(downloadItem, tempFile.fileName());
+ }
+ 
+-void onDownloadRequested(QWebEngineDownloadItem* downloadItem)
++void onDownloadRequested(QWebEngineDownloadRequest* downloadItem)
+ {
+    // download and then open PDF files requested by the user
+    if (downloadItem->mimeType() == QStringLiteral("application/pdf"))
+       return onPdfDownloadRequested(downloadItem);
+    
+    // request directory from user
++   QFileInfo filepath = QFileInfo(downloadItem->downloadDirectory(),
++		   downloadItem->downloadFileName());
++
+    QString downloadPath = QFileDialog::getSaveFileName(
+             nullptr,
+             QStringLiteral("Save File"),
+-            downloadItem->path());
++            filepath.filePath());
+    
+    if (downloadPath.isEmpty())
+       return;
+@@ -313,7 +318,7 @@ QWebEnginePage* WebPage::createWindow(QWebEnginePage::WebWindowType type)
+ 
+       // allow for Ctrl + W to close window (NOTE: Ctrl means Meta on macOS)
+       QAction* action = new QAction(pWindow);
+-      action->setShortcut(Qt::CTRL + Qt::Key_W);
++      action->setShortcut(Qt::CTRL | Qt::Key_W);
+       pWindow->addAction(action);
+       QObject::connect(
+                action, &QAction::triggered,
+@@ -595,6 +600,18 @@ void WebPage::triggerAction(WebAction action, bool checked)
+    QWebEnginePage::triggerAction(action, checked);
+ }
+ 
++void WebPage::setView(QWidget * webview){
++   webView_ = webview;
++
++}
++QWidget * WebPage::view(){
++   if(webViewSet){
++      return webView_;
++   }else{
++      //qDebug() << "This shouldn't be here\n";
++      return nullptr;
++   }
++}
+ PendingWindow::PendingWindow(QString name,
+                              MainWindow* pMainWindow,
+                              int screenX,
+diff --git a/src/cpp/desktop/DesktopWebPage.hpp b/src/cpp/desktop/DesktopWebPage.hpp
+index 69f23d9eae..62df0e6ac4 100644
+--- a/src/cpp/desktop/DesktopWebPage.hpp
++++ b/src/cpp/desktop/DesktopWebPage.hpp
+@@ -101,6 +101,8 @@ public:
+ 
+    inline WebProfile* profile() { return static_cast<WebProfile*>(QWebEnginePage::profile()); }
+ 
++   void setView(QWidget * webview);
++   QWidget *view();
+ public Q_SLOTS:
+    bool shouldInterruptJavaScript();
+    void closeRequested();
+@@ -130,6 +132,8 @@ private:
+    bool allowExternalNav_;
+    std::queue<PendingWindow> pendingWindows_;
+    QDir defaultSaveDir_;
++   QWidget *webView_;
++   bool webViewSet;
+ };
+ 
+ } // namespace desktop
+diff --git a/src/cpp/desktop/DesktopWebView.cpp b/src/cpp/desktop/DesktopWebView.cpp
+index 420d6834e9..7a590767ab 100644
+--- a/src/cpp/desktop/DesktopWebView.cpp
++++ b/src/cpp/desktop/DesktopWebView.cpp
+@@ -18,12 +18,13 @@
+ #include <QApplication>
+ #include <QClipboard>
+ #include <QMenu>
+-#include <QNetworkReply>
+ #include <QStyleFactory>
+ 
+-#include <QWebEngineContextMenuData>
+ #include <QWebEngineSettings>
+ #include <QWebEngineHistory>
++#include <QWebEngineContextMenuRequest>
++
++#include <QRegExp>
+ 
+ #include <core/system/Environment.hpp>
+ 
+@@ -113,6 +114,7 @@ WebView::WebView(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
+ {
+ 
+    pWebPage_ = new WebPage(baseUrl, this, allowExternalNavigate);
++   pWebPage_->setView(this);
+    init();
+ }
+ 
+@@ -124,6 +126,7 @@ WebView::WebView(QWebEngineProfile *profile,
+    baseUrl_(baseUrl)
+ {
+    pWebPage_ = new WebPage(profile, baseUrl, this, allowExternalNavigate);
++   pWebPage_->setView(this);
+    init();
+ }
+ 
+@@ -321,13 +324,13 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
+ {
+    QMenu* menu = new QMenu(this);
+    
+-   const auto& data = webPage()->contextMenuData();
++   const auto data = lastContextMenuRequest();
+    
+    bool canNavigateHistory =
+          webPage()->history()->canGoBack() ||
+          webPage()->history()->canGoForward();
+    
+-   if (data.selectedText().isEmpty() && canNavigateHistory)
++   if (data->selectedText().isEmpty() && canNavigateHistory)
+    {
+       auto* back    = menu->addAction(label(tr("&Back")),    [&]() { webPage()->history()->back(); });
+       auto* forward = menu->addAction(label(tr("&Forward")), [&]() { webPage()->history()->forward(); });
+@@ -338,20 +341,20 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
+       menu->addSeparator();
+    }
+    
+-   if (data.mediaUrl().isValid())
++   if (data->mediaUrl().isValid())
+    {
+-      switch (data.mediaType())
++      switch (data->mediaType())
+       {
+-      case QWebEngineContextMenuData::MediaTypeImage:
++      case QWebEngineContextMenuRequest::MediaTypeImage:
+          
+          menu->addAction(label(tr("Sa&ve image as...")),   [&]() { triggerPageAction(QWebEnginePage::DownloadImageToDisk); });
+          menu->addAction(label(tr("Cop&y image")),         [&]() { triggerPageAction(QWebEnginePage::CopyImageToClipboard); });
+          menu->addAction(label(tr("C&opy image address")), [&]() { triggerPageAction(QWebEnginePage::CopyImageUrlToClipboard); });
+          break;
+          
+-      case QWebEngineContextMenuData::MediaTypeAudio:
++      case QWebEngineContextMenuRequest::MediaTypeAudio:
+          
+-         if (data.mediaFlags().testFlag(QWebEngineContextMenuData::MediaPaused))
++         if (data->mediaFlags().testFlag(QWebEngineContextMenuRequest::MediaPaused))
+             menu->addAction(label(tr("&Play")), [&]() { triggerPageAction(QWebEnginePage::ToggleMediaPlayPause); });
+          else
+             menu->addAction(label(tr("&Pause")), [&]() { triggerPageAction(QWebEnginePage::ToggleMediaPlayPause); });
+@@ -364,9 +367,9 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
+          menu->addAction(label(tr("C&opy audio address")), [&]() { triggerPageAction(QWebEnginePage::CopyMediaUrlToClipboard); });
+          break;
+          
+-      case QWebEngineContextMenuData::MediaTypeVideo:
++      case QWebEngineContextMenuRequest::MediaTypeVideo:
+          
+-         if (data.mediaFlags().testFlag(QWebEngineContextMenuData::MediaPaused))
++         if (data->mediaFlags().testFlag(QWebEngineContextMenuRequest::MediaPaused))
+             menu->addAction(label(tr("&Play")), [&]() { triggerPageAction(QWebEnginePage::ToggleMediaPlayPause); });
+          else
+             menu->addAction(label(tr("&Pause")), [&]() { triggerPageAction(QWebEnginePage::ToggleMediaPlayPause); });
+@@ -379,7 +382,7 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
+          menu->addAction(label(tr("C&opy video address")), [&]() { triggerPageAction(QWebEnginePage::CopyMediaUrlToClipboard); });
+          break;
+          
+-      case QWebEngineContextMenuData::MediaTypeFile:
++      case QWebEngineContextMenuRequest::MediaTypeFile:
+          menu->addAction(label(tr("Sa&ve file as...")),   [&]() { triggerPageAction(QWebEnginePage::DownloadLinkToDisk); });
+          menu->addAction(label(tr("C&opy link address")), [&]() { triggerPageAction(QWebEnginePage::CopyMediaUrlToClipboard); });
+          break;
+@@ -388,9 +391,9 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
+          break;
+       }
+    }
+-   else if (data.linkUrl().isValid())
++   else if (data->linkUrl().isValid())
+    {
+-      menu->addAction(label(tr("Open link in &browser")), [&]() { desktop::openUrl(data.linkUrl()); });
++      menu->addAction(label(tr("Open link in &browser")), [&]() { desktop::openUrl(data->linkUrl()); });
+       menu->addAction(label(tr("Save lin&k as...")),      [&]() { triggerPageAction(QWebEnginePage::DownloadLinkToDisk); });
+       menu->addAction(label(tr("Copy link addr&ess")),    [&]() { triggerPageAction(QWebEnginePage::CopyLinkToClipboard); });
+    }
+@@ -412,8 +415,8 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
+       paste->setText(label(tr("&Paste")));
+       selectAll->setText(label(tr("Select &all")));
+       
+-      cut->setEnabled(data.isContentEditable() && !data.selectedText().isEmpty());
+-      copy->setEnabled(!data.selectedText().isEmpty());
++      cut->setEnabled(data->isContentEditable() && !data->selectedText().isEmpty());
++      copy->setEnabled(!data->selectedText().isEmpty());
+       paste->setEnabled(QApplication::clipboard()->mimeData()->hasText());
+       
+       menu->addAction(cut);
+@@ -466,8 +469,8 @@ void WebView::mouseNavigateButtonClick(QMouseEvent* pMouseEvent)
+       "if (window.desktopHooks) "
+       "  window.desktopHooks.mouseNavigateButtonClick(%1, %2, %3);")
+          .arg(pMouseEvent->button() == Qt::ForwardButton ? QStringLiteral("true") : QStringLiteral("false"))
+-         .arg(pMouseEvent->x())
+-         .arg(pMouseEvent->y());
++         .arg(pMouseEvent->position().x())
++         .arg(pMouseEvent->position().y());
+ 
+    webPage()->runJavaScript(command);
+ }
+diff --git a/src/cpp/desktop/DesktopWebView.hpp b/src/cpp/desktop/DesktopWebView.hpp
+index 6073a64792..ad13d1b45f 100644
+--- a/src/cpp/desktop/DesktopWebView.hpp
++++ b/src/cpp/desktop/DesktopWebView.hpp
+@@ -18,6 +18,8 @@
+ 
+ #include <QtGui>
+ #include <QWebEngineView>
++#include <QNetworkRequest>
++#include <QNetworkReply>
+ 
+ #include "DesktopWebPage.hpp"
+ 
