@@ -1,0 +1,120 @@
+chmod_test: it tries to chmod /badfilename.txt and gives an access denied
+changes to /tmp/badfilename.txt to get the correct error
+{command,process,spawn}_test.ts:It clearEnv removes all ENV except SANDBOX_*
+set DENO_DIR so it has a place to store files.
+tls_test.ts: ignore test that access the external network
+stat_test.ts:200(not changed) still fails as Deno.stat().birthtime returns 0
+diff --git a/cli/tests/unit/chmod_test.ts b/cli/tests/unit/chmod_test.ts
+index 70ab62c84..4c9faa9bd 100644
+--- a/cli/tests/unit/chmod_test.ts
++++ b/cli/tests/unit/chmod_test.ts
+@@ -81,7 +81,7 @@ Deno.test(
+ );
+ 
+ Deno.test({ permissions: { write: true } }, function chmodSyncFailure() {
+-  const filename = "/badfile.txt";
++  const filename = "/tmp/badfile.txt";
+   assertThrows(
+     () => {
+       Deno.chmodSync(filename, 0o777);
+@@ -173,7 +173,7 @@ Deno.test(
+ );
+ 
+ Deno.test({ permissions: { write: true } }, async function chmodFailure() {
+-  const filename = "/badfile.txt";
++  const filename = "/tmp/badfile.txt";
+   await assertRejects(
+     async () => {
+       await Deno.chmod(filename, 0o777);
+diff --git a/cli/tests/unit/command_test.ts b/cli/tests/unit/command_test.ts
+index 0b8aa934b..7d789ccf4 100644
+--- a/cli/tests/unit/command_test.ts
++++ b/cli/tests/unit/command_test.ts
+@@ -571,6 +571,7 @@ Deno.test(
+       clearEnv: true,
+       env: {
+         FOO: "23147",
++        DENO_DIR: Deno.env.get("DENO_DIR") || "/tmp",
+       },
+     }).output();
+ 
+@@ -596,6 +597,7 @@ Deno.test(
+       clearEnv: true,
+       env: {
+         FOO: "23147",
++        DENO_DIR: Deno.env.get("DENO_DIR") || "/tmp",
+       },
+     }).outputSync();
+ 
+diff --git a/cli/tests/unit/process_test.ts b/cli/tests/unit/process_test.ts
+index e610095ff..362ca8827 100644
+--- a/cli/tests/unit/process_test.ts
++++ b/cli/tests/unit/process_test.ts
+@@ -553,6 +553,7 @@ Deno.test(
+       clearEnv: true,
+       env: {
+         FOO: "23147",
++        DENO_DIR: Deno.env.get("DENO_DIR") || "/tmp",
+       },
+     });
+ 
+diff --git a/cli/tests/unit/spawn_test.ts b/cli/tests/unit/spawn_test.ts
+index 10095be95..f27794ef0 100644
+--- a/cli/tests/unit/spawn_test.ts
++++ b/cli/tests/unit/spawn_test.ts
+@@ -561,6 +561,7 @@ Deno.test(
+       clearEnv: true,
+       env: {
+         FOO: "23147",
++        DENO_DIR: Deno.env.get("DENO_DIR") || "/tmp",
+       },
+     });
+ 
+@@ -586,6 +587,7 @@ Deno.test(
+       clearEnv: true,
+       env: {
+         FOO: "23147",
++        DENO_DIR: Deno.env.get("DENO_DIR") || "/tmp",
+       },
+     });
+ 
+diff --git a/cli/tests/unit/tls_test.ts b/cli/tests/unit/tls_test.ts
+index d3ef4d0bf..0831488a4 100644
+--- a/cli/tests/unit/tls_test.ts
++++ b/cli/tests/unit/tls_test.ts
+@@ -1081,7 +1081,7 @@ Deno.test(
+ );
+ 
+ Deno.test(
+-  { permissions: { read: true, net: true } },
++  { permissions: { read: true, net: true }, ignore: true },
+   async function startTls() {
+     const hostname = "smtp.gmail.com";
+     const port = 587;
+@@ -1132,7 +1132,7 @@ Deno.test(
+ );
+ 
+ Deno.test(
+-  { permissions: { read: true, net: true } },
++  { permissions: { read: true, net: true },ignore:true },
+   async function connectTLSBadClientCertPrivateKey(): Promise<void> {
+     await assertRejects(async () => {
+       await Deno.connectTls({
+@@ -1148,7 +1148,7 @@ Deno.test(
+ );
+ 
+ Deno.test(
+-  { permissions: { read: true, net: true } },
++  { permissions: { read: true, net: true },ignore:true },
+   async function connectTLSBadPrivateKey(): Promise<void> {
+     await assertRejects(async () => {
+       await Deno.connectTls({
+@@ -1164,7 +1164,7 @@ Deno.test(
+ );
+ 
+ Deno.test(
+-  { permissions: { read: true, net: true } },
++  { permissions: { read: true, net: true },ignore:true },
+   async function connectTLSNotPrivateKey(): Promise<void> {
+     await assertRejects(async () => {
+       await Deno.connectTls({
