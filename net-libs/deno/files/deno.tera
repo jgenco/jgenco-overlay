@@ -27,6 +27,8 @@ CRATES="
 # * GN_ARGS=" use_lld=false"                works with deno-1.22.3
 # * GN_ARGS=" use_lld=false use_gold=false" works with deno-1.25.2
 #add support for ccache/sccache
+#add support for pre compiled archive
+# * https://github.com/denoland/rusty_v8#the-rusty_v8_archive-environment-variable
 #}
 
 DENO_STD_VER=""
@@ -143,15 +145,14 @@ src_compile() {
 		cargo_src_compile --locked
 		popd > /dev/null
 	fi
-
+	"${S}/target/release/deno" completions bash > "${S}/deno_bash_comp" || die "Failed to create bash completion file"
 }
 src_install() {
 	pushd ${S}/cli
 	cargo_src_install
 	popd
 
-	"${ED}/usr/bin/deno" completions bash > deno_bash_comp || die "Failed to create bash completion file"
-	newbashcomp deno_bash_comp deno
+	newbashcomp "${S}/deno_bash_comp" deno
 }
 
 pkg_postinst(){
@@ -162,7 +163,7 @@ pkg_postinst(){
 		#https://github.com/unicode-org/icu/blob/main/icu4c/source/i18n/formattedvalue.cpp#L212
 		#the source code mentions this is a false positive
 		#come up with some text to inform the user
-		#TODO unbundle third party libs(ICU) if possible
+		#TODO unbundle third party libs(ICU,zlib) if possible
 		:
 	fi
 }
