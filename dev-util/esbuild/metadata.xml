@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<upstream>
+		<changelog>https://github.com/evanw/esbuild/blob/master/CHANGELOG.md</changelog>
+		<remote-id type="github">evanw/esbuild</remote-id>
+		<bugs-to>https://github.com/evanw/esbuild/issues</bugs-to>
+	</upstream>
+</pkgmetadata>
