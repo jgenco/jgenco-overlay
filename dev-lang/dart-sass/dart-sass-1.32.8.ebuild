@@ -4,7 +4,7 @@
 EAPI=8
 
 DESCRIPTION="The reference implementation of Sass, written in Dart. "
-HOMEPAGE="http://sass-lang.com/dart-sass"
+HOMEPAGE="https://sass-lang.com/dart-sass"
 SRC_URI="
 https://github.com/sass/dart-sass/archive/refs/tags/${PV}.tar.gz -> ${P}.tar.gz
 "
