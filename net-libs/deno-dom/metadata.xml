@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<upstream>
+		<doc>https://deno.land/x/deno_dom?doc</doc>
+		<bugs-to>https://github.com/b-fuze/deno-dom/issues</bugs-to>
+		<remote-id type="github">b-fuze/deno-dom</remote-id>
+	</upstream>
+</pkgmetadata>
