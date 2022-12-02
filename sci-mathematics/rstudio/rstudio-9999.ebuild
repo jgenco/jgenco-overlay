@@ -192,7 +192,7 @@ REQUIRED_USE="!server? ( ^^ ( electron qt5 qt6 ) )"
 
 DESCRIPTION="IDE for the R language"
 HOMEPAGE="
-	https://rstudio.com
+	https://posit.co/products/open-source/rstudio/
 	https://github.com/rstudio/rstudio/"
 
 if [[ "${PV}" == *9999 ]];then
