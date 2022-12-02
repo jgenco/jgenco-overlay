@@ -4,7 +4,7 @@
 EAPI=8
 
 DESCRIPTION="Dart is a cohesive, scalable platform for building apps"
-HOMEPAGE="https://www.dartlang.org/"
+HOMEPAGE="https://dart.dev/"
 #signing key: https://dl-ssl.google.com/linux/linux_signing_key.pub
 #wget https://storage.googleapis.com/download.dartlang.org/linux/debian/dists/stable/Release{,.gpg}
 #https://storage.googleapis.com/download.dartlang.org/linux/debian/dists/stable/main/binary-amd64/Packages
