@@ -4,4 +4,9 @@
 	<use>
 		<flag name="bundle">Bundle all external dependencies into one file.</flag>
 	</use>
+	<upstream>
+		<doc>https://quarto.org/docs/guide/</doc>
+		<bugs-to>https://github.com/quarto-dev/quarto-cli/issues</bugs-to>
+		<remote-id type="github">quarto-dev/quarto-cli</remote-id>
+	</upstream>
 </pkgmetadata>
