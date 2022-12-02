@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<upstream>
+		<changelog>https://github.com/sass/dart-sass/blob/main/CHANGELOG.md</changelog>
+		<doc>https://sass-lang.com/documentation/</doc>
+		<bugs-to>https://github.com/sass/sass/issues</bugs-to>
+		<remote-id type="github">sass/dart-sass</remote-id>
+	</upstream>
+</pkgmetadata>
