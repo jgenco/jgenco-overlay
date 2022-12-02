@@ -1,17 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-	<maintainer type="person">
-		<email>ezzieyguywuf@gmail.com</email>
-		<name>Wolfgang E. Sanyer</name>
-	</maintainer>
-	<maintainer type="project">
-		<email>proxy-maint@gentoo.org</email>
-		<name>Proxy Maintainers</name>
-	</maintainer>
 	<use>
 	<flag name="boost">
 		Enable support for boost::{optional,tuple,fusion,gregorian::date}
 	</flag>
 	</use>
+	<upstream>
+		<changelog>https://github.com/SOCI/soci/blob/master/CHANGES</changelog>
+		<doc>https://soci.sourceforge.net/doc/index.html</doc>
+		<bugs-to>https://github.com/SOCI/soci/issues</bugs-to>
+		<remote-id type="github">SOCI/soci</remote-id>
+	</upstream>
 </pkgmetadata>

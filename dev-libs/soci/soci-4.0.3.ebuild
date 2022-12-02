@@ -6,7 +6,7 @@ EAPI=7
 inherit cmake
 
 DESCRIPTION="Simple Open (Database) Call Interface - write SQL in C++"
-HOMEPAGE="https://github.com/SOCI/soci"
+HOMEPAGE="https://soci.sourceforge.net/"
 SRC_URI="https://github.com/${PN}/${PN}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
 IUSE="boost firebird mysql odbc oracle postgres +sqlite test"
 RESTRICT="!test? ( test )"
