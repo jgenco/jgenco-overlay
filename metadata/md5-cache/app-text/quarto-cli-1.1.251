@@ -11,5 +11,5 @@ RDEPEND=<=net-libs/deno-1.23.0 || ( >=app-text/pandoc-2.19.2 >=app-text/pandoc-b
 RESTRICT=mirror
 SLOT=0
 SRC_URI=https://github.com/quarto-dev/quarto-cli/archive/refs/tags/v1.1.251.tar.gz -> quarto-cli-1.1.251.tar.gz
-_eclasses_=toolchain-funcs	441f754fd75cd4fd1fa06fbc17da6144	multilib	5ca4e49abed8e3a2f7b56920eadee157	bash-completion-r1	f5e7a020fd9c741740756aac61bf75ff
+_eclasses_=toolchain-funcs	37a4612ce5522df5a100359a8dbc8491	multilib	5ca4e49abed8e3a2f7b56920eadee157	bash-completion-r1	f5e7a020fd9c741740756aac61bf75ff
 _md5_=964934aaba215024f1941ba7c545ef77
