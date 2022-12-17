@@ -1,0 +1,639 @@
+See rstudio bug:https://github.com/rstudio/rstudio/issues/12390
+NOTE:This patch was edited to remove non existent file NEWS.md as it was
+made over the next version of Rstudio.
+From c16965b75173c83257c8f3a26f2d22b437dd8ddd Mon Sep 17 00:00:00 2001
+From: Kevin Ushey <kevin@rstudio.com>
+Date: Thu, 15 Dec 2022 10:52:26 +0800
+Subject: [PATCH] rationalize usages of rpostback + postback script paths
+ (#12422)
+
+* use similar postback layout for dev + package builds
+
+* don't forward GIT_ASKPASS / SSH_ASKPASS to terminals
+
+* use .exe extension on Windows
+
+* use helper for modifying path in session
+
+* remove debugging
+
+* more usages of R getenv / setenv
+
+* move utilities to RUtil
+
+* remove old code
+
+* one more setenv change
+
+* sort
+
+* update NEWS
+
+* PR feedback
+
+* set rpostback executable path for dev builds
+---
+ CMakeCompiler.txt                             |  5 ++
+ NEWS.md                                       |  1 +
+ src/cpp/conf/rdesktop-dev.conf                |  2 +-
+ src/cpp/conf/rsession-dev.conf                |  4 +-
+ .../core/include/core/r_util/RToolsInfo.hpp   |  6 +-
+ src/cpp/r/ROptions.cpp                        |  8 +-
+ src/cpp/r/RUtil.cpp                           | 87 ++++++++++++++++++-
+ src/cpp/r/include/r/RUtil.hpp                 | 19 ++++
+ src/cpp/session/SessionConsoleProcess.cpp     | 16 +++-
+ src/cpp/session/SessionMain.cpp               | 11 +--
+ src/cpp/session/SessionPostback.cpp           | 21 ++++-
+ .../include/session/SessionConstants.hpp      |  7 +-
+ .../include/session/SessionModuleContext.hpp  |  6 ++
+ src/cpp/session/modules/SessionGit.cpp        | 18 +---
+ src/cpp/session/modules/SessionSVN.cpp        |  8 +-
+ .../modules/build/SessionBuildEnvironment.cpp |  6 +-
+ .../session/modules/quarto/SessionQuarto.cpp  | 30 +++----
+ src/cpp/session/postback/CMakeLists.txt       | 20 +++--
+ 18 files changed, 195 insertions(+), 80 deletions(-)
+
+diff --git a/CMakeCompiler.txt b/CMakeCompiler.txt
+index 9ce12f4cec5..b212fda95ca 100644
+--- a/CMakeCompiler.txt
++++ b/CMakeCompiler.txt
+@@ -53,6 +53,11 @@ if(MSVC)
+   # these warnings are being triggered in the MSVC-supplied headers and we aren't touching those
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4068")
+ 
++  # disable C4003 warning: not enough arguments for function-like macro invocation
++  # C99, C++11 and above allow you to call function-like macros which accept 1 argument
++  # without any parameters, since macro arguments are allowed to be empty
++  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4003")
++
+   # embed debug information into the generated objects
+   # (otherwise we can run into annoying PDB errors during compilation)
+   string(REGEX REPLACE "/Zi" "/Z7" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+diff --git a/src/cpp/conf/rdesktop-dev.conf b/src/cpp/conf/rdesktop-dev.conf
+index 7d8d6cff52f..28f25f2e088 100644
+--- a/src/cpp/conf/rdesktop-dev.conf
++++ b/src/cpp/conf/rdesktop-dev.conf
+@@ -32,7 +32,7 @@ r-session-library=${CMAKE_CURRENT_BINARY_DIR}/r/R/packages/library
+ r-session-package-archives=${RSTUDIO_DEPENDENCIES_DIR}/common
+ 
+ # external binaries
+-external-rpostback-path=${CMAKE_CURRENT_BINARY_DIR}/session/postback/postback/rpostback
++external-rpostback-path=${RPOSTBACK_EXECUTABLE_PATH}
+ external-consoleio-path=${CMAKE_CURRENT_BINARY_DIR}/session/consoleio/consoleio.exe
+ external-gnudiff-path=${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/gnudiff
+ external-gnugrep-path=${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/gnugrep/3.0
+diff --git a/src/cpp/conf/rsession-dev.conf b/src/cpp/conf/rsession-dev.conf
+index bcc3e35a48a..8597d1739a8 100644
+--- a/src/cpp/conf/rsession-dev.conf
++++ b/src/cpp/conf/rsession-dev.conf
+@@ -30,8 +30,8 @@ r-resources-path=${CMAKE_CURRENT_SOURCE_DIR}/session/resources
+ r-session-library=${CMAKE_CURRENT_BINARY_DIR}/r/R/packages/library
+ r-session-package-archives=${RSTUDIO_DEPENDENCIES_DIR}/common
+ 
+-# execute R postback from the build tree
+-external-rpostback-path=session/postback/postback/rpostback
++# execute rpostback from build tree
++external-rpostback-path=session/postback/rpostback
+ 
+ # common dependencies
+ external-hunspell-dictionaries-path=${RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR}
+diff --git a/src/cpp/core/include/core/r_util/RToolsInfo.hpp b/src/cpp/core/include/core/r_util/RToolsInfo.hpp
+index 41753020a8a..920d3b4e774 100644
+--- a/src/cpp/core/include/core/r_util/RToolsInfo.hpp
++++ b/src/cpp/core/include/core/r_util/RToolsInfo.hpp
+@@ -74,17 +74,15 @@ template <typename T>
+ void prependToSystemPath(const RToolsInfo& toolsInfo, T* pTarget)
+ {
+    // prepend in reverse order
+-   std::vector<FilePath>::const_reverse_iterator it
+-                                          = toolsInfo.pathEntries().rbegin();
++   auto it = toolsInfo.pathEntries().rbegin();
+    for ( ; it != toolsInfo.pathEntries().rend(); ++it)
+    {
+       std::string path = it->getAbsolutePath();
+-      boost::algorithm::replace_all(path, "/", "\\");
++      std::replace(path.begin(), path.end(), '/', '\\');
+       core::system::addToPath(pTarget, path, true);
+    }
+ }
+ 
+-
+ } // namespace r_util
+ } // namespace core 
+ } // namespace rstudio
+diff --git a/src/cpp/r/ROptions.cpp b/src/cpp/r/ROptions.cpp
+index 56bdf98dd7a..93990283748 100644
+--- a/src/cpp/r/ROptions.cpp
++++ b/src/cpp/r/ROptions.cpp
+@@ -26,6 +26,7 @@
+ #include <core/system/Environment.hpp>
+ 
+ #include <r/RExec.hpp>
++#include <r/RUtil.hpp>
+ 
+ using namespace rstudio::core;
+ 
+@@ -54,10 +55,11 @@ const int kDefaultWidth = 80;
+    
+ void setOptionWidth(int width)
+ {
+-   core::system::setenv("RSTUDIO_CONSOLE_WIDTH",
+-                        core::safe_convert::numberToString(width));
++   r::util::setenv(
++            "RSTUDIO_CONSOLE_WIDTH",
++            core::safe_convert::numberToString(width));
+ 
+-   boost::format fmt("options(width=%1%)");
++   boost::format fmt("options(width = %1%)");
+    Error error = r::exec::executeString(boost::str(fmt % width));
+    if (error)
+       LOG_ERROR(error);
+diff --git a/src/cpp/r/RUtil.cpp b/src/cpp/r/RUtil.cpp
+index a6807f1125a..28f79176407 100644
+--- a/src/cpp/r/RUtil.cpp
++++ b/src/cpp/r/RUtil.cpp
+@@ -21,11 +21,13 @@
+ #include <boost/algorithm/string/replace.hpp>
+ #include <boost/regex.hpp>
+ 
+-#include <core/Algorithm.hpp>
+-#include <shared_core/FilePath.hpp>
+-#include <core/StringUtils.hpp>
+ #include <shared_core/Error.hpp>
++#include <shared_core/FilePath.hpp>
++
++#include <core/Algorithm.hpp>
+ #include <core/RegexUtils.hpp>
++#include <core/StringUtils.hpp>
++#include <core/system/Environment.hpp>
+ 
+ #include <r/RExec.hpp>
+ 
+@@ -35,6 +37,12 @@
+ # define CP_ACP 0
+ #endif
+ 
++#ifdef _WIN32
++# define kPathSeparator ";"
++#else
++# define kPathSeparator ":"
++#endif
++
+ #ifdef _WIN32
+ 
+ #include <Windows.h>
+@@ -72,6 +80,79 @@ bool versionTest(const std::string& comparator, const std::string& version)
+ 
+ } // anonymous namespace
+ 
++void setenv(const std::string& key, const std::string& value)
++{
++   core::system::setenv(key, value);
++
++#ifdef _WIN32
++   // NOTE: Required on Windows as R links to a static copy
++   // of libc and libgcc, and so has a separate environment
++   // block from the rsession.exe executable itself.
++   Error error = r::exec::RFunction("base:::Sys.setenv")
++         .addParam(key, value)
++         .call();
++
++   if (error)
++      LOG_ERROR(error);
++#endif
++}
++
++std::string getenv(const std::string& key)
++{
++   std::string value;
++   Error error = r::exec::RFunction("base:::Sys.getenv")
++         .addParam(key)
++         .call(&value);
++
++   if (error)
++      LOG_ERROR(error);
++
++   return value;
++}
++
++namespace {
++
++void modifySystemPath(const std::string& pathEntry, bool prepend)
++{
++   std::string oldPath = getenv("PATH");
++   std::string newPath = prepend
++         ? fmt::format("{}{}{}", pathEntry, kPathSeparator, oldPath)
++         : fmt::format("{}{}{}", oldPath, kPathSeparator, pathEntry);
++
++#ifdef _WIN32
++   std::replace(newPath.begin(), newPath.end(), '/', '\\');
++#endif
++
++   boost::regex reDuplicateSeparators(kPathSeparator "+");
++   newPath = boost::regex_replace(newPath, reDuplicateSeparators, kPathSeparator);
++
++   setenv("PATH", newPath);
++}
++
++} // end anonymous namespace
++
++void appendToSystemPath(const std::string& pathEntry)
++{
++   modifySystemPath(pathEntry, false);
++}
++
++void appendToSystemPath(const FilePath& pathEntry)
++{
++   std::string path = string_utils::utf8ToSystem(pathEntry.getAbsolutePath());
++   modifySystemPath(path, false);
++}
++
++void prependToSystemPath(const std::string& pathEntry)
++{
++   modifySystemPath(pathEntry, true);
++}
++
++void prependToSystemPath(const FilePath& pathEntry)
++{
++   std::string path = string_utils::utf8ToSystem(pathEntry.getAbsolutePath());
++   modifySystemPath(path, true);
++}
++
+ std::string expandFileName(const std::string& name)
+ {
+    return std::string(R_ExpandFileName(name.c_str()));
+diff --git a/src/cpp/r/include/r/RUtil.hpp b/src/cpp/r/include/r/RUtil.hpp
+index 5c6d86e3440..bb6d172656c 100644
+--- a/src/cpp/r/include/r/RUtil.hpp
++++ b/src/cpp/r/include/r/RUtil.hpp
+@@ -36,6 +36,25 @@ namespace rstudio {
+ namespace r {
+ namespace util {
+ 
++// NOTE: On Windows, environment variables set via core::system::setenv()
++// won't be visible in the R session.
++//
++// These routines should be preferred when getting and
++// setting environment variables in the R session.
++void setenv(const std::string& key, const std::string& value);
++std::string getenv(const std::string& key);
++
++void appendToSystemPath(const core::FilePath& path);
++void appendToSystemPath(const std::string& path);
++void prependToSystemPath(const core::FilePath& path);
++void prependToSystemPath(const std::string& path);
++
++template <typename T>
++void addToSystemPath(const T& path, bool prepend)
++{
++   prepend ? prependToSystemPath(path) : appendToSystemPath(path);
++}
++
+ std::string expandFileName(const std::string& name);
+    
+ std::string fixPath(const std::string& path);
+diff --git a/src/cpp/session/SessionConsoleProcess.cpp b/src/cpp/session/SessionConsoleProcess.cpp
+index a99a80cab01..6bead6d4f44 100644
+--- a/src/cpp/session/SessionConsoleProcess.cpp
++++ b/src/cpp/session/SessionConsoleProcess.cpp
+@@ -94,7 +94,21 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
+ #else
+    core::system::setHomeToUserProfile(&shellEnv);
+ #endif
+-
++   
++   // don't forward GIT_ASKPASS or SSH_ASKPASS if it's set to our rpostback
++   // handlers -- those aren't required in a terminal, as the user can be
++   // prompted for input via stdin, and it's likely that users will munge
++   // the PATH within a terminal a way that makes our utilities unavailable
++   //
++   // TODO: could we just set an absolute path to the rpostback-askpass util?
++   std::string gitAskpass = core::system::getenv("GIT_ASKPASS");
++   if (gitAskpass == "rpostback-askpass")
++      core::system::unsetenv(&shellEnv, "GIT_ASKPASS");
++
++   std::string sshAskpass = core::system::getenv("SSH_ASKPASS");
++   if (sshAskpass == "rpostback-askpass")
++      core::system::unsetenv(&shellEnv, "SSH_ASKPASS");
++   
+    // amend shell paths as appropriate
+    session::modules::workbench::ammendShellPaths(&shellEnv);
+ 
+diff --git a/src/cpp/session/SessionMain.cpp b/src/cpp/session/SessionMain.cpp
+index 71ba5559dba..25fc2a2429e 100644
+--- a/src/cpp/session/SessionMain.cpp
++++ b/src/cpp/session/SessionMain.cpp
+@@ -113,6 +113,7 @@
+ #include "SessionAddins.hpp"
+ 
+ #include "SessionModuleContextInternal.hpp"
++#include <session/SessionModuleContext.hpp>
+ 
+ #include "SessionClientEventQueue.hpp"
+ #include "SessionClientInit.hpp"
+@@ -2160,15 +2161,7 @@ int main(int argc, char * const argv[])
+          core::thread::safeLaunchThread(detectParentTermination);
+ 
+       // set the rpostback absolute path
+-      FilePath rpostback = options.rpostbackPath();
+-   #ifndef __APPLE__
+-      // package builds on Linux and Windows hoist the binary one level higher in the directory structure
+-      if (rpostback.getAbsolutePath().find("session/postback") == std::string::npos) {
+-         rpostback = rpostback.getParent().getParent();
+-         rpostback = rpostback.completeChildPath("rpostback");
+-      }
+-   #endif
+-
++      FilePath rpostback = module_context::rPostbackPath();
+       core::system::setenv(
+             "RS_RPOSTBACK_PATH",
+             string_utils::utf8ToSystem(rpostback.getAbsolutePath()));
+diff --git a/src/cpp/session/SessionPostback.cpp b/src/cpp/session/SessionPostback.cpp
+index ae8c435d61c..f5b822f80f8 100644
+--- a/src/cpp/session/SessionPostback.cpp
++++ b/src/cpp/session/SessionPostback.cpp
+@@ -88,6 +88,22 @@ void handlePostback(const PostbackHandlerFunction& handlerFunction,
+    
+ } // anonymous namespace
+ 
++FilePath rPostbackPath()
++{
++   return session::options().rpostbackPath();
++}
++
++FilePath rPostbackScriptsDir()
++{
++   // postback scripts should lie in a 'postback' directory,
++   // located in the same folder as the 'rpostback' binary
++   return rPostbackPath().getParent().completeChildPath("postback");
++}
++
++FilePath rPostbackScriptPath(const std::string& scriptName)
++{
++   return rPostbackScriptsDir().completeChildPath(scriptName);
++}
+ 
+ Error registerPostbackHandler(const std::string& name,
+                               const PostbackHandlerFunction& handlerFunction,
+@@ -104,9 +120,8 @@ Error registerPostbackHandler(const std::string& name,
+       return error;
+                                                     
+    // compute the shell command required to invoke this handler and return it
+-   Options& options = session::options();
+-   *pShellCommand = options.rpostbackPath().getAbsolutePath() + "-" + name;
+-   
++   *pShellCommand = rPostbackScriptPath("rpostback-" + name).getAbsolutePath();
++
+    // return success
+    return Success();
+ }
+diff --git a/src/cpp/session/include/session/SessionConstants.hpp b/src/cpp/session/include/session/SessionConstants.hpp
+index 5823a09118e..d8f0bf9242a 100644
+--- a/src/cpp/session/include/session/SessionConstants.hpp
++++ b/src/cpp/session/include/session/SessionConstants.hpp
+@@ -148,9 +148,14 @@
+ #endif
+ 
+ #define kDefaultQuartoPath         "bin/quarto"
+-#define kDefaultPostbackPath       "bin/postback/rpostback"
+ #define kDefaultRsclangPath        "bin/rsclang"
+ 
++#ifdef _WIN32
++# define kDefaultPostbackPath       "bin/rpostback.exe"
++#else
++# define kDefaultPostbackPath       "bin/rpostback"
++#endif
++
+ // json rpc methods we handle (the rest are delegated to the HttpServer)
+ const char * const kClientInit = "client_init";
+ const char * const kEditCompleted = "edit_completed";
+diff --git a/src/cpp/session/include/session/SessionModuleContext.hpp b/src/cpp/session/include/session/SessionModuleContext.hpp
+index 2081d62c937..217ae4272fe 100644
+--- a/src/cpp/session/include/session/SessionModuleContext.hpp
++++ b/src/cpp/session/include/session/SessionModuleContext.hpp
+@@ -26,6 +26,7 @@
+ #include <core/BoostSignals.hpp>
+ #include <core/HtmlUtils.hpp>
+ #include <core/Version.hpp>
++#include <core/system/Environment.hpp>
+ #include <core/system/System.hpp>
+ #include <core/system/ShellUtils.hpp>
+ #include <core/system/FileChangeEvent.hpp>
+@@ -102,6 +103,11 @@ core::FilePath safeCurrentPath();
+ 
+ core::json::Object createFileSystemItem(const core::FileInfo& fileInfo);
+ core::json::Object createFileSystemItem(const core::FilePath& filePath);
++
++// postback helpers
++core::FilePath rPostbackPath();
++core::FilePath rPostbackScriptsDir();
++core::FilePath rPostbackScriptsPath(const std::string& scriptName);
+    
+ // r session info
+ std::string rVersion();
+diff --git a/src/cpp/session/modules/SessionGit.cpp b/src/cpp/session/modules/SessionGit.cpp
+index 7b1eea55323..cef5f3eab1d 100644
+--- a/src/cpp/session/modules/SessionGit.cpp
++++ b/src/cpp/session/modules/SessionGit.cpp
+@@ -127,7 +127,7 @@ core::system::ProcessOptions procOptions()
+    // (note that we also do this on init, but we do this again for
+    // child processes just to ensure any user-initiated PATH munging
+    // doesn't break builtin utilities)
+-   FilePath postbackDir = session::options().rpostbackPath().getParent();
++   FilePath postbackDir = module_context::rPostbackScriptsDir();
+    core::system::addToPath(&childEnv, postbackDir.getAbsolutePath());
+ 
+    options.workingDir = projects::projectContext().directory();
+@@ -3354,22 +3354,12 @@ core::Error initialize()
+       return error;
+ 
+    // setup environment
+-   BOOST_ASSERT(boost::algorithm::ends_with(sshAskCmd, "rpostback-askpass"));
+-   core::system::setenv("GIT_ASKPASS", "rpostback-askpass");
+-
++   r::util::setenv("GIT_ASKPASS", "rpostback-askpass");
+    if (interceptAskPass)
+-   {
+-      core::system::setenv("SSH_ASKPASS", "rpostback-askpass");
+-   }
++      r::util::setenv("SSH_ASKPASS", "rpostback-askpass");
+ 
+    // add postback directory to PATH
+-   FilePath postbackDir = session::options().rpostbackPath().getParent();
+-   if (postbackDir.getAbsolutePath().find("session/postback") == std::string::npos) {
+-      // for package builds only, postback/rpostback-askpass in same directory as rpostback itself
+-      postbackDir = postbackDir.completeChildPath("postback");
+-   }
+-
+-   core::system::addToPath(postbackDir.getAbsolutePath());
++   r::util::appendToSystemPath(module_context::rPostbackScriptsDir());
+ 
+    // add suspend/resume handler
+    addSuspendHandler(SuspendHandler(boost::bind(onSuspend, _2), onResume));
+diff --git a/src/cpp/session/modules/SessionSVN.cpp b/src/cpp/session/modules/SessionSVN.cpp
+index ff7c7728c86..3177caf1373 100644
+--- a/src/cpp/session/modules/SessionSVN.cpp
++++ b/src/cpp/session/modules/SessionSVN.cpp
+@@ -118,13 +118,7 @@ core::system::ProcessOptions procOptions(bool requiresSsh)
+    core::system::environment(&childEnv);
+ 
+    // add postback directory to PATH
+-   FilePath postbackDir = session::options().rpostbackPath().getParent();
+-   if (postbackDir.getAbsolutePath().find("session/postback") == std::string::npos) {
+-      // for package builds only, postback/rpostback-askpass in same directory as rpostback itself
+-      // that is, rpostback-askpass is nested inside a folder called postback which we add to PATH
+-      postbackDir = postbackDir.completeChildPath("postback");
+-   }
+-
++   FilePath postbackDir = module_context::rPostbackScriptsDir();
+    core::system::addToPath(&childEnv, postbackDir.getAbsolutePath());
+ 
+    // on windows add gnudiff directory to the path
+diff --git a/src/cpp/session/modules/build/SessionBuildEnvironment.cpp b/src/cpp/session/modules/build/SessionBuildEnvironment.cpp
+index 782b30934d3..6c91b5e9e67 100644
+--- a/src/cpp/session/modules/build/SessionBuildEnvironment.cpp
++++ b/src/cpp/session/modules/build/SessionBuildEnvironment.cpp
+@@ -29,6 +29,7 @@
+ 
+ #include <r/RExec.hpp>
+ #include <r/RVersionInfo.hpp>
++#include <r/RUtil.hpp>
+ 
+ #include <session/SessionModuleContext.hpp>
+ 
+@@ -144,8 +145,7 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget,
+ 
+     // enumerate them to see if we have a compatible version
+     // (go in reverse order for most recent first)
+-    std::vector<r_util::RToolsInfo>::const_reverse_iterator it = rTools.rbegin();
+-    for ( ; it != rTools.rend(); ++it)
++    for (auto it = rTools.rbegin(); it != rTools.rend(); ++it)
+     {
+        if (module_context::isRtoolsCompatible(*it))
+        {
+@@ -214,7 +214,7 @@ bool addRtoolsToPathIfNecessary(std::string* pPath,
+    {
+       for (const core::system::Option& var : environmentVars)
+       {
+-         core::system::setenv(var.first, var.second);
++         r::util::setenv(var.first, var.second);
+       }
+       return true;
+    }
+diff --git a/src/cpp/session/modules/quarto/SessionQuarto.cpp b/src/cpp/session/modules/quarto/SessionQuarto.cpp
+index 91d0b5e45c9..85aa300dc40 100644
+--- a/src/cpp/session/modules/quarto/SessionQuarto.cpp
++++ b/src/cpp/session/modules/quarto/SessionQuarto.cpp
+@@ -38,6 +38,7 @@
+ #include <core/system/Process.hpp>
+ 
+ #include <r/RExec.hpp>
++#include <r/RUtil.hpp>
+ 
+ #include <session/SessionModuleContext.hpp>
+ #include <session/SessionSourceDatabase.hpp>
+@@ -208,7 +209,6 @@ void detectQuartoInstallation()
+    bool prepend = std::get<2>(userInstalled);
+ 
+    std::string sysPath = core::system::getenv("PATH");
+-   r::exec::RFunction sysSetenv("Sys.setenv");
+ 
+    // always use user installed if it's there but subject to version check
+    if (!s_userInstalledPath.isEmpty())
+@@ -216,21 +216,14 @@ void detectQuartoInstallation()
+       if (s_quartoVersion >= kQuartoRecommendedVersion)
+       {
+          s_quartoPath = s_userInstalledPath;
+-         const std::string quartoPath = string_utils::utf8ToSystem(s_quartoPath.getParent().getAbsolutePath());
++         const std::string quartoPath = string_utils::utf8ToSystem(
++                  s_quartoPath.getParent().getAbsolutePath());
+ 
+          if (sysPath.find(quartoPath) != std::string::npos)
+             return;
+ 
+          // prepend to path only if RSTUDIO_QUARTO is defined
+-         core::system::addToPath(&sysPath, quartoPath, prepend);
+-         sysSetenv.addParam("PATH", sysPath);
+-         Error error = sysSetenv.call();
+-         if (error)
+-         {
+-            LOG_DEBUG_MESSAGE("Error setting PATH: " + sysPath);
+-            LOG_ERROR(error);
+-         }
+-
++         r::util::addToSystemPath(s_quartoPath.getParent(), prepend);
+          return;
+       }
+    }
+@@ -241,30 +234,27 @@ void detectQuartoInstallation()
+ #else
+    std::string target = "quarto.exe";
+ #endif
++
+    FilePath embeddedQuartoPath = session::options().quartoPath()
+       .completeChildPath("bin")
+       .completeChildPath(target);
++
+    if (embeddedQuartoPath.isEmpty())
+       return;
++
+    auto embeddedVersion = readQuartoVersion(embeddedQuartoPath);
+    if (embeddedVersion >= kQuartoRequiredVersion)
+    {
+       s_quartoPath = embeddedQuartoPath;
+       s_quartoVersion = embeddedVersion;
+-      const std::string quartoPath = string_utils::utf8ToSystem(s_quartoPath.getParent().getAbsolutePath());
++      const std::string quartoPath = string_utils::utf8ToSystem(
++               s_quartoPath.getParent().getAbsolutePath());
+ 
+       if (sysPath.find(quartoPath) != std::string::npos)
+          return;
+ 
+       // append to path
+-      core::system::addToPath(&sysPath, quartoPath, false);
+-      sysSetenv.addParam("PATH", sysPath);
+-      Error error = sysSetenv.call();
+-      if (error)
+-      {
+-         LOG_DEBUG_MESSAGE("Error setting PATH: " + sysPath);
+-         LOG_ERROR(error);
+-      }
++      r::util::addToSystemPath(s_quartoPath.getParent(), prepend);
+    }
+    else
+    {
+diff --git a/src/cpp/session/postback/CMakeLists.txt b/src/cpp/session/postback/CMakeLists.txt
+index 534827676e8..7d06523544a 100644
+--- a/src/cpp/session/postback/CMakeLists.txt
++++ b/src/cpp/session/postback/CMakeLists.txt
+@@ -45,19 +45,21 @@ if (RSTUDIO_SERVER)
+     )
+ endif()
+ 
+-# configure postback scripts for development mode
++# configure postback scripts
+ set(POSTBACK_SCRIPT_DIR ${CMAKE_CURRENT_BINARY_DIR}/postback)
+ file(MAKE_DIRECTORY ${POSTBACK_SCRIPT_DIR})
+-configure_file(rpostback-editfile ${POSTBACK_SCRIPT_DIR}/rpostback-editfile)
+-configure_file(rpostback-pdfviewer ${POSTBACK_SCRIPT_DIR}/rpostback-pdfviewer)
+-configure_file(rpostback-gitssh ${POSTBACK_SCRIPT_DIR}/rpostback-gitssh)
+-configure_file(rpostback-askpass ${POSTBACK_SCRIPT_DIR}/rpostback-askpass)
+ configure_file(askpass-passthrough ${POSTBACK_SCRIPT_DIR}/askpass-passthrough)
+-configure_file(rpostback-browser ${POSTBACK_SCRIPT_DIR}/rpostback-browser)
++configure_file(rpostback-askpass   ${POSTBACK_SCRIPT_DIR}/rpostback-askpass)
++configure_file(rpostback-browser   ${POSTBACK_SCRIPT_DIR}/rpostback-browser)
++configure_file(rpostback-editfile  ${POSTBACK_SCRIPT_DIR}/rpostback-editfile)
++configure_file(rpostback-gitssh    ${POSTBACK_SCRIPT_DIR}/rpostback-gitssh)
++configure_file(rpostback-pdfviewer ${POSTBACK_SCRIPT_DIR}/rpostback-pdfviewer)
+ 
+-# put rpostback in a place where it can be found for dev config
+-if(NOT RSTUDIO_PACKAGE_BUILD)
+-   set_target_properties(rpostback PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${POSTBACK_SCRIPT_DIR})
++# set RPOSTBACK_EXECUTABLE_PATH for rdesktop-dev
++if(WIN32)
++    set(RPOSTBACK_EXECUTABLE_PATH "${CMAKE_CURRENT_BINARY_DIR}/rpostback.exe" CACHE INTERNAL "")
++else()
++    set(RPOSTBACK_EXECUTABLE_PATH "${CMAKE_CURRENT_BINARY_DIR}/rpostback" CACHE INTERNAL "")
+ endif()
+ 
+ # installation rules
