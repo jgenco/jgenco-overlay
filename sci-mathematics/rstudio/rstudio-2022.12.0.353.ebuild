@@ -120,7 +120,7 @@ QT_VER=5.15.3
 QT_SLOT=5
 
 SLOT="0"
-KEYWORDS=""
+KEYWORDS="~amd64"
 IUSE="server electron +qt5 qt6 test debug quarto panmirror doc clang"
 REQUIRED_USE="!server? ( ^^ ( electron qt5 qt6 ) )"
 
@@ -329,6 +329,11 @@ src_unpack() {
 	bundle_ln "/usr/share/hunspell" "/dependencies/dictionaries" "dictionaries"
 }
 src_prepare() {
+	#fix path rstudio bin path from "${EPREFIX}/usr/rstudio" to "${EPREFIX}/usr/bin/rstudio"
+	#NOTE: the actual bin is "${EPREFIX}/usr/share/rstudio/rstudio" but we symlink in src_install
+	sed -i "s#/rstudio#/bin/rstudio#" src/node/desktop/resources/freedesktop/rstudio.desktop.in || \
+		die "Failed to set proper path for rstudio"
+
 	cmake_src_prepare
 	java-pkg-2_src_prepare
 
@@ -385,7 +390,7 @@ src_prepare() {
 		eapply "${FILESDIR}/${PN}-2022.12.0.353-qtsingleapplication.patch"
 	else
 		#qtsingleapplication I belive needs updated for QT6 not tested.
-		sed -i "s/QT5/QT6/g;s/Qt5/Qt6/g" "${S}/src/cpp/desktop/CMakeLists.txt"
+		sed -i "s/QT5/QT6/g;s/Qt5/Qt6/g" "${S}/src/cpp/desktop/CMakeLists.txt" || die "Failed to sed to QT6"
 		eapply "${FILESDIR}/rstudio-2022.12.0.353-qt6-cmake.patch" "${FILESDIR}/rstudio-2022.12.0.353-qt6-desktop.patch"
 	fi
 
@@ -395,7 +400,7 @@ src_prepare() {
 	# make sure icons and mime stuff are with prefix
 	sed -i \
 		-e "s:/usr:${EPREFIX}/usr:g" \
-		CMakeGlobals.txt src/cpp/desktop/CMakeLists.txt || die "Failed to change to eprefix"
+		CMakeGlobals.txt src/{cpp,node}/desktop/CMakeLists.txt || die "Failed to change to eprefix"
 
 	if  use electron;then
 		local electron_src_hash=$(sha1sum "${S}/src/node/desktop/package.json")
@@ -463,7 +468,7 @@ src_configure() {
 		-DRSTUDIO_USE_SYSTEM_YAML_CPP=ON
 		-DRSTUDIO_PACKAGE_BUILD=1
 		-DRSTUDIO_BIN_PATH="${EPREFIX}/usr/bin"
-		-DQUARTO_ENABLED=$(usex quarto TRUE FALSE)
+		-DQUARTO_ENABLED=$(usex quarto)
 		-DRSTUDIO_USE_SYSTEM_SOCI=TRUE
 	)
 
@@ -479,6 +484,7 @@ src_configure() {
 		mycmakeargs+=( -DQT_QMAKE_EXECUTABLE="$(qt5_get_bindir)/qmake"
 						-DRSTUDIO_INSTALL_FREEDESKTOP="ON" )
 	fi
+
 	#disable javadoc when use doc
 	EANT_DOC_TARGET=""
 
@@ -525,8 +531,9 @@ src_compile() {
 
 	#NOTE curently not in the build system
 	if use doc;then
-		pushd "${S}/docs/user/rstudio"
+		pushd docs/user/rstudio
 		R_LIBS="${R_LIB_PATH}" quarto render || die " Quarto failed to render user quide"
+		mv {_site,user_guide} || die "Failed to rename user guide"
 		popd
 	fi
 }
@@ -576,22 +583,20 @@ src_install() {
 
 		mkdir -p "${ED}/usr/bin"
 		dosym -r /usr/share/${PN}/rstudio /usr/bin/rstudio
-		sed -i "s#/usr/#/usr/bin/#" "${ED}/usr/share/applications/rstudio.desktop"
 		if use server; then
 			dosym -r /usr/share/${PN}/resources/app/bin/rserver /usr/bin/rserver
 		fi
 		dodoc "${RSTUDIO_BINARY_DIR}/"{LICENSE,LICENSES.chromium.html}
 	else
 		# This binary name is much to generic, so we'll change it
-		mv "${ED}/usr/bin/diagnostics" "${ED}/usr/bin/${PN}-diagnostics"
+		mv "${ED}/usr/bin/diagnostics" "${ED}/usr/bin/${PN}-diagnostics" || die "Failed to rename diagnostics"
 	fi
 	dodoc "${ED}/usr/share/${PN}/"{SOURCE,VERSION}
-	rm "${ED}/usr/share/${PN}/"{COPYING,INSTALL,NOTICE,SOURCE,VERSION,README.md}
+	rm "${ED}/usr/share/${PN}/"{COPYING,INSTALL,NOTICE,SOURCE,VERSION,README.md} || die "Failed to remove installed docs"
 
 	einstalldocs
 
 	if use doc;then
-		mv "${S}/docs/user/rstudio/"{_site,user_guide}
 		dodoc -r  docs/user/rstudio/user_guide
 	fi
 }
