@@ -1,0 +1,12 @@
+--- a/src/gwt/build.xml
++++ b/src/gwt/build.xml
+@@ -159,9 +159,6 @@
+    </target>
+ 
+    <target name="gwtc" depends="ext,javac" description="GWT compile to JavaScript">
+-      <antcall target="panmirror">
+-         <param name="panmirror.target" value="ide-dist"/>
+-      </antcall>
+       <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler">
+          <classpath>
+             <pathelement location="${src.dir}"/>

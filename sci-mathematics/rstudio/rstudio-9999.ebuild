@@ -6,10 +6,10 @@ EAPI=8
 inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm prefix
 
 #####Start of ELECTRON  package list#####
-ELECTRON_PACKAGE_HASH="28dbedfe003f178b2337f1640acc082f79771edf"
-ELECTRON_VERSION="19.1.3"
-ELECTRON_VERSION_MAJ="19"
-ELECTRON_EGIT_COMMIT="d152bb422d6d2af9edfaee66c42b4e9630caaaf7"
+ELECTRON_PACKAGE_HASH="362ae192e23b8fe358e1b6bbbae31f24cc4f5de6"
+ELECTRON_VERSION="22.0.0"
+ELECTRON_VERSION_MAJ="$(ver_cut 1 ${ELECTRON_VERSION})"
+ELECTRON_EGIT_COMMIT="c62c55a487826256792af3eee0a02c9853c12be8"
 ELECTRON_NODEJS_DEPS="
 bindings@1.5.0
 file-uri-to-path@1.0.0
@@ -23,159 +23,93 @@ unix-dgram@2.0.6
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
 R_RMARKDOWN_PKGS="
-rlang_1.0.5
-glue_1.6.2
-cli_3.4.0
-fastmap_1.1.0
-base64enc_0.1-3
-digest_0.6.29
-rlang_1.0.5
-glue_1.6.2
-cli_3.4.0
-vctrs_0.4.1
-utf8_1.2.2
-lifecycle_1.0.2
-fansi_1.0.3
-colorspace_2.0-3
-lattice_0.20-45
-stringi_1.7.8
-magrittr_2.0.3
-xfun_0.32
-fastmap_1.1.0
-base64enc_0.1-3
-digest_0.6.29
-cachem_1.0.6
-htmltools_0.5.3
-rappdirs_0.3.3
-R6_2.5.1
-fs_1.5.2
-vctrs_0.4.1
-rlang_1.0.5
-pkgconfig_2.0.3
-pillar_1.8.1
-magrittr_2.0.3
-lifecycle_1.0.2
-fansi_1.0.3
-viridisLite_0.4.1
-RColorBrewer_1.1-3
-R6_2.5.1
-munsell_0.5.0
-labeling_0.4.2
-farver_2.1.1
-Matrix_1.4-1
-nlme_3.1-159
-xfun_0.32
-stringi_1.7.8
-glue_1.6.2
-yaml_2.3.5
-stringr_1.4.1
-highr_0.9
-evaluate_0.16
-htmltools_0.5.3
-fastmap_1.1.0
-base64enc_0.1-3
-digest_0.6.29
-memoise_2.0.1
-cachem_1.0.6
-jquerylib_0.1.4
-sass_0.4.2
-jsonlite_1.8.0
-withr_2.5.0
-tibble_3.1.8
-scales_1.2.1
-rlang_1.0.5
-mgcv_1.8-40
-MASS_7.3-58.1
-isoband_0.2.5
-gtable_0.3.1
-glue_1.6.2
-digest_0.6.29
-yaml_2.3.5
-xfun_0.32
-tinytex_0.41
-stringr_1.4.1
-knitr_1.40
-jsonlite_1.8.0
-jquerylib_0.1.4
-htmltools_0.5.3
-evaluate_0.16
-bslib_0.4.0
-rmarkdown_2.16
-ggplot2_3.3.6
+rlang@1.0.5
+glue@1.6.2
+cli@3.4.0
+fastmap@1.1.0
+base64enc@0.1-3
+digest@0.6.29
+vctrs@0.4.1
+utf8@1.2.2
+lifecycle@1.0.2
+fansi@1.0.3
+colorspace@2.0-3
+lattice@0.20-45
+stringi@1.7.8
+magrittr@2.0.3
+xfun@0.32
+cachem@1.0.6
+htmltools@0.5.3
+rappdirs@0.3.3
+R6@2.5.1
+fs@1.5.2
+pkgconfig@2.0.3
+pillar@1.8.1
+viridisLite@0.4.1
+RColorBrewer@1.1-3
+munsell@0.5.0
+labeling@0.4.2
+farver@2.1.1
+Matrix@1.4-1
+nlme@3.1-159
+yaml@2.3.5
+stringr@1.4.1
+highr@0.9
+evaluate@0.16
+memoise@2.0.1
+jquerylib@0.1.4
+sass@0.4.2
+jsonlite@1.8.0
+withr@2.5.0
+tibble@3.1.8
+scales@1.2.1
+mgcv@1.8-40
+MASS@7.3-58.1
+isoband@0.2.5
+gtable@0.3.1
+tinytex@0.41
+knitr@1.40
+bslib@0.4.0
+rmarkdown@2.16
+ggplot2@3.3.6
 "
 #####End   of RMARKDOWN package list#####
 #####Start of TESTHAT   package list#####
 #also includes xml2
 R_TESTTHAT_PKGS="
-rlang_1.0.5
-glue_1.6.2
-cli_3.4.0
-rlang_1.0.5
-glue_1.6.2
-cli_3.4.0
-vctrs_0.4.1
-utf8_1.2.2
-lifecycle_1.0.2
-fansi_1.0.3
-rlang_1.0.5
-glue_1.6.2
-cli_3.4.0
-vctrs_0.4.1
-utf8_1.2.2
-lifecycle_1.0.2
-fansi_1.0.3
-pkgconfig_2.0.3
-pillar_1.8.1
-magrittr_2.0.3
-vctrs_0.4.1
-rlang_1.0.5
-pkgconfig_2.0.3
-pillar_1.8.1
-magrittr_2.0.3
-lifecycle_1.0.2
-fansi_1.0.3
-tibble_3.1.8
-crayon_1.5.1
-rprojroot_2.0.3
-R6_2.5.1
-cli_3.4.0
-ps_1.7.1
-tibble_3.1.8
-rlang_1.0.5
-rematch2_2.1.2
-glue_1.6.2
-fansi_1.0.3
-diffobj_0.3.5
-cli_3.4.0
-R6_2.5.1
-ps_1.7.1
-withr_2.5.0
-rprojroot_2.0.3
-fs_1.5.2
-desc_1.4.2
-crayon_1.5.1
-processx_3.7.0
-withr_2.5.0
-waldo_0.4.0
-rlang_1.0.5
-R6_2.5.1
-ps_1.7.1
-processx_3.7.0
-praise_1.0.0
-pkgload_1.3.0
-magrittr_2.0.3
-lifecycle_1.0.2
-jsonlite_1.8.0
-evaluate_0.16
-ellipsis_0.3.2
-digest_0.6.29
-desc_1.4.2
-crayon_1.5.1
-cli_3.4.0
-callr_3.7.2
-brio_1.1.3
-testthat_3.1.4
-xml2_1.3.3
+rlang@1.0.5
+glue@1.6.2
+cli@3.4.0
+vctrs@0.4.1
+utf8@1.2.2
+lifecycle@1.0.2
+fansi@1.0.3
+pkgconfig@2.0.3
+pillar@1.8.1
+magrittr@2.0.3
+tibble@3.1.8
+crayon@1.5.1
+rprojroot@2.0.3
+R6@2.5.1
+ps@1.7.1
+rematch2@2.1.2
+diffobj@0.3.5
+fs@1.5.2
+desc@1.4.2
+crayon@1.5.1
+processx@3.7.0
+withr@2.5.0
+waldo@0.4.0
+praise@1.0.0
+pkgload@1.3.0
+jsonlite@1.8.0
+evaluate@0.16
+ellipsis@0.3.2
+digest@0.6.29
+callr@3.7.2
+brio@1.1.3
+testthat@3.1.4
+xml2@1.3.3
 "
 #####End   of TESTHAT   package list#####
 
@@ -200,10 +134,11 @@ if [[ "${PV}" == *9999 ]];then
 	EGIT_REPO_URI="https://github.com/rstudio/${PN}"
 	EGIT_BRANCH="main"
 
-	RSTUDIO_BINARY_FILENAME="rstudio-2022.12.0-preview-298-amd64-debian.tar.gz"
-	RSTUDIO_BINARY_DIR="${WORKDIR}/${RSTUDIO_BINARY_FILENAME/preview-/preview+}"
+	RSTUDIO_BINARY_FILENAME="rstudio-2023.03.0-daily-31-amd64-debian.tar.gz"
+	#rstudio-2023.03.0-daily+31
+	RSTUDIO_BINARY_DIR="${WORKDIR}/${RSTUDIO_BINARY_FILENAME/daily-/daily+}"
 	RSTUDIO_BINARY_DIR=${RSTUDIO_BINARY_DIR/%-amd64-debian.tar.gz}
-	#https://dailies.rstudio.com/rstudio/elsbeth-geranium/electron/bionic-amd64-xcopy/
+	#https://dailies.rstudio.com/rstudio/cherry-blossom/electron/jammy-amd64-xcopy/
 	SRC_URI+="panmirror? ( https://s3.amazonaws.com/rstudio-ide-build/electron/jammy/amd64/${RSTUDIO_BINARY_FILENAME} ) "
 	SRC_URI+="electron?  ( https://s3.amazonaws.com/rstudio-ide-build/electron/jammy/amd64/${RSTUDIO_BINARY_FILENAME} ) "
 else
@@ -213,20 +148,26 @@ else
 
 	#https://posit.co/download/rstudio-desktop/
 	RSTUDIO_BINARY_FILENAME="rstudio-$(ver_rs 3 "-")-x86_64-fedora.tar.gz"
-	RSUTDIO_BINARY_DIR="${WORKDIR}/rstudio-$(ver_rs 3 "+")"
-	SRC_URI+="panmirror? ( https://download1.rstudio.org/desktop/centos7/x86_64/${RSTUDIO_BINARY_FILENAME} ) "
-	SRC_URI+="electron?  ( https://download1.rstudio.org/desktop/centos7/x86_64/${RSTUDIO_BINARY_FILENAME} ) "
+	RSTUDIO_BINARY_DIR="${WORKDIR}/rstudio-$(ver_rs 3 "+")"
+	SRC_URI+="panmirror? ( https://download1.rstudio.org/electron/centos7/x86_64/${RSTUDIO_BINARY_FILENAME} ) "
+	SRC_URI+="electron?  ( https://download1.rstudio.org/electron/centos7/x86_64/${RSTUDIO_BINARY_FILENAME} ) "
 fi
 
-#buffers@0.1.1 = MIT/X11
-LICENSE="AGPL-3 BSD MIT Apache-2.0 Boost-1.0 CC-BY-4.0 MIT GPL-3 ISC
-test? ( EPL-1.0 )
-panmirror? ( || ( AFL-2.1 BSD ) || ( MIT Apache-2.0 ) 0BSD Apache-2.0 BSD BSD-2 ISC LGPL-3 MIT PYTHON Unlicense )
-electron? ( MIT Apache-2.0 BSD )"
+LICENSE="
+	AGPL-3 BSD MIT Apache-2.0 Boost-1.0 CC-BY-4.0 MIT GPL-3 ISC
+	test? ( EPL-1.0 )
+	panmirror? ( || ( AFL-2.1 BSD ) || ( MIT Apache-2.0 ) 0BSD Apache-2.0 BSD BSD-2 ISC LGPL-3 MIT PYTHON Unlicense )
+	electron? ( MIT Apache-2.0  BSD 0BSD BSD-2 BSD CC-BY-3.0 CC-BY-4.0 CC0-1.0 ISC PSF-2.4 || ( AFL-2.1 BSD ) || ( BSD GPL-2 ) || ( Unlicense Apache-2.0 ) )
+"
 
-build_r_src_uri(){
+build_r_src_uri() {
 	for rpkg in ${@}; do
-		echo "https://cloud.r-project.org/src/contrib/${rpkg}.tar.gz -> R_${rpkg}.tar.gz "
+		[[ ${rpkg} =~ (.*)@(.*) ]]
+		package=${BASH_REMATCH[1]}
+		version=${BASH_REMATCH[2]}
+		full_name=${package}_${version}
+		echo "https://cloud.r-project.org/src/contrib/${full_name}.tar.gz -> R_${full_name}.tar.gz "
+		echo "https://cloud.r-project.org/src/contrib/Archive/${package}/${full_name}.tar.gz -> R_${full_name}.tar.gz "
 	done
 }
 
@@ -241,24 +182,25 @@ SRC_URI+="electron?  (
 		) "
 RESTRICT="mirror !test? ( test )"
 
-DEPEND=""
 RDEPEND="
-	>=dev-lang/R-3.3.0
-	>=dev-libs/boost-1.78:=
-	>=dev-libs/mathjax-2.7
+	server? (
+		acct-user/rstudio-server
+		acct-group/rstudio-server
+		sys-libs/pam
+	)
 	|| (
 		>=app-text/pandoc-2.18
 		>=app-text/pandoc-bin-2.18
 	)
+	app-text/hunspell:=
+	quarto? ( >=app-text/quarto-cli-1.2.269 )
+	=dev-cpp/yaml-cpp-0.7.0-r2:=
+	>=dev-lang/R-3.3.0
+	>=dev-libs/boost-1.78:=
+	>=dev-libs/libfmt-8.1.1:=
+	dev-libs/openssl:=
+	>=dev-libs/mathjax-2.7
 	>=dev-libs/soci-4.0.3[postgres,sqlite]
-	>=dev-libs/libfmt-8.1.1
-	sys-process/lsof
-	=dev-cpp/yaml-cpp-0.7.0-r2
-	<=virtual/jdk-11:=
-	server? (
-		acct-user/rstudio-server
-		acct-group/rstudio-server
-	)
 	!electron? (
 		qt5? (
 			>=dev-qt/qtcore-${QT_VER}:${QT_SLOT}
@@ -267,11 +209,13 @@ RDEPEND="
 			>=dev-qt/qtnetwork-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtopengl-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtpositioning-${QT_VER}:${QT_SLOT}
+			>=dev-qt/qtprintsupport-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtsensors-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtsql-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtsvg-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtwebchannel-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtwebengine-${QT_VER}:${QT_SLOT}
+			>=dev-qt/qtwidgets-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtxml-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtxmlpatterns-${QT_VER}:${QT_SLOT}
 			~dev-qt/qtsingleapplication-2.6.1_p20171024
@@ -283,29 +227,30 @@ RDEPEND="
 			dev-qt/qt5compat
 		)
 	)
-	quarto? ( >=app-text/quarto-cli-1.2.269 )
 	electron? (
 		>=net-libs/nodejs-16.14.0[npm]
 	)
 	clang? (
 		sys-devel/clang
 	)
-	app-text/hunspell
-	"
+	sys-apps/util-linux
+	sys-libs/zlib
+	sys-process/lsof
+	<=virtual/jdk-11:=
+"
 
 DEPEND="${RDEPEND}"
 BDEPEND="
+	doc? ( >=app-text/quarto-cli-1.2.269 )
+	dev-cpp/websocketpp
+	dev-libs/rapidjson
 	dev-java/aopalliance:1
+	electron? ( app-arch/unzip )
 	dev-java/gin:2.1
 	dev-java/javax-inject
 	=dev-java/validation-api-1.0*:1.0[source]
 	<=virtual/jdk-11:=
-	electron? ( app-arch/unzip )
-	dev-cpp/websocketpp
-	dev-libs/rapidjson
-	doc? ( >=app-text/quarto-cli-1.2.269 )
 "
-PV_RELEASE="2022.07.0.548"
 PATCHES=(
 	"${FILESDIR}/${PN}-1.4.1717-boost-imports-and-namespaces.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-cmake-bundled-dependencies.patch"
@@ -318,27 +263,34 @@ PATCHES=(
 	"${FILESDIR}/${PN}-9999-node_electron_cmake.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-reenable-sandbox.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-libfmt.patch"
-	"${FILESDIR}/${PN}-9999-hunspell.patch"
-	"${FILESDIR}/${PN}-9999-add-support-for-RapidJSON.patch"
-	"${FILESDIR}/${PN}-9999-system-clang.patch"
-	"${FILESDIR}/${PN}-2022.07.0.548.panmirror_disable.patch"
+	"${FILESDIR}/${PN}-2022.12.0.353-hunspell.patch"
+	"${FILESDIR}/${PN}-2022.12.0.353-add-support-for-RapidJSON.patch"
+	"${FILESDIR}/${PN}-2022.12.0.353-system-clang.patch"
+	"${FILESDIR}/${PN}-9999-panmirror_disable.patch"
 )
 
-DOCS=(CONTRIBUTING.md COPYING INSTALL NEWS.md NOTICE README.md version/news )
+DOCS=(CONTRIBUTING.md COPYING INSTALL NOTICE README.md version/news )
 
 R_LIB_PATH="${WORKDIR}/r_pkgs"
-install_r_packages(){
+install_r_packages() {
 	mkdir -p ${R_LIB_PATH}
 	local r_script="${S}/R_pkg_ins.R"
 	echo -n 'pkgs = c("' >> ${r_script}
-	echo  -n ${@}|sed 's/ /","/g' >> ${r_script}
+	echo  -n ${@}|sed 's/ /","/g;s/@/_/g' >> ${r_script}
 	echo  '")' >> ${r_script}
 	echo 'pkgs_files = unique(paste0("'"${DISTDIR}"'/R_",pkgs,".tar.gz"))' >> ${r_script}
 	echo 'install.packages(pkgs_files,repos=NULL,Ncpus='$(makeopts_jobs)')' >> ${r_script}
 	R_LIBS="${R_LIB_PATH}" Rscript ${r_script} || die "Failed to install R packages"
 }
+bundle_rm() {
+	rm ${3} "${S}${1}" || die "Failed to remove bundled ${2}"
+}
+bundle_ln() {
+	[[ ! -d "${EPREFIX}${1}" && ! -f "${EPREFIX}${1}" ]] && die "${EPREFIX}${1} not a directory of file"
+	ln -s "${EPREFIX}${1}" "${S}${2}" || die "Failed to link bundled ${3}"
+}
 
-pkg_setup(){
+pkg_setup() {
 	use electron && QA_PREBUILT="
 	usr/share/${PN}/rstudio
 	usr/share/${PN}/chrome-sandbox
@@ -349,7 +301,7 @@ pkg_setup(){
 	java-pkg-2_pkg_setup
 }
 
-src_unpack(){
+src_unpack() {
 	if [[ "${PV}" == *9999 ]];then
 		if use electron; then
 			#Electron package.json changes alot. This is a known good version
@@ -357,7 +309,7 @@ src_unpack(){
 			:
 		else
 			#A good last commit when testing a patch
-			#EGIT_COMMIT="6d3e5ccb94c3cc1f1d4bf2fcf6044d93bb9b9723" # 2022-11-29
+			#EGIT_COMMIT="7d165dcfc1b6d300eb247738db2c7076234f6ef0" # 2022-12-03
 			:
 		fi
 		git-r3_src_unpack
@@ -365,7 +317,6 @@ src_unpack(){
 		unpack ${P}.tar.gz
 	fi
 	use panmirror || use electron && unpack ${RSTUDIO_BINARY_FILENAME}
-	npm_src_unpack
 	use electron  &&  npm_build_cache ${ELECTRON_NODEJS_DEPS}
 
 	if use electron; then
@@ -381,35 +332,39 @@ src_unpack(){
 		popd > /dev/null
 	fi
 
-	ln -s "${EPREFIX}/usr/share/hunspell" "${S}/dependencies/dictionaries" || die "Failed to link dictionaries"
+	bundle_ln "/usr/share/hunspell" "/dependencies/dictionaries" "dictionaries"
 }
-src_prepare(){
+src_prepare() {
+	#fix path rstudio bin path from "${EPREFIX}/usr/rstudio" to "${EPREFIX}/usr/bin/rstudio"
+	#NOTE: the actual bin is "${EPREFIX}/usr/share/rstudio/rstudio" but we symlink in src_install
+	sed -i "s#/rstudio#/bin/rstudio#" src/node/desktop/resources/freedesktop/rstudio.desktop.in || \
+		die "Failed to set proper path for rstudio"
+
 	cmake_src_prepare
 	java-pkg-2_src_prepare
 
-	ln -s "${EPREFIX}/usr/share/mathjax" "${S}/dependencies/mathjax-27"
+	bundle_ln "/usr/share/mathjax" "/dependencies/mathjax-27" "mathjax"
 
 	#SUSE has a good list of software bundled with rstudio
 	#https://build.opensuse.org/package/view_file/openSUSE:Factory/rstudio/rstudio.spec
 	#Remove Bundled deps ln -s to system libraries - see /src/gwt/.classpath
 	#gin and aopalliance
-	rm "${S}/src/gwt/lib/gin/2.1.2/"* -R || die "Failed to remove bundled jin"
-	ln -s "${EPREFIX}/usr/share/aopalliance-1/lib/aopalliance.jar" "${S}/src/gwt/lib/gin/2.1.2/aopalliance.jar" \
-			|| die "linking to aopalliance.jar failed"
-	ln -s "${EPREFIX}/usr/share/javax-inject/lib/javax-inject.jar" "${S}/src/gwt/lib/gin/2.1.2/javax-inject.jar" \
-			|| die "linking to javax-inject.jar failed"
+	rm -r "${S}/src/gwt/lib/gin/2.1.2/"* || die "Failed to remove bundled jin"
+	bundle_ln  "/usr/share/aopalliance-1/lib/aopalliance.jar" "/src/gwt/lib/gin/2.1.2/aopalliance.jar" \
+			"aopalliance.jar"
+	bundle_ln  "/usr/share/javax-inject/lib/javax-inject.jar" "/src/gwt/lib/gin/2.1.2/javax-inject.jar" \
+			"javax-inject.jar"
 	for jar in gin guice-assistedinject-3.0 guice-3.0 ;do
-		ln -s "${EPREFIX}/usr/share/gin-2.1/lib/${jar}.jar" "${S}/src/gwt/lib/gin/2.1.2/${jar}.jar" \
-			|| die "linking to ${JAR} failed"
+		bundle_ln "/usr/share/gin-2.1/lib/${jar}.jar" "/src/gwt/lib/gin/2.1.2/${jar}.jar" "${JAR}"
 	done
 
 	#gwt - they bundle a custom gwt build @github rstudio/gwt tree v1.4
 	#validation-api
-	rm "${S}/src/gwt/lib/gwt/gwt-rstudio/validation-api-"*.jar || die "Failed to remove validation-api jars"
-	ln -s "${EPREFIX}/usr/share/validation-api-1.0/lib/validation-api.jar" \
-		"${S}/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA.jar" || die "linking to validation-api.jar"
-	ln -s "${EPREFIX}/usr/share/validation-api-1.0/sources/validation-api-src.zip" \
-		"${S}/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA-sources.jar" || die "linking to validation-api-src.zip"
+	rm "${S}/src/gwt/lib/gwt/gwt-rstudio/validation-api-"*.jar || die "Failed to remove bundled validation-api jars"
+	bundle_ln "/usr/share/validation-api-1.0/lib/validation-api.jar" \
+		"/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA.jar" "validation-api.jar"
+	bundle_ln "/usr/share/validation-api-1.0/sources/validation-api-src.zip" \
+		"/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA-sources.jar" "validation-api-src.zip"
 
 	#todo lib/junit-4.9b3.jar dev-java/junit - only for testing
 	#todo create elemental2
@@ -417,37 +372,41 @@ src_prepare(){
 	#clang-c/websocketpp/rapidjson - inspired by SUSE
 	#unbundle clang-c
 	if use clang; then
-		rm -r "${S}/src/cpp/core/include/core/libclang/clang-c" || die "Failed to remove bundled clang headers"
+		bundle_rm "/src/cpp/core/include/core/libclang/clang-c" "clang headers" "-r"
 	fi
 	eprefixify src/cpp/core/libclang/LibClang.cpp
 
 	#unbundle websocketpp
-	rm -r "${S}/src/cpp/ext/websocketpp/"
-	ln -s "${PREFIX}/usr/include/websocketpp" "${S}/src/cpp/ext/websocketpp" || die "Failed to bundle websocketpp"
+	bundle_rm "/src/cpp/ext/websocketpp/" "websocketpp" "-r"
+	bundle_ln "/usr/include/websocketpp" "/src/cpp/ext/websocketpp" "websocketpp"
 
 	#unbundle rapidjson
-	rm -r "${S}/src/cpp/shared_core/include/shared_core/json/rapidjson/" || die "Failed to remove bundled rapidjson files"
-	ln -s "${EPREFIX}/usr/include/rapidjson" "${S}/src/cpp/shared_core/include/shared_core/json/rapidjson" \
-		|| die "failed to bundle rapidjson"
+	bundle_rm "/src/cpp/shared_core/include/shared_core/json/rapidjson/" "rapidjson" "-r"
+	bundle_ln  "/usr/include/rapidjson" "/src/cpp/shared_core/include/shared_core/json/rapidjson" \
+		"rapidjson"
+
+	#unbundle hunspell
+	bundle_rm "/src/cpp/core/spelling/hunspell" "hunspell" "-r"
+
 	if ! use qt6;then
 		#unbundle qtsingleapplication
 		#the original ebuild had a complex grep/sed to fix library name for cmake
 		#I don't know what it was but now it doesn't change anything
-		rm -r "${S}/src/cpp/desktop/3rdparty" || die "Failed to unbundle qtsingleapplication"
-		eapply "${FILESDIR}/${PN}-9999-qtsingleapplication.patch"
+		bundle_rm "/src/cpp/desktop/3rdparty" "qtsingleapplication" "-r"
+		eapply "${FILESDIR}/${PN}-2022.12.0.353-qtsingleapplication.patch"
 	else
 		#qtsingleapplication I belive needs updated for QT6 not tested.
-		sed -i "s/QT5/QT6/g;s/Qt5/Qt6/g" "${S}/src/cpp/desktop/CMakeLists.txt"
-		eapply "${FILESDIR}/rstudio-9999-qt6-cmake.patch" "${FILESDIR}/rstudio-9999-qt6-desktop.patch"
+		sed -i "s/QT5/QT6/g;s/Qt5/Qt6/g" "${S}/src/cpp/desktop/CMakeLists.txt" || die "Failed to sed to QT6"
+		eapply "${FILESDIR}/rstudio-2022.12.0.353-qt6-cmake.patch" "${FILESDIR}/rstudio-2022.12.0.353-qt6-desktop.patch"
 	fi
 
 	#unbundle fmt
-	rm -r "${S}/src/cpp/ext/fmt" || die "Failed to unbundle libfmt"
+	bundle_rm "/src/cpp/ext/fmt" "libfmt" -r
 
 	# make sure icons and mime stuff are with prefix
 	sed -i \
 		-e "s:/usr:${EPREFIX}/usr:g" \
-		CMakeGlobals.txt src/cpp/desktop/CMakeLists.txt || die "Failed to change to eprefix"
+		CMakeGlobals.txt src/{cpp,node}/desktop/CMakeLists.txt || die "Failed to change to eprefix"
 
 	if  use electron;then
 		local electron_src_hash=$(sha1sum "${S}/src/node/desktop/package.json")
@@ -515,7 +474,7 @@ src_configure() {
 		-DRSTUDIO_USE_SYSTEM_YAML_CPP=ON
 		-DRSTUDIO_PACKAGE_BUILD=1
 		-DRSTUDIO_BIN_PATH="${EPREFIX}/usr/bin"
-		-DQUARTO_ENABLED=$(usex quarto TRUE FALSE)
+		-DQUARTO_ENABLED=$(usex quarto)
 		-DRSTUDIO_USE_SYSTEM_SOCI=TRUE
 	)
 
@@ -531,12 +490,17 @@ src_configure() {
 		mycmakeargs+=( -DQT_QMAKE_EXECUTABLE="$(qt5_get_bindir)/qmake"
 						-DRSTUDIO_INSTALL_FREEDESKTOP="ON" )
 	fi
+
+	#disable javadoc when use doc
+	EANT_DOC_TARGET=""
+
 	# It looks like eant takes care of this for us during src_compile
 	# TODO: verify with someone who knows better
 	# java-ant-2_src_configure
 	cmake_src_configure
+
 }
-src_compile(){
+src_compile() {
 	export EANT_BUILD_XML="src/gwt/build.xml"
 	export EANT_BUILD_TARGET="build"
 	export ANT_OPTS="-Duser.home=${T} -Djava.util.prefs.userRoot=${T}"
@@ -552,8 +516,6 @@ src_compile(){
 		fi
 	fi
 
-	# FIXME: isn't there a variable we can use in one of the java eclasses that
-	# will take care of some of the dependency and path stuff for us?
 	local eant_extra_args=(
 		# These are from src/gwt/CMakeLists.txt, grep if(GWT_BUILD)
 		-Dbuild.dir="bin"
@@ -561,8 +523,6 @@ src_compile(){
 		-Dextras.dir="extras"
 		-Dlib.dir="lib"
 		-Dgwt.main.module="org.rstudio.studio.${gwt_main_module}"
-		# These are added as improvements, but are not strictly necessary
-		# -Dgwt.extra.args='-incremental' # actually, it fails to build with # this
 		-DlocalWorkers=$(makeopts_jobs)
 	)
 
@@ -577,8 +537,9 @@ src_compile(){
 
 	#NOTE curently not in the build system
 	if use doc;then
-		pushd "${S}/docs/user/rstudio"
+		pushd docs/user/rstudio
 		R_LIBS="${R_LIB_PATH}" quarto render || die " Quarto failed to render user quide"
+		mv {_site,user_guide} || die "Failed to rename user guide"
 		popd
 	fi
 }
@@ -597,6 +558,7 @@ src_install() {
 		doins "${FILESDIR}/rserver.conf" "${FILESDIR}/rsession.conf"
 	fi
 	if use electron;then
+		#install electron files
 		insinto /usr/share/${PN}
 		doins "${RSTUDIO_BINARY_DIR}/rstudio"
 		doins "${RSTUDIO_BINARY_DIR}/"chrome*
@@ -608,9 +570,11 @@ src_install() {
 		fperms +x /usr/share/rstudio/{chrome-sandbox,chrome_crashpad_handler}
 		fperms +x /usr/share/rstudio/{libEGL.so,libffmpeg.so,libGLESv2.so,libvk_swiftshader.so,libvulkan.so.1}
 
+		#install electron app files
 		insinto /usr/share/${PN}/resources/app
 		#removed bundled binaries
-		rm -r "${RSTUDIO_BINARY_DIR}/resources/app/.webpack/main/native_modules"
+		rm -r "${RSTUDIO_BINARY_DIR}/resources/app/.webpack/main/native_modules" \
+			|| die "Failed to remove bundled native_modules"
 		#install prepared js
 		doins -r "${RSTUDIO_BINARY_DIR}/resources/app/.webpack"
 		doins "${RSTUDIO_BINARY_DIR}/resources/app/package.json"
@@ -625,22 +589,20 @@ src_install() {
 
 		mkdir -p "${ED}/usr/bin"
 		dosym -r /usr/share/${PN}/rstudio /usr/bin/rstudio
-		sed -i "s#/usr/#/usr/bin/#" "${ED}/usr/share/applications/rstudio.desktop"
 		if use server; then
 			dosym -r /usr/share/${PN}/resources/app/bin/rserver /usr/bin/rserver
 		fi
 		dodoc "${RSTUDIO_BINARY_DIR}/"{LICENSE,LICENSES.chromium.html}
-
 	else
 		# This binary name is much to generic, so we'll change it
-		mv "${ED}/usr/bin/diagnostics" "${ED}/usr/bin/${PN}-diagnostics"
+		mv "${ED}/usr/bin/diagnostics" "${ED}/usr/bin/${PN}-diagnostics" || die "Failed to rename diagnostics"
 	fi
 	dodoc "${ED}/usr/share/${PN}/"{SOURCE,VERSION}
-	rm "${ED}/usr/share/${PN}/"{COPYING,INSTALL,NOTICE,SOURCE,VERSION,README.md}
+	rm "${ED}/usr/share/${PN}/"{COPYING,INSTALL,NOTICE,SOURCE,VERSION,README.md} || die "Failed to remove installed docs"
 
 	einstalldocs
+
 	if use doc;then
-		mv "${S}/docs/user/rstudio/"{_site,user_guide}
 		dodoc -r  docs/user/rstudio/user_guide
 	fi
 }
@@ -653,9 +615,8 @@ src_test() {
 	pushd "${BUILD_DIR}/src/cpp" || die "Failed to change to ${BUILD_DIR}/src/cpp"
 	#--scope core,rserver,rsession,r
 	R_LIBS="${R_LIB_PATH}" ./rstudio-tests || die
-	#FAIL 9 | WARN 0 | SKIP 1 | PASS 1030
-	#FAIL = probably simply need packages purr, flexdashboard, and shiny installed
-	#       also 4 quarto FAILs
+	#FAIL 1 | WARN 0 | SKIP 1 | PASS 1030
+	#FAIL = probably simply need package: purr
 	#SKIP = test-document-apis.R - NYI
 	popd
 }
