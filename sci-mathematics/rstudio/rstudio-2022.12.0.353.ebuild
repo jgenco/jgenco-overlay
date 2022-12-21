@@ -185,17 +185,19 @@ RDEPEND="
 	server? (
 		acct-user/rstudio-server
 		acct-group/rstudio-server
+		sys-libs/pam
 	)
 	|| (
 		>=app-text/pandoc-2.18
 		>=app-text/pandoc-bin-2.18
 	)
-	app-text/hunspell
+	app-text/hunspell:=
 	quarto? ( >=app-text/quarto-cli-1.2.269 )
-	=dev-cpp/yaml-cpp-0.7.0-r2
+	=dev-cpp/yaml-cpp-0.7.0-r2:=
 	>=dev-lang/R-3.3.0
 	>=dev-libs/boost-1.78:=
-	>=dev-libs/libfmt-8.1.1
+	>=dev-libs/libfmt-8.1.1:=
+	dev-libs/openssl:=
 	>=dev-libs/mathjax-2.7
 	>=dev-libs/soci-4.0.3[postgres,sqlite]
 	!electron? (
@@ -206,11 +208,13 @@ RDEPEND="
 			>=dev-qt/qtnetwork-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtopengl-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtpositioning-${QT_VER}:${QT_SLOT}
+			>=dev-qt/qtprintsupport-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtsensors-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtsql-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtsvg-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtwebchannel-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtwebengine-${QT_VER}:${QT_SLOT}
+			>=dev-qt/qtwidgets-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtxml-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtxmlpatterns-${QT_VER}:${QT_SLOT}
 			~dev-qt/qtsingleapplication-2.6.1_p20171024
@@ -228,6 +232,8 @@ RDEPEND="
 	clang? (
 		sys-devel/clang
 	)
+	sys-apps/util-linux
+	sys-libs/zlib
 	sys-process/lsof
 	<=virtual/jdk-11:=
 "
