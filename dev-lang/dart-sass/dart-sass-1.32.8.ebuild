@@ -101,7 +101,7 @@ SRC_URI="${SRC_URI} $(build_dart_uri ${DART_BOARD})"
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64"
-RESTRICT="mirror"
+RESTRICT="strip mirror"
 
 DEPEND="
 || (
