@@ -1,4 +1,4 @@
-# Copyright 2022 Gentoo Authors
+# Copyright 2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -235,7 +235,7 @@ RDEPEND="
 	sys-apps/util-linux
 	sys-libs/zlib
 	sys-process/lsof
-	<=virtual/jdk-11:=
+	~virtual/jdk-11:=
 "
 
 DEPEND="${RDEPEND}"
@@ -248,7 +248,7 @@ BDEPEND="
 	dev-java/gin:2.1
 	dev-java/javax-inject
 	=dev-java/validation-api-1.0*:1.0[source]
-	<=virtual/jdk-11:=
+	~virtual/jdk-11:=
 "
 PATCHES=(
 	"${FILESDIR}/${PN}-1.4.1717-boost-imports-and-namespaces.patch"
