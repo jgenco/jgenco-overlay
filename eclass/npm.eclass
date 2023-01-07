@@ -1,4 +1,4 @@
-# Copyright 2022 Gentoo Authors
+# Copyright 2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 # @ECLASS: npm.eclass
@@ -19,7 +19,8 @@ esac
 if [[ ! ${_NPM_ECLASS} ]]; then
 _NPM_ECLASS=1
 NPM_CACHE_DIR="${WORKDIR}/node_cache"
-npm_build_src_uri(){
+NPM_LOCK_FILE=""
+npm_build_src_uri() {
 	local gitex='(github):\/\/(.+)\/(.+)#([0-9a-f]+)'
 	local regex='((.*\/)?(.*))@(.*)'
 	local file_ext="tgz"
@@ -49,7 +50,7 @@ npm_build_src_uri(){
 		die "NO regex found for packages"
 	done
 }
-npm_src_unpack(){
+npm_src_unpack() {
 	mkdir ${NPM_CACHE_DIR}
 	for ARCHIVE in ${A}; do
 		case ${ARCHIVE} in
@@ -65,7 +66,31 @@ npm_src_unpack(){
 		esac
 	done
 }
-npm_build_cache(){
+
+npm_check_pkg_hash() {
+	good_match="FALSE"
+	bad_match="FALSE"
+	while read -r line ;do
+		[[ ${line} == "package:${1}       \"integrity\": \"sha1-${2}\""   ]] && good_match="TRUE" && continue
+		[[ ${line} == "package:${1}       \"integrity\": \"sha512-${3}\"" ]] && good_match="TRUE" && continue
+		bad_match="TRUE"
+	done < <(grep  "^package:${1}       \"integrity\": " "${NPM_CACHE_DIR}/npmlines")
+
+	#all good
+	[[ ${good_match} == "TRUE" && ${bad_match} == "FALSE" ]] && 
+		return
+	#didn't find package
+	[[ ${good_match} == "FALSE" && ${bad_match} == "FALSE" ]] && 
+		einfo "Failed to find package $1" &&  return
+	[[ ${good_match} == "TRUE" && ${bad_match} == "TRUE" ]] && 
+		einfo "Found competing hashes for package $1"
+
+	echo "package:${1}       \"integrity\": \"sha1-${2}\","
+	echo "package:${1}       \"integrity\": \"sha512-${3}\","
+	die "Package $1 hash failed to match package-lock files(s)"
+}
+
+npm_build_cache() {
 	#NOTE this dosn't account for git+ssh:// urls
 
 	cur_time=$(date +%s)
@@ -74,9 +99,27 @@ npm_build_cache(){
 	echo "${cur_time}" > ${NPM_CACHE_DIR}/_cacache/_lastverified
 	touch ${NPM_CACHE_DIR}/update-notifier-last-checked
 	einfo "Building NPM cache..."
-	for PKG in ${@};do
+
+	check_lock_file=""
+	for npm_lock in ${NPM_LOCK_FILE};do
+		[[ -f ${npm_lock} ]] || die "${npm_lock} not a file"
+		einfo "Checking lockfile: $npm_loc"
+		check_lock_file="TRUE"
+	done
+
+	if [[ ${check_lock_file} == "TRUE" ]];then
+		einfo "Checking npm lock file(s)"
+		grep -E "resolved|integrity" "${NPM_LOCK_FILE}" | \
+			sed "s#.*https://[^\/]\+/\([^/]*/\)\?\(.*\)/-/\(\2\)-\(.*\).*.tgz.*#package:\1\2@\4#;s#,\$##" | paste -s -d' \n' \
+			|sort |uniq > ${NPM_CACHE_DIR}/npmlines
+		#"
+	else
+		einfo "NOT Checking npm lock file(s)"
+	fi
+
+	for pkg in ${@};do
 		regex='((.*\/)?(.*))@(.*)'
-		[[ ${PKG} =~ ${regex} ]]
+		[[ ${pkg} =~ ${regex} ]]
 			local npm_name_full=${BASH_REMATCH[1]}
 			local npm_scope=${BASH_REMATCH[2]}
 			local npm_name=${BASH_REMATCH[3]}
@@ -96,9 +139,12 @@ npm_build_cache(){
 			local pkg_size=$(wc -c ${pkg_path}| sed "s/ .*//")
 			local pkg_sha1=$(sha1sum ${pkg_path}| sed "s/ .*//")
 			local pkg_sha1_b64=$(echo ${pkg_sha1} | xxd -r -p|base64)
-			#local pkg_sha512_b64=$(sha512sum $pkg_path |sed "s/ .*//"|xxd -r -p|base64 -w0)
 			local pkg_sha512=$(sha512sum $pkg_path |sed "s/ .*//")
 			local pkg_sha512_b64=$(echo -n ${pkg_sha512}|xxd -r -p|base64 -w0)
+
+			[[ ${check_lock_file} == "TRUE" ]] && 
+				npm_check_pkg_hash "${npm_name_full}@${npm_ver}" ${pkg_sha1_b64} ${pkg_sha512_b64}
+
 			local pkg_url="https://registry.npmjs.org/${npm_scope}${npm_name}/-/${npm_name}-${npm_ver}.tgz"
 			local npm_cache_idx="${NPM_CACHE_DIR}/_cacache/index-v5"
 			local npm_cache_cnt="${NPM_CACHE_DIR}/_cacache/content-v2"
@@ -134,9 +180,10 @@ npm_build_cache(){
 			ln -s ${pkg_path} ${npm_pkg_cnt_path_sha_512}
 			ln -s ${pkg_path} ${npm_pkg_cnt_path_sha_1}
 	done
+	[[ ${check_lock_file} == "TRUE" ]] && ( rm ${NPM_CACHE_DIR}/npmlines || die "Failed to delete npmlines" )
 	einfo "Finished building NPM cache"
 }
-npm_fix_lock_path(){
+npm_fix_lock_path() {
 	#1=source 2=dest 3=die info
 	local DIE_INFO=${3}
 	[[ ${DIE_INFO} != "" ]] || DIE_INFO=${2}
