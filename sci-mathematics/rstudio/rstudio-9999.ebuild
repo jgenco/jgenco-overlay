@@ -1,4 +1,4 @@
-# Copyright 2022 Gentoo Authors
+# Copyright 2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -9,7 +9,7 @@ inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-uti
 ELECTRON_PACKAGE_HASH="362ae192e23b8fe358e1b6bbbae31f24cc4f5de6"
 ELECTRON_VERSION="22.0.0"
 ELECTRON_VERSION_MAJ="$(ver_cut 1 ${ELECTRON_VERSION})"
-ELECTRON_EGIT_COMMIT="c62c55a487826256792af3eee0a02c9853c12be8"
+ELECTRON_EGIT_COMMIT="b7cda611341759b290fba2d6d35b23544ba43f6c"
 ELECTRON_NODEJS_DEPS="
 bindings@1.5.0
 file-uri-to-path@1.0.0
@@ -236,7 +236,7 @@ RDEPEND="
 	sys-apps/util-linux
 	sys-libs/zlib
 	sys-process/lsof
-	<=virtual/jdk-11:=
+	~virtual/jdk-11:=
 "
 
 DEPEND="${RDEPEND}"
@@ -249,7 +249,7 @@ BDEPEND="
 	dev-java/gin:2.1
 	dev-java/javax-inject
 	=dev-java/validation-api-1.0*:1.0[source]
-	<=virtual/jdk-11:=
+	~virtual/jdk-11:=
 "
 PATCHES=(
 	"${FILESDIR}/${PN}-1.4.1717-boost-imports-and-namespaces.patch"
@@ -309,14 +309,16 @@ src_unpack() {
 			:
 		else
 			#A good last commit when testing a patch
-			#EGIT_COMMIT="7d165dcfc1b6d300eb247738db2c7076234f6ef0" # 2022-12-03
+			#EGIT_COMMIT="b7cda611341759b290fba2d6d35b23544ba43f6c" # 2022-12-03
 			:
 		fi
 		git-r3_src_unpack
 	else
 		unpack ${P}.tar.gz
 	fi
+
 	use panmirror || use electron && unpack ${RSTUDIO_BINARY_FILENAME}
+	NPM_LOCK_FILE="${FILESDIR}/${PN}-electron-thin_package-lock.json"
 	use electron  &&  npm_build_cache ${ELECTRON_NODEJS_DEPS}
 
 	if use electron; then
