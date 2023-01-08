@@ -1,6 +1,9 @@
 There seem to be some missing boost-related includes and using-declarations.
 TODO: submit upstream bug report and pull request to resolve.
 
+RE:https://github.com/jgenco/jgenco-overlay/issues/4
+src/cpp/core/include/core/Thread.hpp part added for boost 1.81.0-r1 support
+
 --- a/src/cpp/core/HtmlUtils.cpp
 +++ b/src/cpp/core/HtmlUtils.cpp
 @@ -17,5 +17,6 @@
@@ -34,3 +37,13 @@ TODO: submit upstream bug report and pull request to resolve.
  namespace rstudio {
  namespace core {
  namespace system {
+--- a/src/cpp/core/include/core/Thread.hpp
++++ b/src/cpp/core/include/core/Thread.hpp
+@@ -17,7 +17,7 @@
+ #define CORE_THREAD_HPP
+ 
+ #include <queue>
+-
++#include <set>
+ #include <boost/utility.hpp>
+ #include <boost/function.hpp>

@@ -252,7 +252,7 @@ BDEPEND="
 	~virtual/jdk-11:=
 "
 PATCHES=(
-	"${FILESDIR}/${PN}-1.4.1717-boost-imports-and-namespaces.patch"
+	"${FILESDIR}/${PN}-2022.12.0.353-boost-imports-and-namespaces.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-cmake-bundled-dependencies.patch"
 	"${FILESDIR}/${PN}-1.4.1717-fix-boost-version-check.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-resource-path.patch"
