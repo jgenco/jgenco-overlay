@@ -1,4 +1,4 @@
-# Copyright 2022 Gentoo Authors
+# Copyright 2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -112,8 +112,10 @@ DEPEND="
 RDEPEND="${DEPEND}"
 BDEPEND=""
 
+DOCS=(CHANGELOG.md LICENSE README.md)
+
 src_unpack() {
-	mkdir -p ${WORKDIR}/.dart
+	mkdir -p ${WORKDIR}/.dart || die "Failed to make .dart dir"
 	cat > ${WORKDIR}/.dart/dartdev.json <<-_EOF_
 {
 	"disclosureShown": true,
@@ -121,7 +123,7 @@ src_unpack() {
 	"enabled": false
 }
 	_EOF_
-	mkdir -p ${WORKDIR}/.pub-cache/hosted
+	mkdir -p ${WORKDIR}/.pub-cache/hosted || die "Failed to create hosted dir"
 
 	local MAIN_FILENAME="${P}.tar.gz"
 	local FILE=""
@@ -135,9 +137,10 @@ src_unpack() {
 			local VERSION=${BASH_REMATCH[2]}
 			#this will need to fixed when other host are used
 			local MOD_DIR="${WORKDIR}/.pub-cache/hosted/pub.dartlang.org/${PACKAGE}-${VERSION}"
-			mkdir -p ${WORKDIR}/.pub-cache/hosted/pub.dartlang.org/.cache
-			mkdir -p ${MOD_DIR}
-			pushd ${MOD_DIR} > /dev/null
+			mkdir -p ${WORKDIR}/.pub-cache/hosted/pub.dartlang.org/.cache || die "Failed to create .cache dir"
+			mkdir -p ${MOD_DIR} || die "Failed to create $MOD_DIR"
+
+			pushd ${MOD_DIR} > /dev/null || die "Failed to pushinto $MOD_DIR"
 			unpack ${FILE}
 			popd > /dev/null
 		else
@@ -159,4 +162,5 @@ src_test(){
 	}
 src_install(){
 	dobin sass
+	einstalldocs
 }
