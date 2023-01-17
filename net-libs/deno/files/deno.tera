@@ -23,9 +23,6 @@ CRATES="
 #TODO
 #Use ninja-utils eclass to support dev-util/samurai?
 #remove GN var?
-#make sys-devel/lld optional?
-# * GN_ARGS=" use_lld=false"                works with deno-1.22.3
-# * GN_ARGS=" use_lld=false use_gold=false" works with deno-1.25.2
 #add support for ccache/sccache
 #add support for pre compiled archive
 # * https://github.com/denoland/rusty_v8#the-rusty_v8_archive-environment-variable
@@ -119,6 +116,14 @@ src_compile() {
 	else
 		gn_conf+=" is_clang=false"
 		gn_conf+=" use_custom_libcxx=false"
+	fi
+
+	if tc-ld-is-lld && tc-is-clang;then
+		gn_conf+=" use_lld=true"
+	elif tc-ld-is-gold;then
+		gn_conf+=" use_lld=false use_gold=true"
+	else
+		gn_conf+=" use_lld=false use_gold=false"
 	fi
 
 	#They didn't include the pgo files tools/builtins-pgo/{x64,arm64}.profile
