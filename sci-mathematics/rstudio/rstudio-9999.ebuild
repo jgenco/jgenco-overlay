@@ -6,7 +6,7 @@ EAPI=8
 inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm prefix
 
 #####Start of ELECTRON  package list#####
-ELECTRON_PACKAGE_HASH="362ae192e23b8fe358e1b6bbbae31f24cc4f5de6"
+ELECTRON_PACKAGE_HASH="bd35e1ea996a1f61dc888c6bc988ae25caeb7103"
 ELECTRON_VERSION="22.0.0"
 ELECTRON_VERSION_MAJ="$(ver_cut 1 ${ELECTRON_VERSION})"
 ELECTRON_EGIT_COMMIT="b7cda611341759b290fba2d6d35b23544ba43f6c"
@@ -201,6 +201,29 @@ RDEPEND="
 	dev-libs/openssl:=
 	>=dev-libs/mathjax-2.7
 	>=dev-libs/soci-4.0.3[postgres,sqlite]
+	electron? (
+		dev-libs/expat
+		dev-libs/glib:2
+		dev-libs/nspr
+		dev-libs/nss
+		media-libs/alsa-lib
+		media-libs/fontconfig
+		media-libs/mesa
+		net-print/cups
+		sys-apps/dbus
+		x11-libs/cairo
+		x11-libs/gtk+:3
+		x11-libs/libX11
+		x11-libs/libXcomposite
+		x11-libs/libXdamage
+		x11-libs/libXext
+		x11-libs/libXfixes
+		x11-libs/libXrandr
+		x11-libs/libdrm
+		x11-libs/libxcb
+		x11-libs/libxkbcommon
+		x11-libs/pango
+	)
 	!electron? (
 		qt5? (
 			>=dev-qt/qtcore-${QT_VER}:${QT_SLOT}
@@ -595,7 +618,7 @@ src_install() {
 			dosym -r /usr/share/${PN}/resources/app/bin/rserver /usr/bin/rserver
 		fi
 		dodoc "${RSTUDIO_BINARY_DIR}/"{LICENSE,LICENSES.chromium.html}
-	else
+	elif use qt5 || use qt6 ; then
 		# This binary name is much to generic, so we'll change it
 		mv "${ED}/usr/bin/diagnostics" "${ED}/usr/bin/${PN}-diagnostics" || die "Failed to rename diagnostics"
 	fi
