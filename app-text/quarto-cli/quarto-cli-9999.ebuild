@@ -1,4 +1,4 @@
-# Copyright 2022 Gentoo Authors
+# Copyright 2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -13,74 +13,74 @@ RESTRICT="!test? ( test )"
 #     knitr bumped down from .1
 RENV_HASH="fe40c06f6624238757b2b70f2ced273644ddaa4a"
 RENV_TEST_PKGS="
-Rcpp_1.0.9
-base64enc_0.1-3
-digest_0.6.29
-fastmap_1.1.0
-cli_3.4.0
-glue_1.6.2
-rlang_1.0.5
-lattice_0.20-45
-colorspace_2.0-3
-fansi_1.0.3
-lifecycle_1.0.2
-utf8_1.2.2
-vctrs_0.4.1
-stringi_1.7.8
-xfun_0.32
-fs_1.5.2
-rappdirs_0.3.3
-cachem_1.0.6
-htmltools_0.5.3
-R6_2.5.1
-later_1.3.0
-magrittr_2.0.3
-promises_1.2.0.1
-jquerylib_0.1.4
-jsonlite_1.8.0
-memoise_2.0.1
-sass_0.4.2
-evaluate_0.16
-highr_0.9
-stringr_1.4.1
-yaml_2.3.5
-pillar_1.8.1
-pkgconfig_2.0.3
-RColorBrewer_1.1-3
-farver_2.1.1
-labeling_0.4.2
-munsell_0.5.0
-viridisLite_0.4.1
-Matrix_1.5-1
-nlme_3.1-159
-bit_4.0.4
-DBI_1.1.3
-bit64_4.0.5
-blob_1.2.3
-plogr_0.2.0
-MASS_7.3-58.1
-gtable_0.3.1
-isoband_0.2.5
-mgcv_1.8-40
-scales_1.2.1
-tibble_3.1.8
-knitr_1.40
-tinytex_0.41
-bslib_0.4.0
-commonmark_1.8.0
-crayon_1.5.1
-ellipsis_0.3.2
-fontawesome_0.3.0
-httpuv_1.6.6
-mime_0.12
-sourcetools_0.1.7
-withr_2.5.0
-xtable_1.8-4
-shiny_1.7.2
-rmarkdown_2.16
-renv_0.15.5
-ggplot2_3.3.6
-RSQLite_2.2.17
+Rcpp@1.0.9
+base64enc@0.1-3
+digest@0.6.29
+fastmap@1.1.0
+cli@3.4.0
+glue@1.6.2
+rlang@1.0.5
+lattice@0.20-45
+colorspace@2.0-3
+fansi@1.0.3
+lifecycle@1.0.2
+utf8@1.2.2
+vctrs@0.4.1
+stringi@1.7.8
+xfun@0.32
+fs@1.5.2
+rappdirs@0.3.3
+cachem@1.0.6
+htmltools@0.5.3
+R6@2.5.1
+later@1.3.0
+magrittr@2.0.3
+promises@1.2.0.1
+jquerylib@0.1.4
+jsonlite@1.8.0
+memoise@2.0.1
+sass@0.4.2
+evaluate@0.16
+highr@0.9
+stringr@1.4.1
+yaml@2.3.5
+pillar@1.8.1
+pkgconfig@2.0.3
+RColorBrewer@1.1-3
+farver@2.1.1
+labeling@0.4.2
+munsell@0.5.0
+viridisLite@0.4.1
+Matrix@1.5-1
+nlme@3.1-159
+bit@4.0.4
+DBI@1.1.3
+bit64@4.0.5
+blob@1.2.3
+plogr@0.2.0
+MASS@7.3-58.1
+gtable@0.3.1
+isoband@0.2.5
+mgcv@1.8-40
+scales@1.2.1
+tibble@3.1.8
+knitr@1.40
+tinytex@0.41
+bslib@0.4.0
+commonmark@1.8.0
+crayon@1.5.1
+ellipsis@0.3.2
+fontawesome@0.3.0
+httpuv@1.6.6
+mime@0.12
+sourcetools@0.1.7
+withr@2.5.0
+xtable@1.8-4
+shiny@1.7.2
+rmarkdown@2.16
+renv@0.15.5
+ggplot2@3.3.6
+RSQLite@2.2.17
 "
 PYTHON_COMPAT=( python3_{8..11} )
 inherit bash-completion-r1 multiprocessing python-any-r1
@@ -95,8 +95,13 @@ else
 fi
 
 build_r_src_uri(){
-	for RPKG in ${@}; do
-		echo "https://cloud.r-project.org/src/contrib/${RPKG}.tar.gz -> R_${RPKG}.tar.gz "
+	for rpkg in ${@}; do
+		[[ ${rpkg} =~ (.*)@(.*) ]]
+		package=${BASH_REMATCH[1]}
+		version=${BASH_REMATCH[2]}
+		full_name=${package}_${version}
+		echo "https://cloud.r-project.org/src/contrib/${full_name}.tar.gz -> R_${full_name}.tar.gz "
+		echo "https://cloud.r-project.org/src/contrib/Archive/${package}/${full_name}.tar.gz -> R_${full_name}.tar.gz "
 	done
 }
 SRC_URI+="test? ( $(build_r_src_uri ${RENV_TEST_PKGS} ) )"
