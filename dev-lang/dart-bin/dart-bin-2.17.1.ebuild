@@ -3,6 +3,8 @@
 
 EAPI=8
 
+inherit unpacker
+
 DESCRIPTION="Dart is a cohesive, scalable platform for building apps"
 HOMEPAGE="https://dart.dev/"
 #signing key: https://dl-ssl.google.com/linux/linux_signing_key.pub
@@ -17,16 +19,20 @@ KEYWORDS="~amd64"
 DEPEND=""
 RDEPEND="${DEPEND}"
 BDEPEND=""
-src_unpack(){
-	default
-	mkdir ${S}
-	tar xaf data.tar.xz -C ${S}
-	}
-src_install(){
+
+S="${WORKDIR}"
+
+QA_PREBUILT="
+/opt/dart/usr/lib/dart/bin/dart
+/opt/dart/usr/lib/dart/bin/dartaotruntime
+/opt/dart/usr/lib/dart/bin/utils/gen_snapshot
+"
+
+src_install() {
 	insinto /opt/dart
-	doins -r usr
-	mkdir ${D}/opt/bin
-	ln -s  /opt/dart/usr/bin/dart ${D}/opt/bin
-	chmod +x ${D}/opt/dart/usr/lib/dart/bin/dart*
-	chmod +x ${D}/opt/dart/usr/lib/dart/bin/utils/gen_snapshot
+	doins -r .
+	mkdir "${ED}/opt/bin"
+	dosym -r /opt/dart/usr/bin/dart /opt/bin/dart
+	fperms +x /opt/dart/usr/lib/dart/bin/dart{,2js,analyzer,aotruntime,devc}
+	fperms +x /opt/dart/usr/lib/dart/bin/utils/gen_snapshot
 }
