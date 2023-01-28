@@ -112,6 +112,7 @@ DEPEND="
 RDEPEND="${DEPEND}"
 BDEPEND=""
 
+QA_FLAGS_IGNORED=(/usr/bin/sass)
 DOCS=(CHANGELOG.md LICENSE README.md)
 
 src_unpack() {
@@ -152,7 +153,7 @@ src_unpack() {
 src_compile(){
 	export HOME="${WORKDIR}"
 	dart pub get --offline || die "Pub get failed"
-	dart compile exe bin/sass.dart -o sass || die "Compile failed"
+	dart compile exe -Dversion="${PV}" bin/sass.dart -o sass || die "Compile failed"
 }
 src_test(){
 	#93 test failed mostly if not completly b/c lack of null support
