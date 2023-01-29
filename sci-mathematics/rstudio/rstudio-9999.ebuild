@@ -444,25 +444,27 @@ src_prepare() {
 			mkdir -p "${S}/src/node/desktop/out/RStudio-linux-x64"
 		fi
 	fi
+
 }
 src_configure() {
 	export PACKAGE_OS="Gentoo"
+	local my_pv=${PV}
+	local build_type=""
 	if [[ ${PV} == "9999" ]];then
-		export RSTUDIO_VERSION_MAJOR=""
-		export RSTUDIO_VERSION_MINOR=""
-		export RSTUDIO_VERSION_PATCH=""
-		export RSTUDIO_VERSION_SUFFIX=""
-		export GIT_COMMIT=$(git log -n1 --format=%H)
-	else
-		export RSTUDIO_VERSION_MAJOR=$(ver_cut 1)
-		export RSTUDIO_VERSION_MINOR=$(ver_cut 2)
-		export RSTUDIO_VERSION_PATCH=$(ver_cut 3)
-		export RSTUDIO_VERSION_SUFFIX="+$(ver_cut 4)"
+		my_pv="$(<${S}/version/CALENDAR_VERSION).0."
+		local flower="$(<${S}/version/RELEASE)"
+		flower=${flower,,}
+		local base_commit=$(< ${S}/version/base_commit/${flower/ /-}.BASE_COMMIT)
+		my_pv+="$(git rev-list ${base_commit}..HEAD --count)"
+		build_type="-$(<${S}/version/BUILDTYPE)"
+		export GIT_COMMIT=${EGIT_VERSION}
 	fi
+	export RSTUDIO_VERSION_MAJOR=$(ver_cut 1 ${my_pv})
+	export RSTUDIO_VERSION_MINOR=$(ver_cut 2 ${my_pv})
+	export RSTUDIO_VERSION_PATCH=$(ver_cut 3 ${my_pv})
+	export RSTUDIO_VERSION_SUFFIX="${build_type,,}+$(ver_cut 4 ${my_pv})"
 
 	CMAKE_BUILD_TYPE=$(usex debug Debug Release) #RelWithDebInfo Release
-	mkdir -p  "${WORKDIR}/.cache"
-	mkdir -p "${WORKDIR}/.npm"
 	echo "cache=${WORKDIR}/node_cache" > "${S}/src/node/desktop/.npmrc"
 	echo "nodedir=${WORKDIR}/.electron-gyp/${ELECTRON_VERSION}" >> "${S}/src/node/desktop/.npmrc"
 	#Instead of using RSTUDIO_TARGET set RSTUDIO_{SERVER,DESKTOP,ELECTRON} manualy
@@ -516,8 +518,13 @@ src_configure() {
 						-DRSTUDIO_INSTALL_FREEDESKTOP="ON" )
 	fi
 
-	#disable javadoc when use doc
-	EANT_DOC_TARGET=""
+	if use doc; then
+		echo -e "buildType: ${build_type/-/}\nversion: ${my_pv}" > docs/user/rstudio/_variables.yml ||
+			die "Failed to create _variables.yml"
+
+		#disable javadoc when use doc
+		EANT_DOC_TARGET=""
+	fi
 
 	# It looks like eant takes care of this for us during src_compile
 	# TODO: verify with someone who knows better
@@ -569,6 +576,20 @@ src_compile() {
 	fi
 }
 
+src_test() {
+	# It seems to run correctly and ends with BUILD SUCCESSFUL.
+	export EANT_TEST_TARGET="unittest"
+	java-pkg-2_src_test
+
+	mkdir -p "${HOME}/.local/share/rstudio" || die "Failed to make .local dir"
+	pushd "${BUILD_DIR}/src/cpp" || die "Failed to change to ${BUILD_DIR}/src/cpp"
+	#--scope core,rserver,rsession,r
+	R_LIBS="${R_LIB_PATH}" ./rstudio-tests || die
+	#FAIL 1 | WARN 0 | SKIP 1 | PASS 1030
+	#FAIL = probably simply need package: purr
+	#SKIP = test-document-apis.R - NYI
+	popd
+}
 src_install() {
 	cmake_src_install
 	if use panmirror;then
@@ -630,20 +651,6 @@ src_install() {
 	if use doc;then
 		dodoc -r  docs/user/rstudio/user_guide
 	fi
-}
-src_test() {
-	# It seems to run correctly and ends with BUILD SUCCESSFUL.
-	export EANT_TEST_TARGET="unittest"
-	java-pkg-2_src_test
-
-	mkdir -p "${HOME}/.local/share/rstudio" || die "Failed to make .local dir"
-	pushd "${BUILD_DIR}/src/cpp" || die "Failed to change to ${BUILD_DIR}/src/cpp"
-	#--scope core,rserver,rsession,r
-	R_LIBS="${R_LIB_PATH}" ./rstudio-tests || die
-	#FAIL 1 | WARN 0 | SKIP 1 | PASS 1030
-	#FAIL = probably simply need package: purr
-	#SKIP = test-document-apis.R - NYI
-	popd
 }
 
 pkg_preinst() {
