@@ -10,40 +10,24 @@ RESTRICT="mirror"
 IUSE="test"
 RESTRICT="!test? ( test )"
 #note:matrix bumped to -1
-#     knitr bumped down from .1
-RENV_HASH="fe40c06f6624238757b2b70f2ced273644ddaa4a"
+#     knitr bumped down from .9
+RENV_HASH="687871a38fe63d04427be971aa65f00af255d33f"
 RENV_TEST_PKGS="
+cli@3.6.0
+glue@1.6.2
+rlang@1.0.6
+lifecycle@1.0.3
 Rcpp@1.0.9
 base64enc@0.1-3
-digest@0.6.29
+digest@0.6.31
+ellipsis@0.3.2
 fastmap@1.1.0
-cli@3.4.0
-glue@1.6.2
-rlang@1.0.5
 lattice@0.20-45
 colorspace@2.0-3
 fansi@1.0.3
-lifecycle@1.0.2
 utf8@1.2.2
-vctrs@0.4.1
-stringi@1.7.8
-xfun@0.32
-fs@1.5.2
-rappdirs@0.3.3
-cachem@1.0.6
-htmltools@0.5.3
-R6@2.5.1
-later@1.3.0
-magrittr@2.0.3
-promises@1.2.0.1
-jquerylib@0.1.4
-jsonlite@1.8.0
-memoise@2.0.1
-sass@0.4.2
-evaluate@0.16
-highr@0.9
-stringr@1.4.1
-yaml@2.3.5
+vctrs@0.5.1
+withr@2.5.0
 pillar@1.8.1
 pkgconfig@2.0.3
 RColorBrewer@1.1-3
@@ -51,36 +35,61 @@ farver@2.1.1
 labeling@0.4.2
 munsell@0.5.0
 viridisLite@0.4.1
-Matrix@1.5-1
-nlme@3.1-159
-bit@4.0.4
+Matrix@1.5-3
+nlme@3.1-161
+curl@5.0.0
+jsonlite@1.8.4
+xfun@0.36
+fs@1.5.2
+rappdirs@0.3.3
+cachem@1.0.6
+htmltools@0.5.4
+R6@2.5.1
+later@1.3.0
+magrittr@2.0.3
+promises@1.2.0.1
+jquerylib@0.1.4
+memoise@2.0.1
+mime@0.12
+sass@0.4.4
+stringi@1.7.12
+evaluate@0.20
+highr@0.10
+yaml@2.3.6
+V8@4.2.2
+MASS@7.3-58.1
+gtable@0.3.1
+isoband@0.2.7
+mgcv@1.8-41
+scales@1.2.1
+generics@0.1.3
+tibble@3.1.8
+tidyselect@1.2.0
+bit@4.0.5
 DBI@1.1.3
 bit64@4.0.5
 blob@1.2.3
 plogr@0.2.0
-MASS@7.3-58.1
-gtable@0.3.1
-isoband@0.2.5
-mgcv@1.8-40
-scales@1.2.1
-tibble@3.1.8
-knitr@1.40
-tinytex@0.41
-bslib@0.4.0
-commonmark@1.8.0
-crayon@1.5.1
-ellipsis@0.3.2
-fontawesome@0.3.0
-httpuv@1.6.6
-mime@0.12
+bigD@0.2.0
+bitops@1.0-7
+dplyr@1.0.10
+ggplot2@3.4.0
+juicyjuice@0.1.0
+stringr@1.5.0
+knitr@1.41
+tinytex@0.43
+bslib@0.4.2
+commonmark@1.8.1
+crayon@1.5.2
+fontawesome@0.4.0
+httpuv@1.6.8
 sourcetools@0.1.7
-withr@2.5.0
 xtable@1.8-4
-shiny@1.7.2
-rmarkdown@2.16
-renv@0.15.5
-ggplot2@3.3.6
-RSQLite@2.2.17
+shiny@1.7.4
+rmarkdown@2.20
+renv@0.16.0
+gt@0.8.0
+RSQLite@2.2.20
 "
 PYTHON_COMPAT=( python3_{8..11} )
 inherit bash-completion-r1 multiprocessing python-any-r1
@@ -94,7 +103,7 @@ else
 	SRC_URI="https://github.com/quarto-dev/quarto-cli/archive/refs/tags/v${PV}.tar.gz   -> ${P}.tar.gz "
 fi
 
-build_r_src_uri(){
+build_r_src_uri() {
 	for rpkg in ${@}; do
 		[[ ${rpkg} =~ (.*)@(.*) ]]
 		package=${BASH_REMATCH[1]}
@@ -135,7 +144,7 @@ LICENSE="GPL-2+ MIT ZLIB BSD Apache-2.0 ISC || ( MIT GPL-3 )"
 SLOT="0"
 KEYWORDS=""
 PATCHES="
-	${FILESDIR}/quarto-cli-1.2.269-pathfixes.patch
+	${FILESDIR}/quarto-cli-9999-pathfixes.patch
 	${FILESDIR}/quarto-cli-9999-configuration.patch
 "
 DEPEND="
@@ -158,21 +167,21 @@ BDEPEND="
 DOCS=( COPYING.md COPYRIGHT README.md news )
 
 R_LIB_PATH="${WORKDIR}/r_pkgs"
-install_r_packages(){
+install_r_packages() {
 	mkdir -p ${R_LIB_PATH}
 	R_SCRIPT="${S}/R_pkg_ins.R"
 	echo -n 'pkgs = c("' >> ${R_SCRIPT}
-	echo  -n ${@}|sed 's/ /","/g' >> ${R_SCRIPT}
+	echo  -n ${@}|sed 's/@/_/g;s/ /","/g' >> ${R_SCRIPT}
 	echo  '")' >> ${R_SCRIPT}
 	echo 'pkgs_files = paste0("'"${DISTDIR}"'/R_",pkgs,".tar.gz")' >> ${R_SCRIPT}
 	echo 'install.packages(pkgs_files,repos=NULL,Ncpus='$(makeopts_jobs)')' >> ${R_SCRIPT}
 	R_LIBS="${R_LIB_PATH}" Rscript ${R_SCRIPT} || die "Failed to install R packages"
 }
 
-pkg_setup(){
+pkg_setup() {
 	use test && python-any-r1_pkg_setup
 }
-src_unpack(){
+src_unpack() {
 	if [[ "${PV}" == *9999 ]];then
 		git-r3_src_unpack
 		RENV_HASH_CUR=$(sha1sum "${S}/tests/renv.lock")
@@ -183,7 +192,7 @@ src_unpack(){
 		unpack ${P}.tar.gz
 	fi
 }
-src_prepare(){
+src_prepare() {
 	#Setup package/bin dir
 	mkdir -p package/dist/config/
 	mkdir -p package/dist/bin/
@@ -211,7 +220,7 @@ src_prepare(){
 	mkdir -p "${S}/package/dist/config"
 	default
 }
-src_configure(){
+src_configure() {
 	pushd "${S}/package/src" > /dev/null
 	#disables creating symlink
 	export QUARTO_NO_SYMLINK="TRUE"
@@ -221,7 +230,7 @@ src_configure(){
 	cp "${S}/package/dist/config/dev-config" "${S}/dev-config"
 	popd > /dev/null
 }
-src_compile(){
+src_compile() {
 	#Configuration
 	einfo "Setting Configuration"
 
@@ -244,24 +253,8 @@ src_compile(){
 
 	use test && install_r_packages ${RENV_TEST_PKGS}
 }
-src_install(){
-	dobin "${S}/quarto"
-	insinto /usr/share/${PN}/
-	doins -r "${S}/package/dist/share/"*
-	insinto /usr/share/${PN}/bin
-	doins "${S}/package/dist/bin/quarto.js"
-	doins -r "${S}/package/dist/bin/vendor"
-	rm "${ED}/usr/share/${PN}/"{COPYING.md,COPYRIGHT}
 
-	newbashcomp _quarto.sh quarto
-
-	if has_version  ">=app-shells/zsh-4.3.5";then
-		insinto /usr/share/zsh/site-functions
-		doins _quarto
-	fi
-	einstalldocs
-}
-src_test(){
+src_test() {
 	rm tests/bin/python3 || die "Failed to delete tests/bin/python3"
 	ln -s "${EPREFIX}/usr/bin/${EPYTHON}" tests/bin/python3
 
@@ -271,7 +264,7 @@ src_test(){
 	pushd "${S}/tests" > /dev/null
 	#this disables renv - it might be nice to use renv
 	rm .Rprofile || die "Failed to delete .Rprofile"
-	#this lovely test needs internet access thus fails; so as punishment it breaks a large chunk of tests after it.
+	#this test needs internet access thus fails
 	rm smoke/extensions/install.test.ts || die "Failed to delete smoke/extensions/install.test.ts"
 	#check test is for dev builds
 	[[ "${PV}" != *9999 ]] && rm smoke/env/check.test.ts
@@ -294,14 +287,32 @@ src_test(){
 	# * python libraries - see requirements.txt - not all in portage
 	# * dev-python/jupyter
 	# * install tinytex - not in portage
-	# * it uses a chrome (see if ff will work) based browser to do screen shots - probably not possible
+	# * it uses chrome (see if ff will work) based browser to do screen shots - probably not possible
 
 	einfo "Starting smoke test"
 	deno test ${DENO_OPTS} test.ts smoke
 
-	#Gentoo sand  148 passed / 32 failed
+	#Gentoo sand  238 passed / 57 failed
 	#On an internet connected terminal
-	#w/o  tinytex 155 passed / 28 failed
-	#with tinytex 178 passed /  5 failed
+	#w/o  tinytex 239 passed / 72 failed
+	#with tinytex 281 passed / 30 failed
 	popd > /dev/null
 }
+src_install() {
+	dobin "${S}/quarto"
+	insinto /usr/share/${PN}/
+	doins -r "${S}/package/dist/share/"*
+	insinto /usr/share/${PN}/bin
+	doins "${S}/package/dist/bin/quarto.js"
+	doins -r "${S}/package/dist/bin/vendor"
+	rm "${ED}/usr/share/${PN}/"{COPYING.md,COPYRIGHT}
+
+	newbashcomp _quarto.sh quarto
+
+	if has_version  ">=app-shells/zsh-4.3.5";then
+		insinto /usr/share/zsh/site-functions
+		doins _quarto
+	fi
+	einstalldocs
+}
+
