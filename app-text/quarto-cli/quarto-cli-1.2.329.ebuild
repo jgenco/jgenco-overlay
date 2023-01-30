@@ -1,4 +1,4 @@
-# Copyright 2022 Gentoo Authors
+# Copyright 2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -13,74 +13,74 @@ RESTRICT="!test? ( test )"
 #     knitr bumped down from .1
 RENV_HASH="fe40c06f6624238757b2b70f2ced273644ddaa4a"
 RENV_TEST_PKGS="
-Rcpp_1.0.9
-base64enc_0.1-3
-digest_0.6.29
-fastmap_1.1.0
-cli_3.4.0
-glue_1.6.2
-rlang_1.0.5
-lattice_0.20-45
-colorspace_2.0-3
-fansi_1.0.3
-lifecycle_1.0.2
-utf8_1.2.2
-vctrs_0.4.1
-stringi_1.7.8
-xfun_0.32
-fs_1.5.2
-rappdirs_0.3.3
-cachem_1.0.6
-htmltools_0.5.3
-R6_2.5.1
-later_1.3.0
-magrittr_2.0.3
-promises_1.2.0.1
-jquerylib_0.1.4
-jsonlite_1.8.0
-memoise_2.0.1
-sass_0.4.2
-evaluate_0.16
-highr_0.9
-stringr_1.4.1
-yaml_2.3.5
-pillar_1.8.1
-pkgconfig_2.0.3
-RColorBrewer_1.1-3
-farver_2.1.1
-labeling_0.4.2
-munsell_0.5.0
-viridisLite_0.4.1
-Matrix_1.5-1
-nlme_3.1-159
-bit_4.0.4
-DBI_1.1.3
-bit64_4.0.5
-blob_1.2.3
-plogr_0.2.0
-MASS_7.3-58.1
-gtable_0.3.1
-isoband_0.2.5
-mgcv_1.8-40
-scales_1.2.1
-tibble_3.1.8
-knitr_1.40
-tinytex_0.41
-bslib_0.4.0
-commonmark_1.8.0
-crayon_1.5.1
-ellipsis_0.3.2
-fontawesome_0.3.0
-httpuv_1.6.6
-mime_0.12
-sourcetools_0.1.7
-withr_2.5.0
-xtable_1.8-4
-shiny_1.7.2
-rmarkdown_2.16
-renv_0.15.5
-ggplot2_3.3.6
-RSQLite_2.2.17
+Rcpp@1.0.9
+base64enc@0.1-3
+digest@0.6.29
+fastmap@1.1.0
+cli@3.4.0
+glue@1.6.2
+rlang@1.0.5
+lattice@0.20-45
+colorspace@2.0-3
+fansi@1.0.3
+lifecycle@1.0.2
+utf8@1.2.2
+vctrs@0.4.1
+stringi@1.7.8
+xfun@0.32
+fs@1.5.2
+rappdirs@0.3.3
+cachem@1.0.6
+htmltools@0.5.3
+R6@2.5.1
+later@1.3.0
+magrittr@2.0.3
+promises@1.2.0.1
+jquerylib@0.1.4
+jsonlite@1.8.0
+memoise@2.0.1
+sass@0.4.2
+evaluate@0.16
+highr@0.9
+stringr@1.4.1
+yaml@2.3.5
+pillar@1.8.1
+pkgconfig@2.0.3
+RColorBrewer@1.1-3
+farver@2.1.1
+labeling@0.4.2
+munsell@0.5.0
+viridisLite@0.4.1
+Matrix@1.5-1
+nlme@3.1-159
+bit@4.0.4
+DBI@1.1.3
+bit64@4.0.5
+blob@1.2.3
+plogr@0.2.0
+MASS@7.3-58.1
+gtable@0.3.1
+isoband@0.2.5
+mgcv@1.8-40
+scales@1.2.1
+tibble@3.1.8
+knitr@1.40
+tinytex@0.41
+bslib@0.4.0
+commonmark@1.8.0
+crayon@1.5.1
+ellipsis@0.3.2
+fontawesome@0.3.0
+httpuv@1.6.6
+mime@0.12
+sourcetools@0.1.7
+withr@2.5.0
+xtable@1.8-4
+shiny@1.7.2
+rmarkdown@2.16
+renv@0.15.5
+ggplot2@3.3.6
+RSQLite@2.2.17
 "
 PYTHON_COMPAT=( python3_{8..11} )
 inherit bash-completion-r1 multiprocessing python-any-r1
@@ -94,9 +94,14 @@ else
 	SRC_URI="https://github.com/quarto-dev/quarto-cli/archive/refs/tags/v${PV}.tar.gz   -> ${P}.tar.gz "
 fi
 
-build_r_src_uri(){
-	for RPKG in ${@}; do
-		echo "https://cloud.r-project.org/src/contrib/${RPKG}.tar.gz -> R_${RPKG}.tar.gz "
+build_r_src_uri() {
+	for rpkg in ${@}; do
+		[[ ${rpkg} =~ (.*)@(.*) ]]
+		package=${BASH_REMATCH[1]}
+		version=${BASH_REMATCH[2]}
+		full_name=${package}_${version}
+		echo "https://cloud.r-project.org/src/contrib/${full_name}.tar.gz -> R_${full_name}.tar.gz "
+		echo "https://cloud.r-project.org/src/contrib/Archive/${package}/${full_name}.tar.gz -> R_${full_name}.tar.gz "
 	done
 }
 SRC_URI+="test? ( $(build_r_src_uri ${RENV_TEST_PKGS} ) )"
@@ -153,21 +158,21 @@ BDEPEND="
 DOCS=( COPYING.md COPYRIGHT README.md news )
 
 R_LIB_PATH="${WORKDIR}/r_pkgs"
-install_r_packages(){
+install_r_packages() {
 	mkdir -p ${R_LIB_PATH}
 	R_SCRIPT="${S}/R_pkg_ins.R"
 	echo -n 'pkgs = c("' >> ${R_SCRIPT}
-	echo  -n ${@}|sed 's/ /","/g' >> ${R_SCRIPT}
+	echo  -n ${@}|sed 's/@/_/g;s/ /","/g' >> ${R_SCRIPT}
 	echo  '")' >> ${R_SCRIPT}
 	echo 'pkgs_files = paste0("'"${DISTDIR}"'/R_",pkgs,".tar.gz")' >> ${R_SCRIPT}
 	echo 'install.packages(pkgs_files,repos=NULL,Ncpus='$(makeopts_jobs)')' >> ${R_SCRIPT}
 	R_LIBS="${R_LIB_PATH}" Rscript ${R_SCRIPT} || die "Failed to install R packages"
 }
 
-pkg_setup(){
+pkg_setup() {
 	use test && python-any-r1_pkg_setup
 }
-src_unpack(){
+src_unpack() {
 	if [[ "${PV}" == *9999 ]];then
 		git-r3_src_unpack
 		RENV_HASH_CUR=$(sha1sum "${S}/tests/renv.lock")
@@ -178,7 +183,7 @@ src_unpack(){
 		unpack ${P}.tar.gz
 	fi
 }
-src_prepare(){
+src_prepare() {
 	#Setup package/bin dir
 	mkdir -p package/dist/config/
 	mkdir -p package/dist/bin/
@@ -186,14 +191,14 @@ src_prepare(){
 	#quarto-cli has moved to a rust based prog. that does the same thing
 	#located in package/launcher
 	sed "s#_EPREFIX_#${EPREFIX}# ; s#src/import_map.json#src/dev_import_map.json#" \
-		"${FILESDIR}/quarto.combined.eprefix" > "${S}/quarto"
+		"${FILESDIR}/quarto.combined.eprefix" > "${S}/quarto" || die "fix quarto failed"
 	sed "s#export QUARTO_BASE_PATH=\".*\"#export QUARTO_BASE_PATH=\"${S}\"# ;
 		s#export SCRIPT_PATH=\".*\"#export SCRIPT_PATH=\"${S}/package/dist/bin\"#" \
-		"${S}/quarto" > "${S}/package/dist/bin/quarto"
-	chmod +x "${S}/package/dist/bin/quarto"
+		"${S}/quarto" > "${S}/package/dist/bin/quarto" || die "Fix quarto2 failed"
+	chmod +x "${S}/package/dist/bin/quarto" || die "Failed to chmod quarto2"
 
 	pushd "${S}/package/dist/bin" > /dev/null
-	mkdir -p tools/deno-x86_64-unknown-linux-gnu
+	mkdir -p tools/deno-x86_64-unknown-linux-gnu || die "Failed to make dir for deno"
 	ln -s "${EPREFIX}/usr/bin/deno" tools/deno-x86_64-unknown-linux-gnu/deno
 	ln -s "${EPREFIX}/usr/bin/pandoc"        pandoc
 	ln -s "${EPREFIX}/usr/bin/sass"          sass
@@ -206,18 +211,17 @@ src_prepare(){
 	mkdir -p "${S}/package/dist/config"
 	default
 }
-src_configure(){
+src_configure() {
 	pushd "${S}/package/src" > /dev/null
 	#disables creating symlink
 	export QUARTO_NO_SYMLINK="TRUE"
 	#With the configuration patch this just write the devConfig for unbundled and testing
-	./quarto-bld configure    --log-level info || die
+	./quarto-bld configure    --log-level info || die "Failed to run configure"
 	#copy dev-config b/c prepare-dist deletes it
 	cp "${S}/package/dist/config/dev-config" "${S}/dev-config"
 	popd > /dev/null
-
 }
-src_compile(){
+src_compile() {
 	#Configuration
 	einfo "Setting Configuration"
 
@@ -225,7 +229,7 @@ src_compile(){
 	pushd "${S}/package/src"
 
 	einfo "Building ${P}..."
-	./quarto-bld prepare-dist --log-level info || die
+	./quarto-bld prepare-dist --log-level info || die "Failed to run prepare-dist"
 	popd
 
 	[[ "${PV}" == "9999" ]] && MY_PV="99.9.9" || MY_PV=${PV}
@@ -240,7 +244,48 @@ src_compile(){
 
 	use test && install_r_packages ${RENV_TEST_PKGS}
 }
-src_install(){
+
+src_test() {
+	rm tests/bin/python3 || die "Failed to delete tests/bin/python3"
+	ln -s "${EPREFIX}/usr/bin/${EPYTHON}" tests/bin/python3 || die "Failed to link python3"
+
+	mkdir -p "${S}/package/dist/config"
+	mv "${S}/dev-config" "${S}/package/dist/config/dev-config" || die "Failed to move dev-config"
+
+	pushd "${S}/tests" > /dev/null
+	#this disables renv - it might be nice to use renv
+	rm .Rprofile || die "Failed to delete .Rprofile"
+	#this lovely test needs internet access thus fails; so as punishment it breaks a large chunk of tests after it.
+	rm smoke/extensions/install.test.ts || die "Failed to delete smoke/extensions/install.test.ts"
+
+	export QUARTO_ROOT="${S}"
+	export QUARTO_BASE_PATH=${S}
+	export QUARTO_BIN_PATH=${QUARTO_BASE_PATH}/package/dist/bin/
+	export QUARTO_SHARE_PATH=${QUARTO_BASE_PATH}/src/resources/
+	export QUARTO_DEBUG=true
+	export R_LIBS="${R_LIB_PATH}"
+	#add QUARTO_BIN_PATH so the test can find the newly built quarto
+	export PATH="${QUARTO_BIN_PATH}:${PATH}"
+	DENO_OPTS="--unstable --no-config --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/dev_import_map.json"
+	einfo "Starting unit test"
+	deno test ${DENO_OPTS} test.ts unit
+
+	#will need to install/setup
+	# * python libraries - see requirements.txt - not all in portage
+	# * dev-python/jupyter
+	# * install tinytex - not in portage
+	# * it uses a chrome (see if ff will work) based browser to do screen shots - probably not possible
+
+	einfo "Starting smoke test"
+	deno test ${DENO_OPTS} test.ts smoke
+
+	#Gentoo sand  166 passed / 35 failed
+	#On an internet connected terminal
+	#w/o  tinytex 179 passed / 34 failed
+	#with tinytex 207 passed /  6 failed
+	popd > /dev/null
+}
+src_install() {
 	dobin "${S}/quarto"
 	insinto /usr/share/${PN}/
 	doins -r "${S}/package/dist/share/"*
@@ -256,42 +301,4 @@ src_install(){
 		doins _quarto
 	fi
 	einstalldocs
-}
-src_test(){
-	rm tests/bin/python3
-	ln -s "${EPREFIX}/usr/bin/${EPYTHON}" tests/bin/python3
-
-	mkdir -p "${S}/package/dist/config"
-	mv "${S}/dev-config" "${S}/package/dist/config/dev-config"
-
-	pushd "${S}/tests" > /dev/null
-	#this disables renv - it might be nice to use renv
-	rm .Rprofile
-	#this lovely test needs internet access thus fails; so as punishment it breaks a large chunk of tests after it.
-	rm smoke/extensions/install.test.ts
-
-	export QUARTO_ROOT="${S}"
-	export QUARTO_BASE_PATH=${S}
-	export QUARTO_BIN_PATH=${QUARTO_BASE_PATH}/package/dist/bin/
-	export QUARTO_SHARE_PATH=${QUARTO_BASE_PATH}/src/resources/
-	export QUARTO_DEBUG=true
-	export R_LIBS="${R_LIB_PATH}"
-	DENO_OPTS="--unstable --no-config --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/dev_import_map.json"
-	einfo "Starting unit test"
-	deno test ${DENO_OPTS} test.ts unit
-
-	#will need to install/setup
-	# * python libraries - see requirements.txt - not all in portage
-	# * dev-python/jupyter
-	# * install tinytex - not in portage
-	# * it uses a chrome (see if ff will work) based browser to do screen shots - probably not possible
-
-	einfo "Starting smoke test"
-	deno test ${DENO_OPTS} test.ts smoke
-
-	#Gentoo sand  148 passed / 32 failed
-	#On an internet connected terminal
-	#w/o  tinytex 155 passed / 28 failed
-	#with tinytex 178 passed /  5 failed
-	popd > /dev/null
 }
