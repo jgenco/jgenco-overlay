@@ -63,7 +63,7 @@ BDEPEND="
 	)
 "
 PATCHES=(
-	"${FILESDIR}/deno-1.28.2-fix_disable_tests.patch"
+	"${FILESDIR}/deno-1.29.0-fix_disable_tests.patch"
 )
 DOCS=(Releases.md)
 {% block variables -%}
@@ -79,14 +79,13 @@ function find_crate() {
 	die "Crate $1 not found"
 }
 pkg_pretend() {
-	#This used 5.1GB using 5.25G for safety
-	#Next time look into adding RAM req.
-	CHECKREQS_DISK_BUILD="5.25G"
+	#This used 5.1GB using 6G for safety
+	CHECKREQS_DISK_BUILD="6G"
 	check-reqs_pkg_pretend
 	}
 
 pkg_setup() {
-	CHECKREQS_DISK_BUILD="5.25G"
+	CHECKREQS_DISK_BUILD="6G"
 	check-reqs_pkg_setup
 	}
 src_unpack() {
@@ -109,8 +108,6 @@ src_prepare() {
 src_compile() {
 	#inspired by www-client/chromium
 	local gn_conf=""
-	#uses gold instead of lld - make lld optional someday
-	gn_conf+=" use_lld=false"
 	if tc-is-clang; then
 		gb_conf+=" is_clang=true"
 	else
@@ -142,39 +139,19 @@ src_compile() {
 	einfo "GN_ARGS=${GN_ARGS}"
 
 	pushd cli > /dev/null || die "Failed to change dir cli"
-	cargo_src_compile --locked
+	cargo_src_compile
 	popd > /dev/null
 
 	if use test;then
-		pushd "${S}/test_util" > /dev/null || die "Failed to change dir to test_util"
-		cargo_src_compile --locked
+		pushd test_util > /dev/null || die "Failed to change dir to test_util"
+		cargo_src_compile
 		popd > /dev/null
 	fi
-	"${S}/target/release/deno" completions bash > "${S}/deno_bash_comp" || die "Failed to create bash completion file"
-}
-src_install() {
-	pushd ${S}/cli
-	cargo_src_install
-	popd
-
-	newbashcomp "${S}/deno_bash_comp" deno
-}
-
-pkg_postinst(){
-	if ! tc-is-clang ; then
-		#--When cargo_src_compile -vv
-		#QA Check notes gcc warns about return-local-addr for the following file
-		#${ECARGO_VENDOR}/${v8_dir}/third_party/icu/source/i18n/formattedvalue.cpp:212
-		#https://github.com/unicode-org/icu/blob/main/icu4c/source/i18n/formattedvalue.cpp#L212
-		#the source code mentions this is a false positive
-		#come up with some text to inform the user
-		#TODO unbundle third party libs(ICU,zlib) if possible
-		:
-	fi
+	./target/release/deno completions bash > deno_bash_comp || die "Failed to create bash completion file"
 }
 
 src_test() {
-	pushd "${S}/test_util" > /dev/null || die "Failed to change dir to test_util"
+	pushd test_util > /dev/null || die "Failed to change dir to test_util"
 	einfo "Starting test_server..."
 	../target/release/test_server &
 	local server_pid=$!
@@ -196,13 +173,11 @@ src_test() {
 		sleep 5;
 	done
 
-	pushd "${S}" > /dev/null || die "Failed to change dir to deno root directory"
 	#Next time try XDG_RUNTIME_DIR(or other XDG) instead of DENO_DIR + patch
 	export DENO_DIR="${T}/deno_dir"
-	mkdir -p "${DENO_DIR}"
+	mkdir -p "${DENO_DIR}" || die "Failed to make deno_dir"
 	#GPU test fails even under a normal user. I assume this is a hardware problem on my end
-	"${S}/target/release/deno" test --allow-all --unstable --location=http://js-unit-tests/foo/bar cli/tests/unit/
-	popd >/dev/null
+	./target/release/deno test --allow-all --unstable --location=http://js-unit-tests/foo/bar cli/tests/unit/
 
 	einfo "Killing server..."
 	kill ${server_pid}
@@ -214,3 +189,25 @@ src_test() {
 	#deno run --allow-env --allow-net --allow-read --allow-run --allow-write --unstable \
 	#--lock=tools/deno.lock.json ./tools/wpt.ts run --release --binary="${S}/target/release/deno"
 }
+src_install() {
+	pushd cli
+	cargo_src_install
+	popd
+
+	newbashcomp deno_bash_comp deno
+}
+
+pkg_postinst() {
+	if ! tc-is-clang ; then
+		#--When cargo_src_compile -vv
+		#QA Check notes gcc warns about return-local-addr for the following file
+		#${ECARGO_VENDOR}/${v8_dir}/third_party/icu/source/i18n/formattedvalue.cpp:212
+		#https://github.com/unicode-org/icu/blob/main/icu4c/source/i18n/formattedvalue.cpp#L212
+		#the source code mentions this is a false positive
+		#come up with some text to inform the user
+		#TODO unbundle third party libs(ICU,zlib) if possible
+		:
+	fi
+}
+
+
