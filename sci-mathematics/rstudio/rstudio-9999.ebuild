@@ -257,6 +257,7 @@ RDEPEND="
 		sys-devel/clang
 	)
 	sys-apps/util-linux
+	sys-apps/which
 	sys-libs/zlib
 	sys-process/lsof
 	~virtual/jdk-11:=
@@ -275,7 +276,6 @@ BDEPEND="
 	~virtual/jdk-11:=
 "
 PATCHES=(
-	"${FILESDIR}/${PN}-2022.12.0.353-boost-imports-and-namespaces.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-cmake-bundled-dependencies.patch"
 	"${FILESDIR}/${PN}-1.4.1717-fix-boost-version-check.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-resource-path.patch"
@@ -635,6 +635,8 @@ src_install() {
 
 		mkdir -p "${ED}/usr/bin"
 		dosym -r /usr/share/${PN}/rstudio /usr/bin/rstudio
+		#quarto-cli wants this see:src/command/render/render-shared.ts
+		dosym -r /usr/share/${PN}/resources/app/bin/rserver-url /usr/bin/rserver-url
 		if use server; then
 			dosym -r /usr/share/${PN}/resources/app/bin/rserver /usr/bin/rserver
 		fi
