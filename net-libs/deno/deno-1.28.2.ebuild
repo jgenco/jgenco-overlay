@@ -572,13 +572,13 @@ function find_crate() {
 	die "Crate $1 not found"
 }
 pkg_pretend() {
-	#This used 5.1GB using 5.25G for safety
-	CHECKREQS_DISK_BUILD="5.25G"
+	#This used 5.1GB using 6G for safety
+	CHECKREQS_DISK_BUILD="6G"
 	check-reqs_pkg_pretend
 	}
 
 pkg_setup() {
-	CHECKREQS_DISK_BUILD="5.25G"
+	CHECKREQS_DISK_BUILD="6G"
 	check-reqs_pkg_setup
 	}
 src_unpack() {
@@ -647,13 +647,12 @@ src_compile() {
 		cargo_src_compile --locked
 		popd > /dev/null
 	fi
-
+	./target/release/deno completions bash > deno_bash_comp || die "Failed to create bash completion file"
 }
 src_install() {
 	pushd "${S}/cli"
 	cargo_src_install
 	popd
-	"${ED}/usr/bin/deno" completions bash > deno_bash_comp || die "Failed to create bash completion file"
 	newbashcomp deno_bash_comp deno
 }
 
@@ -695,7 +694,7 @@ src_test() {
 
 	pushd "${S}" > /dev/null || die "Failed to change dir to deno root directory"
 	export DENO_DIR="${T}/deno_dir"
-	mkdir -p "${DENO_DIR}"
+	mkdir -p "${DENO_DIR}" || die "Failed to make deno_dir"
 	#GPU test fails even under a normal user. I assume this is a hardware problem on my end
 	"${S}/target/release/deno" test --allow-all --unstable --location=http://js-unit-tests/foo/bar cli/tests/unit/
 	popd >/dev/null
