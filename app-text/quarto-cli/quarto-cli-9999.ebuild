@@ -11,23 +11,60 @@ IUSE="test"
 RESTRICT="!test? ( test )"
 #note:matrix bumped to -1
 #     knitr bumped down from .9
-RENV_HASH="687871a38fe63d04427be971aa65f00af255d33f"
+RENV_HASH="b8bc164f8e22e540972a8f35c474c76c8386888d"
 RENV_TEST_PKGS="
-cli@3.6.0
-glue@1.6.2
 rlang@1.0.6
-lifecycle@1.0.3
 Rcpp@1.0.9
 base64enc@0.1-3
 digest@0.6.31
 ellipsis@0.3.2
 fastmap@1.1.0
+fs@1.5.2
+rappdirs@0.3.3
+cachem@1.0.6
+htmltools@0.5.4
+R6@2.5.1
+later@1.3.0
+magrittr@2.0.3
+cli@3.6.0
+glue@1.6.2
+xfun@0.36
+lifecycle@1.0.3
+triebeard@0.3.0
+promises@1.2.0.1
+jquerylib@0.1.4
+jsonlite@1.8.4
+memoise@2.0.1
+mime@0.12
+sass@0.4.4
 lattice@0.20-45
 colorspace@2.0-3
 fansi@1.0.3
 utf8@1.2.2
-vctrs@0.5.1
+sys@3.4.1
+bslib@0.4.2
+commonmark@1.8.1
+crayon@1.5.2
+fontawesome@0.4.0
+httpuv@1.6.8
+sourcetools@0.1.7
 withr@2.5.0
+xtable@1.8-4
+curl@5.0.0
+httpcode@0.3.0
+urltools@1.7.3
+stringi@1.7.12
+vctrs@0.5.1
+evaluate@0.20
+highr@0.10
+yaml@2.3.6
+stringr@1.5.0
+knitr@1.41
+tinytex@0.43
+cpp11@0.4.3
+crul@1.3
+shiny@1.7.4
+askpass@1.1
 pillar@1.8.1
 pkgconfig@2.0.3
 RColorBrewer@1.1-3
@@ -37,25 +74,6 @@ munsell@0.5.0
 viridisLite@0.4.1
 Matrix@1.5-3
 nlme@3.1-161
-curl@5.0.0
-jsonlite@1.8.4
-xfun@0.36
-fs@1.5.2
-rappdirs@0.3.3
-cachem@1.0.6
-htmltools@0.5.4
-R6@2.5.1
-later@1.3.0
-magrittr@2.0.3
-promises@1.2.0.1
-jquerylib@0.1.4
-memoise@2.0.1
-mime@0.12
-sass@0.4.4
-stringi@1.7.12
-evaluate@0.20
-highr@0.10
-yaml@2.3.6
 V8@4.2.2
 MASS@7.3-58.1
 gtable@0.3.1
@@ -65,44 +83,52 @@ scales@1.2.1
 generics@0.1.3
 tibble@3.1.8
 tidyselect@1.2.0
+openssl@2.0.5
+uuid@1.1-0
+xml2@1.3.3
+zip@2.2.2
+gfonts@0.2.0
+systemfonts@1.0.4
 bit@4.0.5
+rmarkdown@2.20
+lazyeval@0.2.2
+crosstalk@1.2.0
+htmlwidgets@1.6.1
 DBI@1.1.3
 bit64@4.0.5
 blob@1.2.3
 plogr@0.2.0
+data.table@1.14.6
+gdtools@0.3.0
+officer@0.5.2
 bigD@0.2.0
 bitops@1.0-7
 dplyr@1.0.10
 ggplot2@3.4.0
 juicyjuice@0.1.0
-stringr@1.5.0
-knitr@1.41
-tinytex@0.43
-bslib@0.4.2
-commonmark@1.8.1
-crayon@1.5.2
-fontawesome@0.4.0
-httpuv@1.6.8
-sourcetools@0.1.7
-xtable@1.8-4
-shiny@1.7.4
-rmarkdown@2.20
 renv@0.16.0
 gt@0.8.0
+flextable@0.8.5
 RSQLite@2.2.20
+DT@0.27
 "
 PYTHON_COMPAT=( python3_{8..11} )
-inherit bash-completion-r1 multiprocessing python-any-r1
+inherit bash-completion-r1 multiprocessing python-any-r1 prefix
 #NOTE previews for version x.y are simply x.y.[1..n]
 #     releases simply bump to x.y.n+1  no need to be fancy
 if [[ "${PV}" == *9999 ]];then
 	inherit git-r3
 	EGIT_REPO_URI="https://github.com/quarto-dev/${PN}"
 	EGIT_BRANCH="main"
+	DENO_STD_VER="0.170.0"
+	CLIFFY_VER="0.25.7"
+	
 else
 	SRC_URI="https://github.com/quarto-dev/quarto-cli/archive/refs/tags/v${PV}.tar.gz   -> ${P}.tar.gz "
 fi
-
+SRC_URI="
+	https://github.com/denoland/deno_std/archive/refs/tags/${DENO_STD_VER}.tar.gz -> deno_std@${DENO_STD_VER}.tar.gz
+	https://github.com/c4spar/deno-cliffy/archive/refs/tags/v${CLIFFY_VER}.tar.gz -> deno-cliffy@${CLIFFY_VER}.tar.gz "
 build_r_src_uri() {
 	for rpkg in ${@}; do
 		[[ ${rpkg} =~ (.*)@(.*) ]]
@@ -148,14 +174,19 @@ PATCHES="
 	${FILESDIR}/quarto-cli-9999-configuration.patch
 "
 DEPEND="
-	>=net-libs/deno-1.28.2 <net-libs/deno-1.29.0
+	app-arch/unzip
 	|| (
 		>=app-text/pandoc-2.19.2
 		>=app-text/pandoc-bin-2.19.2
 	)
 	~dev-lang/dart-sass-1.32.8
+	>=dev-lang/R-4.1.0
+	dev-libs/libxml2
+	dev-vcs/git
+	>=net-libs/deno-1.28.2 <net-libs/deno-1.31.0
 	~net-libs/deno-dom-0.1.23_alpha_p20220508
-	test? ( >=dev-lang/R-4.1.0 )
+	sys-apps/which
+	x11-misc/xdg-utils
 "
 RDEPEND="${DEPEND}"
 BDEPEND="
@@ -191,11 +222,23 @@ src_unpack() {
 	else
 		unpack ${P}.tar.gz
 	fi
+
+	pushd "${S}/src/vendor/deno.land/" > /dev/null || die "Failed to push to deno.land"
+	rm -r std@0.166.0 || die "Failed to delete deno_std"
+	unpack deno_std@${DENO_STD_VER}.tar.gz
+	mv deno_std-${DENO_STD_VER} std@${DENO_STD_VER} || die "Failed to rename deno_std"
+
+	pushd x > /dev/null || die "Failed to push to x"
+	rm -r cliffy@v0.25.4 || die "Failed to delete old cliff"
+	unpack deno-cliffy@${CLIFFY_VER}.tar.gz
+	mv deno-cliffy-${CLIFFY_VER} cliffy@v${CLIFFY_VER} || die "Failed to rename cliffy"
+	popd
+
+	popd
 }
 src_prepare() {
 	#Setup package/bin dir
-	mkdir -p package/dist/config/
-	mkdir -p package/dist/bin/
+	mkdir -p package/dist/{config,bin} || die "Failed to make directories"
 	#the quarto files are a custom bash script based on the original
 	#quarto-cli has moved to a rust based prog. that does the same thing
 	#located in package/launcher
@@ -204,51 +247,63 @@ src_prepare() {
 	sed "s#export QUARTO_BASE_PATH=\".*\"#export QUARTO_BASE_PATH=\"${S}\"# ;
 		s#export SCRIPT_PATH=\".*\"#export SCRIPT_PATH=\"${S}/package/dist/bin\"#" \
 		"${S}/quarto" > "${S}/package/dist/bin/quarto"
-	chmod +x "${S}/package/dist/bin/quarto"
+	chmod +x "${S}/package/dist/bin/quarto" || die "Failed to chmod +x quarto"
 
-	pushd "${S}/package/dist/bin" > /dev/null
+	pushd "${S}/package/dist/bin" > /dev/null || die "Failed to move to bin"
 	mkdir -p tools/deno-x86_64-unknown-linux-gnu
-	ln -s "${EPREFIX}/usr/bin/deno" tools/deno-x86_64-unknown-linux-gnu/deno
-	ln -s "${EPREFIX}/usr/bin/pandoc"        pandoc
-	ln -s "${EPREFIX}/usr/bin/sass"          sass
-	ln -s "${EPREFIX}/usr/bin/esbuild"       esbuild
-	ln -s "${EPREFIX}/usr/lib64/deno-dom.so" libplugin.so
-	#added for quarto-sandbox for simplicity
-	ln -s "${EPREFIX}/usr/bin/deno"          deno
+	for bin in {pandoc,sass,esbuild,deno};do
+		ln -s "${EPREFIX}/usr/bin/${bin}" ${bin} || die "Failed to link binary $bin"
+	done
+	ln -s "${EPREFIX}/usr/lib64/deno-dom.so" libplugin.so || die "Failed to link deno-dom.so"
+	ln -s "${EPREFIX}/usr/bin/deno" tools/deno-x86_64-unknown-linux-gnu/deno || die "Failed to link deno2"
 	popd > /dev/null
 
-	mkdir -p "${S}/package/dist/config"
+	sed -i "s/std@0.166.0/std@${DENO_STD_VER}/" \
+		src/{,dev_}import_map.json \
+		src/vendor/import_map.json \
+		src/resources/deno_std/{,run_}import_map.json \
+		package/scripts/deno_std/deno_std.ts || die "Failed to update various files"
+	sed  -i "s#https://deno.land/#../../../src/vendor/deno.land/#" \
+		./package/scripts/deno_std/deno_std.ts || die "Failed to update deno_std.ts"
+	deno cache --unstable --lock ./src/resources/deno_std/deno_std.lock \
+		--lock-write ./package/scripts/deno_std/deno_std.ts || die "Failed to update lockfile"
+	sed -i "s/cliffy@v0.25.4/cliffy@v${CLIFFY_VER}/" \
+		src/{,dev_}import_map.json \
+		src/vendor/import_map.json || die "Failed to update cliffy"
+
 	default
+
+	eprefixify src/command/render/render-shared.ts
 }
 src_configure() {
-	pushd "${S}/package/src" > /dev/null
+	pushd package/src > /dev/null ||die "Failed to move to package/src"
 	#disables creating symlink
 	export QUARTO_NO_SYMLINK="TRUE"
 	#With the configuration patch this just write the devConfig for unbundled and testing
 	./quarto-bld configure    --log-level info || die "Failed to run configure"
 	#copy dev-config b/c prepare-dist deletes it
-	cp "${S}/package/dist/config/dev-config" "${S}/dev-config"
 	popd > /dev/null
+	cp package/dist/config/dev-config dev-config || die "Failed to copy dev-config"
 }
 src_compile() {
 	#Configuration
 	einfo "Setting Configuration"
 
 	export QUARTO_ROOT="${S}"
-	pushd "${S}/package/src"
+	pushd package/src || die "Failed to move to package/src"
 
 	einfo "Building ${P}..."
 	./quarto-bld prepare-dist --log-level info || die "Failed to run prepare-dist"
 	popd
 
 	[[ "${PV}" == "9999" ]] && MY_PV="99.9.9" || MY_PV=${PV}
-	echo -n "${MY_PV}" > "${S}/package/dist/share/version"
-	echo -n "${MY_PV}" > "${S}/src/resources/version"
+	echo -n "${MY_PV}" > package/dist/share/version || die "Failed to create pkg version"
+	echo -n "${MY_PV}" > src/resources/version || die "Failed to create version"
 
-	"${S}/package/dist/bin/quarto" completions bash > _quarto.sh || die "Failed to build bash completion"
+	./package/dist/bin/quarto completions bash > _quarto.sh || die "Failed to build bash completion"
 	#>=app-shells/zsh-4.3.5 is what app-shells/gentoo-zsh-completions depends on NOT tested
 	if has_version  ">=app-shells/zsh-4.3.5";then
-		"${S}/package/dist/bin/quarto" completions zsh > _quarto || die "Failed to build zsh completion"
+		./package/dist/bin/quarto completions zsh > _quarto || die "Failed to build zsh completion"
 	fi
 
 	use test && install_r_packages ${RENV_TEST_PKGS}
@@ -256,18 +311,17 @@ src_compile() {
 
 src_test() {
 	rm tests/bin/python3 || die "Failed to delete tests/bin/python3"
-	ln -s "${EPREFIX}/usr/bin/${EPYTHON}" tests/bin/python3
+	ln -s "${EPREFIX}/usr/bin/${EPYTHON}" tests/bin/python3 || die "Failed to link python3"
 
-	mkdir -p "${S}/package/dist/config"
-	mv "${S}/dev-config" "${S}/package/dist/config/dev-config"
+	mv "${S}/dev-config" "${S}/package/dist/config/dev-config" || die "Failed to move dev-config"
 
-	pushd "${S}/tests" > /dev/null
+	pushd "${S}/tests" > /dev/null || die "Failed to move to tests"
 	#this disables renv - it might be nice to use renv
 	rm .Rprofile || die "Failed to delete .Rprofile"
 	#this test needs internet access thus fails
 	rm smoke/extensions/install.test.ts || die "Failed to delete smoke/extensions/install.test.ts"
 	#check test is for dev builds
-	[[ "${PV}" != *9999 ]] && rm smoke/env/check.test.ts
+	[[ "${PV}" != *9999 ]] && rm smoke/env/check.test.ts || die "Failed to remove check test"
 	#install test runs 'quarto list' which requires internet access
 	rm smoke/env/install.test.ts || die "Failed to delete smoke/env/install.test.ts"
 
@@ -287,15 +341,14 @@ src_test() {
 	# * python libraries - see requirements.txt - not all in portage
 	# * dev-python/jupyter
 	# * install tinytex - not in portage
-	# * it uses chrome (see if ff will work) based browser to do screen shots - probably not possible
 
 	einfo "Starting smoke test"
 	deno test ${DENO_OPTS} test.ts smoke
 
-	#Gentoo sand  238 passed / 57 failed
+	#Gentoo sand  246 passed / 57 failed
 	#On an internet connected terminal
-	#w/o  tinytex 239 passed / 72 failed
-	#with tinytex 281 passed / 30 failed
+	#w/o  tinytex 247 passed / 72 failed
+	#with tinytex 290 passed / 29 failed
 	popd > /dev/null
 }
 src_install() {
@@ -315,4 +368,3 @@ src_install() {
 	fi
 	einstalldocs
 }
-
