@@ -297,7 +297,7 @@ pkg_setup() {
 	usr/share/${PN}/chrome_crashpad_handler
 	usr/share/${PN}/lib*
 	"
-	llvm_pkg_setup
+	use clang && llvm_pkg_setup
 	java-pkg-2_pkg_setup
 }
 
