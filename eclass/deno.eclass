@@ -22,93 +22,81 @@ DENO_SRC="${WORKDIR}/deno_src"
 DENO_CACHE="${WORKDIR}/deno_cache"
 export DENO_DIR=${DENO_CACHE}
 
-DENO_LINE_REGEX="((@.*/)?[^@]*)@(([^@ ]*))? +(.*) +(.*) +(.*) +(.*)"
-deno_build_src_uri(){
-	for (( i = 0; i < ${#DENO_LIBS[@]}; i++ ));do
-		[[ ${DENO_LIBS[$i]} =~ ${DENO_LINE_REGEX} ]]
-		PACKAGE=${BASH_REMATCH[1]}
-		VERSION=${BASH_REMATCH[4]}
-		URL="${BASH_REMATCH[5]/_VER_/${VERSION}}"
-		START_FOLDER=${BASH_REMATCH[6]/_VER_/${VERSION}}
-		ACTION=${BASH_REMATCH[7]}
-		SOURCE=${BASH_REMATCH[8]}
-		FILENAME="deno_${PACKAGE/\//_}@${VERSION}.tar.gz"
+DENO_VER_REGEX="((@.*/)?[^@]*)@(([^@ ]*))?"
+deno_build_src_uri() {
+	for line in "${DENO_LIBS[@]}"; do
+		local package_full url start_folder action index
+		read -r package_full url start_folder action index <<< "${line}"
+		local package version url filename
+		[[ ${package_full} =~ ${DENO_VER_REGEX} ]]
+		package=${BASH_REMATCH[1]}
+		version=${BASH_REMATCH[4]}
+		url="${url/_VER_/${version}}"
+		filename="deno_${package/\//_}@${version}.tar.gz"
 
-		if [[ ${URL} =~ "https://" ]];then
-			echo "${URL} -> ${FILENAME#@}"
-	#	else
-	#		echo "${PACKAGE}@@@${VERSION} links to ${URL}"
+		if [[ ${url} =~ "https://" ]];then
+			echo "${url} -> ${filename#@} "
+			
 		fi
-	#	echo "${START_FOLDER} -> ${PACKAGE/\//_}-${VERSION}"
-	#	echo "$START_FOLDER $ACTION $SOURCE"
-	#	echo ""
-	#done
 	done
 }
-deno_src_unpack(){
+deno_src_unpack() {
 	einfo "Setting up DENO_SRC/DENO_CACHE"
 	mkdir ${DENO_CACHE}
 	mkdir ${DENO_SRC}
-	for (( i = 0; i < ${#DENO_LIBS[@]}; i++ ));do
-		if [[ ${DENO_LIBS[$i]} == "" ]];then continue; fi;
-		[[ ${DENO_LIBS[$i]} =~ ${DENO_LINE_REGEX} ]]
-		PACKAGE=${BASH_REMATCH[1]}
-		VERSION=${BASH_REMATCH[4]}
-		START_FOLDER=${BASH_REMATCH[6]/_VER_/${VERSION#v}}
-		ACTION=${BASH_REMATCH[7]}
-		case ${ACTION} in
+	for line in "${DENO_LIBS[@]}"; do
+		local package_full url start_folder action index
+		read -r package_full url start_folder action index <<< "${line}"
+		local start_folder ln_suffix new_dir
+		[[ ${package_full} =~ ${DENO_VER_REGEX} ]]
+		local package=${BASH_REMATCH[1]}
+		local version=${BASH_REMATCH[4]}
+		local start_folder=${start_folder/_VER_/${version#v}}
+		local package_path="${FILESDIR}/deno_${package/\//_}@${version}.tar.gz"
+		local package_dest="${DENO_SRC}/${package/\//_}-${version}"
+		case ${action} in
 		"build")
-			ln -s "${WORKDIR}/${START_FOLDER}" "${DENO_SRC}/${PACKAGE/\//_}-${VERSION#v}.orig"
-			mkdir ${DENO_SRC}/${PACKAGE/\//_}-${VERSION};;
+			ln -s "${WORKDIR}/${start_folder}" "${DENO_SRC}/${package/\//_}-${version#v}.orig" ||die
+			mkdir ${DENO_SRC}/${package/\//_}-${version}||die;;
 		"bundle"|"special_bundle")
-			ln -s "${WORKDIR}/${START_FOLDER}" "${DENO_SRC}/${PACKAGE/\//_}-${VERSION#v}.orig"
-			mkdir ${DENO_SRC}/${PACKAGE/\//_}-${VERSION};;
+			ln -s "${WORKDIR}/${start_folder}" "${DENO_SRC}/${package/\//_}-${version#v}.orig" ||die
+			mkdir ${DENO_SRC}/${package/\//_}-${version}||die;;
 		"NA")
-			ln -s "${WORKDIR}/${START_FOLDER}" "${DENO_SRC}/${PACKAGE/\//_}-${VERSION#v}";;
-		*) die "Unknown action - ${ACTION} for package ${PACKAGE}";;
+			ln -s "${WORKDIR}/${start_folder}" "${DENO_SRC}/${package/\//_}-${version#v}"||die;;
+		*) die "Unknown action - ${action} for package ${package_full}"||die;;
 		esac
 	done
 }
-deno_build_src(){
+deno_build_src() {
 	einfo "Building Source Files..."
-
-	for (( i = 0; i < ${#DENO_LIBS[@]}; i++ ));do
-		if [[ ${DENO_LIBS[$i]} == "" ]];then continue; fi;
-		[[ ${DENO_LIBS[$i]} =~ ${DENO_LINE_REGEX} ]]
-		PACKAGE=${BASH_REMATCH[1]}
-		VERSION=${BASH_REMATCH[4]}
-		START_FOLDER=${BASH_REMATCH[6]/_VER_/${VERSION#v}}
-		ACTION=${BASH_REMATCH[7]}
-		SOURCE=${BASH_REMATCH[8]}
-		case ${ACTION} in
+	for line in "${DENO_LIBS[@]}"; do
+		local package_full url start_folder action index
+		read -r package_full url start_folder action index <<< "${line}"
+		local start_folder
+		[[ ${package_full} =~ ${DENO_VER_REGEX} ]]
+		package=${BASH_REMATCH[1]}
+		version=${BASH_REMATCH[4]}
+		start_folder=${start_folder/_VER_/${version#v}}
+		case ${action} in
 		"build")
-		esbuild ${DENO_SRC}/${PACKAGE/\//_}-${VERSION#v}.orig${SOURCE} --format=esm --outdir=${DENO_SRC}/${PACKAGE/\//_}-${VERSION#v}||die;;
+		esbuild ${DENO_SRC}/${package/\//_}-${version#v}.orig${index} --format=esm --outdir=${DENO_SRC}/${package/\//_}-${version#v}||die;;
 
 		"bundle")
-		esbuild ${DENO_SRC}/${PACKAGE/\//_}-${VERSION#v}.orig${SOURCE}  --format=esm --bundle --outfile=${DENO_SRC}/${PACKAGE/\//_}-${VERSION#v}/${PACKAGE}.js || die;;
+		esbuild ${DENO_SRC}/${package/\//_}-${version#v}.orig${index}  --format=esm --bundle --outfile=${DENO_SRC}/${package/\//_}-${version#v}/${package}.js || die;;
 
 		"NA"|"special_bundle");;
 
-		*) die "Unknown action - ${ACTION} for package ${PACKAGE}";;
+		*) die "Unknown action - ${action} for package ${package_full}";;
 		esac
 	done
 }
-deno_build_cache(){
+deno_build_cache() {
 	einfo "Building Deno cache..."
+	#declare -A DENO_PKG_HASH=(["acorn-7.4.1"]="aIeX4aKa0RO2JeS9dtPa")
 	# curl https://cdn.skypack.dev/moment-guess@1.2.4?meta | sed "s/,/\n,/g"|grep buildId
 	#NOTE: the key is the FOLDER
 	#      dashes instead of @
-	declare -A pkg_hash=(
-	["acorn-7.4.1"]="aIeX4aKa0RO2JeS9dtPa"
-	["acorn-walk-7.2.0"]="HE7wS37ePcNncqJvsD8k"
-	["ansi_up-5.1.0"]="ifIRWFhqTFJbTEKi2tZH"
-	["blueimp-md5-2.19.0"]="FsBtHB6ITwdC3L5Giq4Q"
-	["dayjs-1.8.21"]="6syVEc6qGP8frQXKlmJD"
-	["diff-5.0.0"]="cU62LaUh1QZHrLzL9VHS"
-	["lodash-4.17.21"]="K6GEbP02mWFnLA45zAmi"
-	["moment-guess-1.2.4"]="bDXl7KQy0hLGNuGhyGb4"
-	["@observablehq/parser-4.5.0"]="rWZiNfab8flhVomtfVvr"
-	)
+	
 	regex="(https?)://([^/]+)(/(./)?((@[^/]*/)?[^/]+)@([^/]+)(/.*)?)"
 	TIME=`date +%s`
 	compute_folder(){
@@ -118,62 +106,60 @@ deno_build_cache(){
 	while read -r line
 	do
 		[[ ${line} =~ ${regex} ]]
-		PROTOCOL=${BASH_REMATCH[1]}
-		HOST=${BASH_REMATCH[2]}
+		local protocol=${BASH_REMATCH[1]}
+		local host=${BASH_REMATCH[2]}
 
-		PACKAGE=${BASH_REMATCH[5]}
-		VERSION=${BASH_REMATCH[7]}
-		ADDR=${BASH_REMATCH[3]}
+		local package=${BASH_REMATCH[5]}
+		local version=${BASH_REMATCH[7]}
+		local addr=${BASH_REMATCH[3]}
 
-		FPATH=${BASH_REMATCH[8]}
-		SHA256=$(echo -n "${ADDR}"| sha256sum)
-		SHA256=${SHA256%  -}
+		local fpath=${BASH_REMATCH[8]}
+		local sha256=$(echo -n "${addr}"| sha256sum)
+		local sha256=${sha256:0:64}
 
-		FILE_SOURCE=${DENO_SRC}/${ADDR}
+		local file_source=${DENO_SRC}/${addr}
 
-		mkdir -p ${DENO_CACHE}/deps/${PROTOCOL}/${HOST}
+		mkdir -p ${DENO_CACHE}/deps/${protocol}/${host}
 
-		FILE="${DENO_CACHE}/deps/${PROTOCOL}/${HOST}/${SHA256}"
-		FILE_META="${FILE}.metadata.json"
-		FOLDER="${PACKAGE}-${VERSION#v}"
-		FULLPATH="${DENO_SRC}/${FOLDER/\//_}${FPATH}"
-		FILECONTENTS=""
-		CHECKFILE=""
+		local file="${DENO_CACHE}/deps/${protocol}/${host}/${sha256}"
+		local file_meta="${file}.metadata.json"
+		local folder="${package}-${version#v}"
+		local fullpath="${DENO_SRC}/${folder/\//_}${fpath}"
+		local filecontents=""
+		local checkfile=""
 		#https://cdn.skypack.dev/dayjs@1.8.21/dayjs.min.js
 		#https://cdn.skypack.dev/-/dayjs@v1.8.21-6syVEc6qGP8frQXKlmJD/dist=es2019,mode=imports/optimized/dayjs.js
-		if [[ ${HOST} == "cdn.skypack.dev" ]]; then
-			if [[ ${FPATH} == ""  ]]; then
+		if [[ ${host} == "cdn.skypack.dev" ]]; then
+			if [[ ${fpath} == ""  ]]; then
 				#This gets no {default} except blueimp posibly b/c it has export default ...
-				FILECONTENTS="/-/${PACKAGE}@v${VERSION#v}-${pkg_hash[${FOLDER}]}/dist=es2019,mode=imports/optimized/${PACKAGE}.js"
-				CHECKFILE="${DENO_SRC}/${FOLDER/\//_}/${PACKAGE/\//_}.js"
+				filecontents="/-/${package}@v${version#v}-${DENO_PKG_HASH[${folder}]}/dist=es2019,mode=imports/optimized/${package}.js"
+				checkfile="${DENO_SRC}/${folder/\//_}/${package/\//_}.js"
 			#Special case until more info
-			elif [[ ${FPATH} == "/dayjs.min.js" ]]; then
-				FILECONTENTS="/-/${PACKAGE}@v${VERSION}-${pkg_hash[${FOLDER}]}/dist=es2019,mode=imports/optimized/${PACKAGE}.js"
-				CHECKFILE="${DENO_SRC}/${FOLDER/\//_}/${PACKAGE}.js"
-			elif [[ ${ADDR} =~ /-/.*optimized/(.*) ]]; then
-				VERSION="${VERSION:1:-21}"
-				FULLPATH="${DENO_SRC}/${PACKAGE/\//_}-${VERSION#v}/${BASH_REMATCH[1]/\//_}"
+			elif [[ ${fpath} == "/dayjs.min.js" ]]; then
+				filecontents="/-/${package}@v${version}-${DENO_PKG_HASH[${folder}]}/dist=es2019,mode=imports/optimized/${package}.js"
+				checkfile="${DENO_SRC}/${folder/\//_}/${package}.js"
+			elif [[ ${addr} =~ /-/.*optimized/(.*) ]]; then
+				version="${version:1:-21}"
+				fullpath="${DENO_SRC}/${package/\//_}-${version#v}/${BASH_REMATCH[1]/\//_}"
 			else
-				FILECONTENTS="/-/${PACKAGE}@v${VERSION#v}-${pkg_hash[${FOLDER}]}/dist=es2019,mode=imports/unoptimized${FPATH}.js"
-				CHECKFILE="${DENO_SRC}/${FOLDER/\//_}/${FPATH}.js"
+				filecontents="/-/${package}@v${version#v}-${DENO_PKG_HASH[${folder}]}/dist=es2019,mode=imports/unoptimized${fpath}.js"
+				checkfile="${DENO_SRC}/${folder/\//_}/${fpath}.js"
 			fi
 		fi
-
-		if [[ ${HOST} == "deno.land" ]]; then
-			#Populate Data
-			cp ${FULLPATH} ${FILE}
-			echo -n "{\"headers\": {},\"url\": \"${line}\",\"now\": {\"secs_since_epoch\": ${TIME},\"nanos_since_epoch\": 0}}" > ${FILE_META}
-		elif [[ ${HOST} == "cdn.skypack.dev" ]]; then
-			if [[ ${FILECONTENTS} == "" ]];then
-				cp ${FULLPATH} ${FILE}
+		if [[ ${host} == "deno.land" ]]; then
+			cp ${fullpath} ${file} || die
+			echo -n "{\"headers\": {},\"url\": \"${line}\",\"now\": {\"secs_since_epoch\": ${TIME},\"nanos_since_epoch\": 0}}" > ${file_meta} || die
+		elif [[ ${host} == "cdn.skypack.dev" ]]; then
+			if [[ ${filecontents} == "" ]];then
+				cp ${fullpath} ${file} || die
 			else
-				echo "export * from '${FILECONTENTS}';" > ${FILE}
-				if grep -E "(export|as) default" ${CHECKFILE} > /dev/null; then
-					echo  "export {default} from '${FILECONTENTS}';" >> ${FILE}
+				echo "export * from '${filecontents}';" > ${file} || die
+				if grep -E "(export|as) default" ${checkfile} > /dev/null; then
+					echo  "export {default} from '${filecontents}';" >> ${file} || die
 				fi
 			fi
 			echo -n "{\"headers\": {\"content-type\":\"application/javascript; charset=utf-8\"},
-				\"url\": \"${line}\",\"now\": {\"secs_since_epoch\": ${TIME},\"nanos_since_epoch\": 0}}" > ${FILE_META}
+				\"url\": \"${line}\",\"now\": {\"secs_since_epoch\": ${TIME},\"nanos_since_epoch\": 0}}" > ${file_meta}||die
 		fi
 
 	done < <(cat "${DENO_IMPORT_LIST}")
