@@ -31,6 +31,17 @@ DENO_LIBS=(
 "moment-guess@1.2.4 https://github.com/apoorv-mishra/moment-guess/archive/refs/tags/v_VER_.tar.gz moment-guess-_VER_ bundle /src/index.js"
 "@observablehq/parser@4.5.0 https://github.com/observablehq/parser/archive/refs/tags/_VER_.tar.gz parser-_VER_ special_bundle special"
 )
+declare -A DENO_PKG_HASH=(
+	["acorn-7.4.1"]="aIeX4aKa0RO2JeS9dtPa"
+	["acorn-walk-7.2.0"]="HE7wS37ePcNncqJvsD8k"
+	["ansi_up-5.1.0"]="ifIRWFhqTFJbTEKi2tZH"
+	["blueimp-md5-2.19.0"]="FsBtHB6ITwdC3L5Giq4Q"
+	["dayjs-1.8.21"]="6syVEc6qGP8frQXKlmJD"
+	["diff-5.0.0"]="cU62LaUh1QZHrLzL9VHS"
+	["lodash-4.17.21"]="K6GEbP02mWFnLA45zAmi"
+	["moment-guess-1.2.4"]="bDXl7KQy0hLGNuGhyGb4"
+	["@observablehq/parser-4.5.0"]="rWZiNfab8flhVomtfVvr"
+)
 DENO_IMPORT_LIST="${FILESDIR}/quarto-imports-0.9.471"
 
 if [[ "${PV}" == *9999 ]];then
