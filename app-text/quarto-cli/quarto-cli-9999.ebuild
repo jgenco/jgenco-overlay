@@ -118,7 +118,7 @@ DENO_LIBS=(
 "std@${DENO_STD_VER} https://github.com/denoland/deno_std/archive/refs/tags/_VER_.tar.gz deno_std-_VER_ NA NA"
 "cliffy@v${CLIFFY_VER} https://github.com/c4spar/deno-cliffy/archive/refs/tags/_VER_.tar.gz deno-cliffy-_VER_ NA NA"
 )
-DENO_IMPORT_LIST="${S}/package/scripts/deno_std/deno_std.ts.list"
+DENO_IMPORT_LIST="${WORKDIR}/full-import.list"
 
 PYTHON_COMPAT=( python3_{8..11} )
 inherit bash-completion-r1 multiprocessing python-any-r1 prefix deno
@@ -192,23 +192,30 @@ DEPEND="
 	~net-libs/deno-dom-0.1.35
 	sys-apps/which
 	x11-misc/xdg-utils
+"
+RDEPEND="${DEPEND}"
+BDEPEND="
 	test? (
-		dev-python/jupyter
-		dev-python/pandas
+		$(python_gen_any_dep '
+			dev-python/jupyter[${PYTHON_USEDEP}]
+			dev-python/pandas[${PYTHON_USEDEP}]
+			dev-python/nbformat[${PYTHON_USEDEP}]
+			dev-python/bokeh[${PYTHON_USEDEP}]
+		')
 		|| (
 			dev-lang/julia
 			dev-lang/julia-bin
 		)
 	)
-
-"
-RDEPEND="${DEPEND}"
-BDEPEND="
-	test? (
-		${PYTHON_DEPS}
-	)
 	>=dev-util/esbuild-0.15.6
 "
+python_check_deps() {
+	use test || return 0
+	python_has_version -b "dev-python/jupyter[${PYTHON_USEDEP}]" &&
+	python_has_version -b "dev-python/pandas[${PYTHON_USEDEP}]" &&
+	python_has_version -b "dev-python/nbformat[${PYTHON_USEDEP}]" &&
+	python_has_version -b "dev-python/bokeh[${PYTHON_USEDEP}]"
+}
 DOCS=( COPYING.md COPYRIGHT README.md news )
 
 R_LIB_PATH="${WORKDIR}/r_pkgs"
@@ -222,7 +229,6 @@ install_r_packages() {
 	echo 'install.packages(pkgs_files,repos=NULL,Ncpus='$(makeopts_jobs)')' >> ${R_SCRIPT}
 	R_LIBS="${R_LIB_PATH}" Rscript ${R_SCRIPT} || die "Failed to install R packages"
 }
-
 pkg_setup() {
 	use test && python-any-r1_pkg_setup
 }
@@ -243,7 +249,7 @@ src_unpack() {
 	rm -r std@0.166.0 || die "Failed to delete deno_std"
 	ln -s "${WORKDIR}/deno_std-${DENO_STD_VER}" std@${DENO_STD_VER} || die "Failed to rename deno_std"
 	find -H std@${DENO_STD_VER} -regextype egrep -regex ".*\.(ts|mjs)$" | \
-		sed "s%^%https://deno.land/%" > "${S}/package/scripts/deno_std/deno_std.ts.list" || \
+		sed "s%^%https://deno.land/%" > "${WORKDIR}/full-import.list" || \
 		die "Failed to make import list"
 
 	pushd x > /dev/null || die "Failed to push to x"
@@ -269,12 +275,10 @@ src_prepare() {
 	cp "${S}/quarto.sandbox" "${S}/package/dist/bin/quarto" || die "Failed to copy quarto"
 
 	pushd "${S}/package/dist/bin" > /dev/null || die "Failed to move to bin"
-	mkdir -p tools/deno-x86_64-unknown-linux-gnu
 	for bin in {pandoc,sass,esbuild,deno};do
 		ln -s "${EPREFIX}/usr/bin/${bin}" ${bin} || die "Failed to link binary $bin"
 	done
 	ln -s "${EPREFIX}/usr/lib64/deno-dom.so" libplugin.so || die "Failed to link deno-dom.so"
-	ln -s "${EPREFIX}/usr/bin/deno" tools/deno-x86_64-unknown-linux-gnu/deno || die "Failed to link deno2"
 	popd > /dev/null
 
 	sed -i "s/std@0.166.0/std@${DENO_STD_VER}/" \
@@ -289,19 +293,32 @@ src_prepare() {
 
 	deno_build_src
 	deno_build_cache
-	deno cache --unstable --lock ./src/resources/deno_std/deno_std.lock \
-		--lock-write ./package/scripts/deno_std/deno_std.ts || die "Failed to update lockfile"
+	#build lock the first time to get list of files to import
+	deno cache --unstable --lock "${S}/src/resources/deno_std/deno_std.lock" \
+		--lock-write "${S}/package/scripts/deno_std/deno_std.ts" || die "Failed to create lockfile"
+	grep https "${S}/src/resources/deno_std/deno_std.lock"|sed "s/.*\(https.*\)\":.*/\1/" >\
+		"${S}/src/resources/deno_std/deno_std.ts.list"|| die "Failed to make deno_std.ts.list"
 
+	#build cache that comes with quarto-cli
+	local deno_cache_old="${DENO_CACHE}"
+	DENO_CACHE="${S}/src/resources/deno_std/cache"
+	local deno_dir_old="${DENO_DIR}"
+	export DENO_DIR="${DENO_CACHE}"
+	DENO_IMPORT_LIST="${S}/src/resources/deno_std/deno_std.ts.list"
+
+	deno_build_cache
+	deno cache --unstable --lock "${S}/src/resources/deno_std/deno_std.lock" \
+		--lock-write "${S}/package/scripts/deno_std/deno_std.ts" || die "Failed to build cache"
+
+	DENO_CACHE="${deno_cache_old}"
+	export DENO_DIR="${deno_dir_old}"
 	default
-
 	eprefixify src/command/render/render-shared.ts
 }
 src_configure() {
-	pushd package/src > /dev/null ||die "Failed to move to package/src"
 	#disables creating symlink
 	export QUARTO_NO_SYMLINK="TRUE"
 	#This will tell quarto not to d/l binaries
-	#/MIGHT/ have to unset QUARTO_{DENO,...} for testing
 	export QUARTO_VENDOR_BINARIES="false"
 	export QUARTO_DENO="${EPREFIX}/usr/bin/deno"
 	export QUARTO_DENO_DOM="${EPREFIX}/usr/lib64/deno-dom.so"
@@ -311,28 +328,26 @@ src_configure() {
 	export QUARTO_DART_SASS="${EPREFIX}/usr/bin/sass"
 	export QUARTO_SHARE_PATH="${EPREFIX}/usr/share/quarto"
 
-	#With the configuration patch this just write the devConfig for unbundled and testing
+	pushd package/src > /dev/null ||die "Failed to move to package/src"
 	./quarto-bld configure --log-level info || die "Failed to run configure"
-	#copy dev-config b/c prepare-dist deletes it
 	popd > /dev/null
-	cp package/dist/config/dev-config dev-config || die "Failed to copy dev-config"
+
+	use test &&
+		( mv package/dist/config/dev-config dev-config || die "Failed to save dev-config" )
 }
 src_compile() {
-	#Configuration
-	einfo "Setting Configuration"
-
 	export QUARTO_ROOT="${S}"
 	pushd package/src || die "Failed to move to package/src"
 
-	einfo "Building ${P}..."
 	[[ "${PV}" == "9999" ]] && MY_PV="99.9.9" || MY_PV=${PV}
+	einfo "Building ${P}...${MY_PV}..."
 	./quarto-bld prepare-dist --set-version ${MY_PV} --log-level info || die "Failed to run prepare-dist"
 	popd
 
 	cp package/pkg-working/share/version src/resources/version || die "Failed to create version"
-
-	mv	"${S}/quarto.sandbox" "${S}/package/pkg-working/bin/quarto"
+	mv "${S}/quarto.sandbox" "${S}/package/pkg-working/bin/quarto" || die "Failed to move quarto.sandbox"
 	./package/pkg-working/bin/quarto completions bash > _quarto.sh || ewarn "Failed to build bash completion"
+
 	#>=app-shells/zsh-4.3.5 is what app-shells/gentoo-zsh-completions depends on NOT tested
 	if has_version  ">=app-shells/zsh-4.3.5";then
 		./package/pkg-working/bin/quarto completions zsh > _quarto || die "Failed to build zsh completion"
@@ -340,23 +355,23 @@ src_compile() {
 
 	use test && install_r_packages ${RENV_TEST_PKGS}
 }
-
 src_test() {
-	rm tests/bin/python3 || die "Failed to delete tests/bin/python3"
-	ln -s "${EPREFIX}/usr/bin/${EPYTHON}" tests/bin/python3 || die "Failed to link python3"
-
 	mkdir -p "${S}/package/dist/config" || die "Failed to make config dir"
 	mv "${S}/dev-config" "${S}/package/dist/config/dev-config" || die "Failed to move dev-config"
 
 	pushd "${S}/tests" > /dev/null || die "Failed to move to tests"
 	#this disables renv - it might be nice to use renv
-	rm .Rprofile || die "Failed to delete .Rprofile"
-	#this test needs internet access thus fails
-	rm smoke/extensions/install.test.ts || die "Failed to delete smoke/extensions/install.test.ts"
+	#disable Julia lock like file
+	rm bin/python3 .Rprofile Project.toml || die "Failed to delete files"
+	einfo "Testing with Python:${EPYTHON}"
+	ln -s "${EPREFIX}/usr/bin/${EPYTHON}" bin/python3 || die "Failed to link python3"
+
+	#these test needs internet access thus fails
+	rm smoke/{extensions,env}/install.test.ts \
+		smoke/extensions/extension-render-journals.test.ts \
+		|| die "Failed to delete internet tests"
 	#check test is for dev builds
 	[[ "${PV}" != "9999" ]] && ( rm smoke/env/check.test.ts || die "Failed to remove check test" )
-	#install test runs 'quarto list' which requires internet access
-	rm smoke/env/install.test.ts || die "Failed to delete smoke/env/install.test.ts"
 
 	export QUARTO_ROOT="${S}"
 	export QUARTO_BASE_PATH=${S}
@@ -370,16 +385,18 @@ src_test() {
 	einfo "Starting unit test"
 	deno test ${DENO_OPTS} test.ts unit
 
-	#will need to install/setup
-	# * install tinytex - not in portage - d/l binary
-
+	# * tinytex - not in portage - downloadableable binary
+	# * playright a browser  tester
+	# * julia requires 68 d/ls and 139 dependencies!a
+	#   - import Pkg; Pkg.add("Plots");Pkg.add("IJulia")
+	#   - rm tests/Project.toml
 	einfo "Starting smoke test"
 	deno test ${DENO_OPTS} test.ts smoke
 
-	#Gentoo sand  239 passed / 68 failed
+	#Gentoo sand  258 passed / 43 failed
 	#On an internet connected terminal
 	#w/o  tinytex xxx passed / xx failed
-	#with tinytex 290 passed / 29 failed
+	#with tinytex 319 passed /  2 failed
 	popd > /dev/null
 }
 src_install() {
