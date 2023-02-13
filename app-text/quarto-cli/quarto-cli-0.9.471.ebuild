@@ -3,7 +3,7 @@
 
 EAPI=8
 
-inherit deno
+inherit deno prefix
 
 DESCRIPTION="Open-source scientific and technical publishing system built on Pandoc."
 HOMEPAGE="https://quarto.org/"
@@ -142,8 +142,9 @@ src_compile(){
 	#Configuration
 	einfo "Setting Configuration"
 	mkdir -p package/dist/config/
-	sed "s#_EPREFIX_#${EPREFIX}#" "${FILESDIR}/quarto.combined.eprefix" > "${S}/quarto"
-
+	sed "s#src/dev_import_map.json#src/import_map.json#" \
+		"${FILESDIR}/quarto.combined.eprefix"  >  quarto || die "Failed fix quarto"
+	eprefixify quarto
 	if use bundle;then
 		#Setup package/bin dir
 		mkdir -p "${S}/package/dist/bin"

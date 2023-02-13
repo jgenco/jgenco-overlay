@@ -1,11 +1,11 @@
 #!/bin/bash
-export QUARTO_BASE_PATH="_EPREFIX_/usr/share/quarto-cli"
+export QUARTO_BASE_PATH="@GENTOO_PORTAGE_EPREFIX@/usr/share/quarto-cli"
 BUNDLED="FALSE"
 if [[ -f ${QUARTO_BASE_PATH}/configuration ]];then
 	source ${QUARTO_BASE_PATH}/configuration
 	export QUARTO_DEBUG=true
 	export QUARTO_SHARE_PATH="${QUARTO_BASE_PATH}/src/resources"
-	QUARTO_IMPORT_ARGMAP="--importmap=${QUARTO_BASE_PATH}/src/import_map.json"
+	QUARTO_IMPORT_ARGMAP="--importmap=${QUARTO_BASE_PATH}/src/dev_import_map.json"
 	QUARTO_TARGET="${QUARTO_BASE_PATH}/src/quarto.ts"
 else
 	BUNDLED="TRUE"
@@ -16,10 +16,10 @@ else
 	QUARTO_DENO_OPTIONS=" --no-check"
 fi
 
-export SCRIPT_PATH="_EPREFIX_/usr/bin"
-export QUARTO_BIN_PATH=${SCRIPT_PATH}
+export SCRIPT_PATH="@GENTOO_PORTAGE_EPREFIX@/usr/bin"
+export QUARTO_BIN_PATH="${SCRIPT_PATH}"
 
-export DENO_DOM_PLUGIN="_EPREFIX_/usr/lib64/deno-dom.so"
+export DENO_DOM_PLUGIN="@GENTOO_PORTAGE_EPREFIX@/usr/lib64/deno-dom.so"
 export DENO_DIR="${HOME}/.cache/deno"
 
 QUARTO_DIR="${HOME}/.local/share/quarto"
@@ -31,7 +31,7 @@ function compare_file(){
 	VER_CUR=$1
 	VER_FILE=$2
 	if [[ -f ${VER_FILE} ]];then
-		VER=$(cat ${VER_FILE})
+		VER=$(< ${VER_FILE})
 		if [[ ${VER_CUR} != ${VER} ]];then
 			echo -n "${VER_CUR}" >  ${VER_FILE}
 			RELOAD_DENO_CACHE="-r"
@@ -50,7 +50,7 @@ if [ "$1" == "--paths" ]; then
 fi
 #Added --version for completeness
 if [ "$1" == "--version" ] || [ "$1" == "-v" ]; then
-	VERSION=$(cat "${QUARTO_SHARE_PATH}/version")
+	VERSION=$(< "${QUARTO_SHARE_PATH}/version")
 	if [[ ${VERSION} != "9999" ]];then
 		echo ${VERSION}
 	else
@@ -79,7 +79,7 @@ if [[ ${BUNDLED} == "FALSE" ]];then
 	#version changed / #new install or change from bundle
 	compare_file $(deno -V |sed "s/deno //")  "${QUARTO_DIR}/deno-version" 
 	#version changed / #new install
-	compare_file $(cat ${QUARTO_SHARE_PATH}/version)  "${QUARTO_DIR}/quarto-version"
+	compare_file $(< ${QUARTO_SHARE_PATH}/version)  "${QUARTO_DIR}/quarto-version"
 fi
 QUARTO_DENO_OPTIONS+=" ${RELOAD_DENO_CACHE}"
 #echo "${SCRIPT_PATH}/deno ${QUARTO_ACTION} ${QUARTO_DENO_OPTIONS} ${QUARTO_DENO_EXTRA_OPTIONS} ${QUARTO_IMPORT_ARGMAP} ${QUARTO_TARGET}"

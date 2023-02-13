@@ -266,8 +266,7 @@ src_prepare() {
 	#the quarto files are a custom bash script based on the original
 	#quarto-cli has moved to a rust based prog. that does the same thing
 	#located in package/launcher
-	sed "s#_EPREFIX_#${EPREFIX}# ; s#src/import_map.json#src/dev_import_map.json#" \
-		"${FILESDIR}/quarto.combined.eprefix" > "${S}/quarto" || die "Failed to build quarto"
+	cp "${FILESDIR}/quarto.combined.eprefix" quarto || die "Failed to copy quarto"
 	sed "s#export QUARTO_BASE_PATH=\".*\"#export QUARTO_BASE_PATH=\"${S}\"# ;
 		s#export SCRIPT_PATH=\".*\"#export SCRIPT_PATH=\"${S}/package/dist/bin\"#" \
 		"${S}/quarto" > "${S}/quarto.sandbox" || die "Failed to build quarto.sandbox"
@@ -313,7 +312,7 @@ src_prepare() {
 	DENO_CACHE="${deno_cache_old}"
 	export DENO_DIR="${deno_dir_old}"
 	default
-	eprefixify src/command/render/render-shared.ts
+	eprefixify src/command/render/render-shared.ts quarto quarto.sandbox
 }
 src_configure() {
 	#disables creating symlink

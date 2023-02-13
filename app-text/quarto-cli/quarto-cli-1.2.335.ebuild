@@ -83,7 +83,7 @@ ggplot2@3.3.6
 RSQLite@2.2.17
 "
 PYTHON_COMPAT=( python3_{8..11} )
-inherit bash-completion-r1 multiprocessing python-any-r1
+inherit bash-completion-r1 multiprocessing python-any-r1 prefix
 #NOTE previews for version x.y are simply x.y.[1..n]
 #     releases simply bump to x.y.n+1  no need to be fancy
 if [[ "${PV}" == *9999 ]];then
@@ -190,8 +190,7 @@ src_prepare() {
 	#the quarto files are a custom bash script based on the original
 	#quarto-cli has moved to a rust based prog. that does the same thing
 	#located in package/launcher
-	sed "s#_EPREFIX_#${EPREFIX}# ; s#src/import_map.json#src/dev_import_map.json#" \
-		"${FILESDIR}/quarto.combined.eprefix" > "${S}/quarto" || die "fix quarto failed"
+	cp "${FILESDIR}/quarto.combined.eprefix" quarto || die "Failed to copy quarto"
 	sed "s#export QUARTO_BASE_PATH=\".*\"#export QUARTO_BASE_PATH=\"${S}\"# ;
 		s#export SCRIPT_PATH=\".*\"#export SCRIPT_PATH=\"${S}/package/dist/bin\"#" \
 		"${S}/quarto" > "${S}/package/dist/bin/quarto" || die "Fix quarto2 failed"
@@ -210,6 +209,7 @@ src_prepare() {
 
 	mkdir -p "${S}/package/dist/config"
 	default
+	eprefixify quarto package/dist/bin/quarto
 }
 src_configure() {
 	pushd "${S}/package/src" > /dev/null
