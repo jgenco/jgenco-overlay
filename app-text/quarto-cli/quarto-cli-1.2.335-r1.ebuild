@@ -82,8 +82,13 @@ renv@0.15.5
 ggplot2@3.3.6
 RSQLite@2.2.17
 "
+DENO_STD_VER="0.153.0"
+DENO_LIBS=(
+"std@${DENO_STD_VER} https://github.com/denoland/deno_std/archive/refs/tags/_VER_.tar.gz deno_std-_VER_ NA NA"
+)
+DENO_IMPORT_LIST="${WORKDIR}/full-import.list"
 PYTHON_COMPAT=( python3_{8..11} )
-inherit bash-completion-r1 multiprocessing python-any-r1 prefix
+inherit bash-completion-r1 multiprocessing python-any-r1 prefix deno
 #NOTE previews for version x.y are simply x.y.[1..n]
 #     releases simply bump to x.y.n+1  no need to be fancy
 if [[ "${PV}" == *9999 ]];then
@@ -104,6 +109,7 @@ build_r_src_uri() {
 		echo "https://cloud.r-project.org/src/contrib/Archive/${package}/${full_name}.tar.gz -> R_${full_name}.tar.gz "
 	done
 }
+SRC_URI+="  $(deno_build_src_uri) "
 SRC_URI+="test? ( $(build_r_src_uri ${RENV_TEST_PKGS} ) )"
 #Quarto-cli has third party libraries bundled in their software
 #BOOTSWATCH=5.1.3
@@ -135,7 +141,7 @@ LICENSE="GPL-2+ MIT ZLIB BSD Apache-2.0 ISC || ( MIT GPL-3 )"
 SLOT="0"
 KEYWORDS="~amd64"
 PATCHES="
-	${FILESDIR}/quarto-cli-1.2.269-pathfixes.patch
+	${FILESDIR}/quarto-cli-1.2.335-pathfixes.patch
 	${FILESDIR}/quarto-cli-1.2.269-configuration.patch
 "
 DEPEND="
@@ -182,6 +188,12 @@ src_unpack() {
 	else
 		unpack ${P}.tar.gz
 	fi
+	unpack deno_std@${DENO_STD_VER}.tar.gz
+	#"${S}/src/vendor/deno.land/std@${DENO_STD_VER}"
+	find "${WORKDIR}/deno_std-${DENO_STD_VER}" -regextype egrep -regex ".*\.(ts|mjs)$" | \
+		sed "s%.*deno_std-%https://deno.land/std@%" > "${WORKDIR}/full-import.list" || \
+		die "Failed to make import list"
+	deno_src_unpack
 }
 src_prepare() {
 	#Setup package/bin dir
@@ -208,8 +220,31 @@ src_prepare() {
 	popd > /dev/null
 
 	mkdir -p "${S}/package/dist/config"
+
+	deno_build_src
+	deno_build_cache
+	#build lock the first time to get list of files to import
+	deno cache --unstable --lock "${S}/src/resources/deno_std/deno_std.lock" \
+		--lock-write "${S}/package/scripts/deno_std/deno_std.ts" || die "Failed to create lockfile"
+	grep https "${S}/src/resources/deno_std/deno_std.lock"|sed "s/.*\(https.*\)\":.*/\1/" >\
+		"${S}/src/resources/deno_std/deno_std.ts.list"|| die "Failed to make deno_std.ts.list"
+
+	#build cache that comes with quarto-cli
+	local deno_cache_old="${DENO_CACHE}"
+	DENO_CACHE="${S}/src/resources/deno_std/cache"
+	local deno_dir_old="${DENO_DIR}"
+	export DENO_DIR="${DENO_CACHE}"
+	DENO_IMPORT_LIST="${S}/src/resources/deno_std/deno_std.ts.list"
+
+	deno_build_cache
+	deno cache --unstable --lock "${S}/src/resources/deno_std/deno_std.lock" \
+		--lock-write "${S}/package/scripts/deno_std/deno_std.ts" || die "Failed to build cache"
+
+	DENO_CACHE="${deno_cache_old}"
+	export DENO_DIR="${deno_dir_old}"
+
 	default
-	eprefixify quarto package/dist/bin/quarto
+	eprefixify src/command/render/render-shared.ts quarto package/dist/bin/quarto
 }
 src_configure() {
 	pushd "${S}/package/src" > /dev/null
