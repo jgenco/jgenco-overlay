@@ -229,9 +229,11 @@ install_r_packages() {
 	echo 'install.packages(pkgs_files,repos=NULL,Ncpus='$(makeopts_jobs)')' >> ${R_SCRIPT}
 	R_LIBS="${R_LIB_PATH}" Rscript ${R_SCRIPT} || die "Failed to install R packages"
 }
+
 pkg_setup() {
 	use test && python-any-r1_pkg_setup
 }
+
 src_unpack() {
 	if [[ "${PV}" == *9999 ]];then
 		git-r3_src_unpack
@@ -261,25 +263,15 @@ src_unpack() {
 	deno_src_unpack
 }
 src_prepare() {
-	#Setup package/bin dir
-	mkdir -p package/dist/{config,bin} || die "Failed to make directories"
 	#the quarto files are a custom bash script based on the original
 	#quarto-cli has moved to a rust based prog. that does the same thing
 	#located in package/launcher
 	cp "${FILESDIR}/quarto.combined.eprefix" quarto || die "Failed to copy quarto"
-	sed "s#export QUARTO_BASE_PATH=\".*\"#export QUARTO_BASE_PATH=\"${S}\"# ;
-		s#export SCRIPT_PATH=\".*\"#export SCRIPT_PATH=\"${S}/package/dist/bin\"#" \
-		"${S}/quarto" > "${S}/quarto.sandbox" || die "Failed to build quarto.sandbox"
-	chmod +x "${S}/quarto.sandbox" || die "Failed to chmod +x quarto"
-	cp "${S}/quarto.sandbox" "${S}/package/dist/bin/quarto" || die "Failed to copy quarto"
+	sed "s#export QUARTO_BASE_PATH=\".*\"#export QUARTO_BASE_PATH=\"${S}/package/pkg-working/share\"#"\
+		quarto > package/scripts/common/quarto || die "Failed to build quarto sandbox file"
 
-	pushd "${S}/package/dist/bin" > /dev/null || die "Failed to move to bin"
-	for bin in {pandoc,sass,esbuild,deno};do
-		ln -s "${EPREFIX}/usr/bin/${bin}" ${bin} || die "Failed to link binary $bin"
-	done
-	ln -s "${EPREFIX}/usr/lib64/deno-dom.so" libplugin.so || die "Failed to link deno-dom.so"
-	popd > /dev/null
-
+	#This updates deno_std/cliffy to support deno 1.29
+	#it also works for 1.30 but the test fail b/c Deno.core.runMicrotasks
 	sed -i "s/std@0.166.0/std@${DENO_STD_VER}/" \
 		src/{,dev_}import_map.json \
 		src/vendor/import_map.json \
@@ -289,14 +281,15 @@ src_prepare() {
 	sed -i "s/cliffy@v0.25.4/cliffy@v${CLIFFY_VER}/" \
 		src/{,dev_}import_map.json \
 		src/vendor/import_map.json || die "Failed to update cliffy"
+	#End updateing deps
 
 	deno_build_src
 	deno_build_cache
 	#build lock the first time to get list of files to import
-	deno cache --unstable --lock "${S}/src/resources/deno_std/deno_std.lock" \
-		--lock-write "${S}/package/scripts/deno_std/deno_std.ts" || die "Failed to create lockfile"
-	grep https "${S}/src/resources/deno_std/deno_std.lock"|sed "s/.*\(https.*\)\":.*/\1/" >\
-		"${S}/src/resources/deno_std/deno_std.ts.list"|| die "Failed to make deno_std.ts.list"
+	deno cache --unstable --lock src/resources/deno_std/deno_std.lock \
+		--lock-write package/scripts/deno_std/deno_std.ts || die "Failed to create lockfile"
+	grep https src/resources/deno_std/deno_std.lock|sed "s/.*\(https.*\)\":.*/\1/" >\
+		src/resources/deno_std/deno_std.ts.list || die "Failed to make deno_std.ts.list"
 
 	#build cache that comes with quarto-cli
 	local deno_cache_old="${DENO_CACHE}"
@@ -306,15 +299,15 @@ src_prepare() {
 	DENO_IMPORT_LIST="${S}/src/resources/deno_std/deno_std.ts.list"
 
 	deno_build_cache
-	deno cache --unstable --lock "${S}/src/resources/deno_std/deno_std.lock" \
-		--lock-write "${S}/package/scripts/deno_std/deno_std.ts" || die "Failed to build cache"
+	deno cache --unstable --lock src/resources/deno_std/deno_std.lock \
+		--lock-write package/scripts/deno_std/deno_std.ts || die "Failed to build cache"
 
 	DENO_CACHE="${deno_cache_old}"
 	export DENO_DIR="${deno_dir_old}"
 	default
-	eprefixify src/command/render/render-shared.ts quarto quarto.sandbox
+	eprefixify src/command/render/render-shared.ts quarto package/scripts/common/quarto
 }
-src_configure() {
+src_compile() {
 	#disables creating symlink
 	export QUARTO_NO_SYMLINK="TRUE"
 	#This will tell quarto not to d/l binaries
@@ -325,16 +318,7 @@ src_configure() {
 	export QUARTO_PANDOC="${EPREFIX}/usr/bin/pandoc"
 	export QUARTO_ESBUILD="${EPREFIX}/usr/bin/esbuild"
 	export QUARTO_DART_SASS="${EPREFIX}/usr/bin/sass"
-	export QUARTO_SHARE_PATH="${EPREFIX}/usr/share/quarto"
 
-	pushd package/src > /dev/null ||die "Failed to move to package/src"
-	./quarto-bld configure --log-level info || die "Failed to run configure"
-	popd > /dev/null
-
-	use test &&
-		( mv package/dist/config/dev-config dev-config || die "Failed to save dev-config" )
-}
-src_compile() {
 	export QUARTO_ROOT="${S}"
 	pushd package/src || die "Failed to move to package/src"
 
@@ -343,9 +327,9 @@ src_compile() {
 	./quarto-bld prepare-dist --set-version ${MY_PV} --log-level info || die "Failed to run prepare-dist"
 	popd
 
+	ln -s ../bin package/pkg-working/share || die "Failed to link bin dir"
 	cp package/pkg-working/share/version src/resources/version || die "Failed to create version"
-	mv "${S}/quarto.sandbox" "${S}/package/pkg-working/bin/quarto" || die "Failed to move quarto.sandbox"
-	./package/pkg-working/bin/quarto completions bash > _quarto.sh || ewarn "Failed to build bash completion"
+	./package/pkg-working/bin/quarto completions bash > _quarto.sh || die "Failed to build bash completion"
 
 	#>=app-shells/zsh-4.3.5 is what app-shells/gentoo-zsh-completions depends on NOT tested
 	if has_version  ">=app-shells/zsh-4.3.5";then
@@ -355,15 +339,11 @@ src_compile() {
 	use test && install_r_packages ${RENV_TEST_PKGS}
 }
 src_test() {
-	mkdir -p "${S}/package/dist/config" || die "Failed to make config dir"
-	mv "${S}/dev-config" "${S}/package/dist/config/dev-config" || die "Failed to move dev-config"
-
 	pushd "${S}/tests" > /dev/null || die "Failed to move to tests"
 	#this disables renv - it might be nice to use renv
 	#disable Julia lock like file
-	rm bin/python3 .Rprofile Project.toml || die "Failed to delete files"
+	rm .Rprofile Project.toml || die "Failed to delete files"
 	einfo "Testing with Python:${EPYTHON}"
-	ln -s "${EPREFIX}/usr/bin/${EPYTHON}" bin/python3 || die "Failed to link python3"
 
 	#these test needs internet access thus fails
 	rm smoke/{extensions,env}/install.test.ts \
@@ -373,24 +353,24 @@ src_test() {
 	[[ "${PV}" != "9999" ]] && ( rm smoke/env/check.test.ts || die "Failed to remove check test" )
 
 	export QUARTO_ROOT="${S}"
-	export QUARTO_BASE_PATH=${S}
-	export QUARTO_BIN_PATH=${QUARTO_BASE_PATH}/package/dist/bin/
-	export QUARTO_SHARE_PATH=${QUARTO_BASE_PATH}/src/resources/
-	export QUARTO_DEBUG=true
+	export QUARTO_BASE_PATH="${S}"
+	export QUARTO_BIN_PATH="${S}/package/pkg-working/bin"
+	export QUARTO_SHARE_PATH="${S}/src/resources"
 	export R_LIBS="${R_LIB_PATH}"
 	#add QUARTO_BIN_PATH so the test can find the newly built quarto
 	export PATH="${QUARTO_BIN_PATH}:${PATH}"
-	DENO_OPTS="--unstable --config test-conf.json --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${QUARTO_BASE_PATH}/src/dev_import_map.json"
+	local deno_opts="--config test-conf.json --unstable --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --importmap=${S}/src/dev_import_map.json"
+
 	einfo "Starting unit test"
-	deno test ${DENO_OPTS} test.ts unit
+	deno test ${deno_opts} unit
 
 	# * tinytex - not in portage - downloadableable binary
-	# * playright a browser  tester
-	# * julia requires 68 d/ls and 139 dependencies!a
+	# * playright a browser  tester - integration/
+	# * julia requires 68 d/ls and 139 dependencies!
 	#   - import Pkg; Pkg.add("Plots");Pkg.add("IJulia")
 	#   - rm tests/Project.toml
 	einfo "Starting smoke test"
-	deno test ${DENO_OPTS} test.ts smoke
+	deno test ${deno_opts} smoke
 
 	#Gentoo sand  258 passed / 43 failed
 	#On an internet connected terminal
@@ -399,6 +379,7 @@ src_test() {
 	popd > /dev/null
 }
 src_install() {
+	rm package/pkg-working/share/bin || die "Failed to delete bin link"
 	dobin "${S}/quarto"
 	insinto /usr/share/${PN}/
 	doins -r "${S}/package/pkg-working/share/"*

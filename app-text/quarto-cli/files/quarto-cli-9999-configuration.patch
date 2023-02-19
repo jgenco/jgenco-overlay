@@ -1,23 +1,8 @@
-* and Installing quarto (I think)
-* When quarto is run(unbundled?) it checks to see if it needs 
+* When quarto is run unbundled/QUARTO_DEBUG it checks to see if it needs 
 be reconfigured.  It checks this by checking if two configuration
-files are in agrement and checking the hash of the quarto file.
+files are in agrement and checking the hash of some files.
 If not equal it start the configuration script.
 I added the console.log to know if something was missed.
---- a/package/src/common/configure.ts
-+++ b/package/src/common/configure.ts
-@@ -137,11 +137,5 @@ export function copyQuartoScript(config: Configuration, targetDir: string) {
-       join(targetDir, "quarto.cmd"),
-     );
-   } else {
--    const out = join(targetDir, "quarto");
--    Deno.copyFileSync(
--      join(config.directoryInfo.pkg, "scripts", "common", "quarto"),
--      out,
--    );
--    Deno.chmodSync(out, 0o755);
-   }
- }
 --- a/src/quarto.ts
 +++ b/src/quarto.ts
 @@ -56,8 +56,7 @@ export async function quarto(
