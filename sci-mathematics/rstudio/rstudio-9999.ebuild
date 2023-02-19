@@ -134,7 +134,7 @@ if [[ "${PV}" == *9999 ]];then
 	EGIT_REPO_URI="https://github.com/rstudio/${PN}"
 	EGIT_BRANCH="main"
 
-	RSTUDIO_BINARY_FILENAME="rstudio-2023.03.0-daily-31-amd64-debian.tar.gz"
+	RSTUDIO_BINARY_FILENAME="rstudio-2023.03.0-daily-328-amd64-debian.tar.gz"
 	#rstudio-2023.03.0-daily+31
 	RSTUDIO_BINARY_DIR="${WORKDIR}/${RSTUDIO_BINARY_FILENAME/daily-/daily+}"
 	RSTUDIO_BINARY_DIR=${RSTUDIO_BINARY_DIR/%-amd64-debian.tar.gz}
@@ -519,6 +519,8 @@ src_configure() {
 	fi
 
 	if use doc; then
+		sed -i "/google_analytics.html/d" docs/user/rstudio/_quarto.yml \
+			|| die "Failed to remove google_analytics include"
 		echo -e "buildType: ${build_type/-/}\nversion: ${my_pv}" > docs/user/rstudio/_variables.yml ||
 			die "Failed to create _variables.yml"
 
