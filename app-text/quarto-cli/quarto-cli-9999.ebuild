@@ -112,7 +112,7 @@ flextable@0.8.5
 RSQLite@2.2.20
 DT@0.27
 "
-DENO_STD_VER="0.170.0"
+DENO_STD_VER="0.177.0"
 CLIFFY_VER="0.25.7"
 DENO_LIBS=(
 "std@${DENO_STD_VER} https://github.com/denoland/deno_std/archive/refs/tags/_VER_.tar.gz deno_std-_VER_ NA NA"
@@ -188,7 +188,7 @@ DEPEND="
 	>=dev-lang/R-4.1.0
 	dev-libs/libxml2
 	dev-vcs/git
-	>=net-libs/deno-1.28.2 <net-libs/deno-1.31.0
+	>=net-libs/deno-1.30.0 <net-libs/deno-1.32.0
 	~net-libs/deno-dom-0.1.35
 	sys-apps/which
 	x11-misc/xdg-utils
@@ -271,7 +271,6 @@ src_prepare() {
 		quarto > package/scripts/common/quarto || die "Failed to build quarto sandbox file"
 
 	#This updates deno_std/cliffy to support deno 1.29
-	#it also works for 1.30 but the test fail b/c Deno.core.runMicrotasks
 	sed -i "s/std@0.166.0/std@${DENO_STD_VER}/" \
 		src/{,dev_}import_map.json \
 		src/vendor/import_map.json \
@@ -281,6 +280,12 @@ src_prepare() {
 	sed -i "s/cliffy@v0.25.4/cliffy@v${CLIFFY_VER}/" \
 		src/{,dev_}import_map.json \
 		src/vendor/import_map.json || die "Failed to update cliffy"
+
+	pushd "${WORKDIR}/deno-cliffy-${CLIFFY_VER}" || die "failed to push into deno-cliffy"
+	find -name "*.ts" -exec sed -i "s/std@0.170.0/std@${DENO_STD_VER}/" {} \; || die "failed to change version"
+	eapply "${FILESDIR}/cliffy-0.25.4_deno_std_0.177.0.patch"
+	popd
+	eapply "${FILESDIR}/"quarto-cli-9999_{deno-1.30,deno-1.30-extra,deno-1.31}.patch
 	#End updateing deps
 
 	deno_build_src
