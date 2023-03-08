@@ -9,17 +9,17 @@ HOMEPAGE="https://quarto.org/"
 RESTRICT="mirror"
 IUSE="test"
 RESTRICT="!test? ( test )"
-#note:matrix bumped to -1
-#     knitr bumped down from .9
-RENV_HASH="b8bc164f8e22e540972a8f35c474c76c8386888d"
+#note:
+#     knitr bumped down to x.y
+RENV_HASH="fe5fc06cc7b3777f8c836b41aaac1ffe"
 RENV_TEST_PKGS="
 rlang@1.0.6
-Rcpp@1.0.9
+Rcpp@1.0.10
 base64enc@0.1-3
 digest@0.6.31
 ellipsis@0.3.2
 fastmap@1.1.0
-fs@1.5.2
+fs@1.6.1
 rappdirs@0.3.3
 cachem@1.0.6
 htmltools@0.5.4
@@ -28,7 +28,7 @@ later@1.3.0
 magrittr@2.0.3
 cli@3.6.0
 glue@1.6.2
-xfun@0.36
+xfun@0.37
 lifecycle@1.0.3
 triebeard@0.3.0
 promises@1.2.0.1
@@ -36,31 +36,31 @@ jquerylib@0.1.4
 jsonlite@1.8.4
 memoise@2.0.1
 mime@0.12
-sass@0.4.4
+sass@0.4.5
 lattice@0.20-45
-colorspace@2.0-3
-fansi@1.0.3
-utf8@1.2.2
+colorspace@2.1-0
+fansi@1.0.4
+utf8@1.2.3
 sys@3.4.1
 bslib@0.4.2
 commonmark@1.8.1
 crayon@1.5.2
-fontawesome@0.4.0
-httpuv@1.6.8
-sourcetools@0.1.7
+fontawesome@0.5.0
+httpuv@1.6.9
+sourcetools@0.1.7-1
 withr@2.5.0
 xtable@1.8-4
 curl@5.0.0
 httpcode@0.3.0
 urltools@1.7.3
 stringi@1.7.12
-vctrs@0.5.1
+vctrs@0.5.2
 evaluate@0.20
 highr@0.10
-yaml@2.3.6
+yaml@2.3.7
 stringr@1.5.0
-knitr@1.41
-tinytex@0.43
+knitr@1.42
+tinytex@0.44
 cpp11@0.4.3
 crul@1.3
 shiny@1.7.4
@@ -73,9 +73,9 @@ labeling@0.4.2
 munsell@0.5.0
 viridisLite@0.4.1
 Matrix@1.5-3
-nlme@3.1-161
+nlme@3.1-162
 V8@4.2.2
-MASS@7.3-58.1
+MASS@7.3-58.2
 gtable@0.3.1
 isoband@0.2.7
 mgcv@1.8-41
@@ -98,18 +98,18 @@ DBI@1.1.3
 bit64@4.0.5
 blob@1.2.3
 plogr@0.2.0
-data.table@1.14.6
+data.table@1.14.8
 gdtools@0.3.0
 officer@0.5.2
 bigD@0.2.0
 bitops@1.0-7
-dplyr@1.0.10
-ggplot2@3.4.0
+dplyr@1.1.0
+ggplot2@3.4.1
 juicyjuice@0.1.0
 renv@0.16.0
 gt@0.8.0
 flextable@0.8.5
-RSQLite@2.2.20
+RSQLite@2.3.0
 DT@0.27
 "
 DENO_STD_VER="0.177.0"
@@ -171,6 +171,8 @@ SRC_URI+="test? ( $(build_r_src_uri ${RENV_TEST_PKGS} ) )"
 #MIT and ZLIB: pako
 #Apache-2.0: jspm-core
 
+PANDOC_VERSION="3.1"
+
 LICENSE="GPL-2+ MIT ZLIB BSD Apache-2.0 ISC || ( MIT GPL-3 )"
 SLOT="0"
 KEYWORDS=""
@@ -181,8 +183,8 @@ PATCHES="
 DEPEND="
 	app-arch/unzip
 	|| (
-		>=app-text/pandoc-2.19.2
-		>=app-text/pandoc-bin-2.19.2
+		>=app-text/pandoc-${PANDOC_VERSION}
+		>=app-text/pandoc-bin-${PANDOC_VERSION}
 	)
 	~dev-lang/dart-sass-1.55.0
 	>=dev-lang/R-4.1.0
@@ -276,7 +278,9 @@ src_prepare() {
 		src/vendor/import_map.json \
 		src/resources/deno_std/{,run_}import_map.json \
 		package/scripts/deno_std/deno_std.ts \
-		package/src/common/dependencies/deno.ts || die "Failed to update various files"
+		package/src/common/dependencies/deno.ts \
+		src/extension/template.ts \
+		|| die "Failed to update various files"
 	sed -i "s/cliffy@v0.25.4/cliffy@v${CLIFFY_VER}/" \
 		src/{,dev_}import_map.json \
 		src/vendor/import_map.json || die "Failed to update cliffy"
@@ -332,6 +336,9 @@ src_compile() {
 	./quarto-bld prepare-dist --set-version ${MY_PV} --log-level info || die "Failed to run prepare-dist"
 	popd
 
+	[[ ${PV} == "9999" ]] && ( echo "${EGIT_VERSION}" \
+		> package/pkg-working/share/git-info || die "Failed to add git-info" )
+
 	ln -s ../bin package/pkg-working/share || die "Failed to link bin dir"
 	cp package/pkg-working/share/version src/resources/version || die "Failed to create version"
 	./package/pkg-working/bin/quarto completions bash > _quarto.sh || die "Failed to build bash completion"
@@ -340,7 +347,6 @@ src_compile() {
 	if has_version  ">=app-shells/zsh-4.3.5";then
 		./package/pkg-working/bin/quarto completions zsh > _quarto || die "Failed to build zsh completion"
 	fi
-
 	use test && install_r_packages ${RENV_TEST_PKGS}
 }
 src_test() {
