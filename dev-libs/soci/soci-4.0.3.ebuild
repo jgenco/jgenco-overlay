@@ -1,24 +1,24 @@
-# Copyright 2021 Gentoo Authors
+# Copyright 2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
 inherit cmake
 
 DESCRIPTION="Simple Open (Database) Call Interface - write SQL in C++"
 HOMEPAGE="https://soci.sourceforge.net/"
 SRC_URI="https://github.com/${PN}/${PN}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
-IUSE="boost firebird mysql odbc oracle postgres +sqlite test"
+IUSE="boost firebird mysql odbc oracle postgres +sqlite test doc"
 RESTRICT="!test? ( test )"
 
 LICENSE="Boost-1.0"
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 
 RDEPEND="
 	boost? ( >=dev-libs/boost-1.33.1:= )
 	firebird? ( dev-db/firebird )
-	mysql? ( dev-db/mysql:5.7= )
+	mysql? ( dev-db/mysql-connector-c )
 	odbc? ( dev-db/unixODBC )
 	oracle? ( dev-db/oracle-instantclient )
 	postgres? ( dev-db/postgresql:* )
@@ -28,7 +28,7 @@ DEPEND="
 	${RDEPEND}
 "
 
-#PATCHES=( "${FILESDIR}/${PN}-4.0.1-cmake-config-path.patch" )
+DOCS=( AUTHORS CHANGES LICENSE_1_0.txt README.md TODO )
 
 src_configure() {
 	local mycmakeargs=(
@@ -56,4 +56,10 @@ src_test() {
 	)
 
 	cmake_src_test
+}
+
+src_install() {
+	cmake_src_install
+	use doc && DOCS+=( docs )
+	default
 }
