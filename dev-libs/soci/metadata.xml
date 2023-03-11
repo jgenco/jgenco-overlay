@@ -2,14 +2,15 @@
 <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
 	<use>
-	<flag name="boost">
-		Enable support for boost::{optional,tuple,fusion,gregorian::date}
-	</flag>
+		<flag name="boost">
+			Enable support for boost::{optional,tuple,fusion,gregorian::date}
+		</flag>
 	</use>
 	<upstream>
 		<changelog>https://github.com/SOCI/soci/blob/master/CHANGES</changelog>
 		<doc>https://soci.sourceforge.net/doc/index.html</doc>
 		<bugs-to>https://github.com/SOCI/soci/issues</bugs-to>
+		<remote-id type="sourceforge">soci</remote-id>
 		<remote-id type="github">SOCI/soci</remote-id>
 	</upstream>
 </pkgmetadata>
