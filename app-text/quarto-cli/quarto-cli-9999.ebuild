@@ -171,7 +171,7 @@ SRC_URI+="test? ( $(build_r_src_uri ${RENV_TEST_PKGS} ) )"
 #MIT and ZLIB: pako
 #Apache-2.0: jspm-core
 
-PANDOC_VERSION="3.1"
+PANDOC_VERSION="3.1.1"
 
 LICENSE="GPL-2+ MIT ZLIB BSD Apache-2.0 ISC || ( MIT GPL-3 )"
 SLOT="0"
@@ -179,6 +179,7 @@ KEYWORDS=""
 PATCHES="
 	${FILESDIR}/quarto-cli-9999-pathfixes.patch
 	${FILESDIR}/quarto-cli-9999-configuration.patch
+	${FILESDIR}/quarto-cli-9999-check.patch
 "
 DEPEND="
 	app-arch/unzip
@@ -313,6 +314,8 @@ src_prepare() {
 
 	DENO_CACHE="${deno_cache_old}"
 	export DENO_DIR="${deno_dir_old}"
+	sed -i -E  "s/2.19.2(\", \"Pandoc)/${PANDOC_VERSION}\1/;s/1.32.8(\", \"Dart Sass)/1.55.0\1/" \
+		src/command/check/check.ts || die "Failed to correct versions"
 	default
 	eprefixify src/command/render/render-shared.ts quarto package/scripts/common/quarto
 }
@@ -337,7 +340,7 @@ src_compile() {
 	popd
 
 	[[ ${PV} == "9999" ]] && ( echo "${EGIT_VERSION}" \
-		> package/pkg-working/share/git-info || die "Failed to add git-info" )
+		> package/pkg-working/share/commit || die "Failed to add commit" )
 
 	ln -s ../bin package/pkg-working/share || die "Failed to link bin dir"
 	cp package/pkg-working/share/version src/resources/version || die "Failed to create version"
