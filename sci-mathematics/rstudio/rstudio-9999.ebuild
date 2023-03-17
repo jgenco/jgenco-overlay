@@ -6,10 +6,10 @@ EAPI=8
 inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm prefix
 
 #####Start of ELECTRON  package list#####
-ELECTRON_PACKAGE_HASH="bd35e1ea996a1f61dc888c6bc988ae25caeb7103"
-ELECTRON_VERSION="22.0.0"
+ELECTRON_PACKAGE_HASH="37208e6b3c9bc01afd3b755383ae2f012472c68d"
+ELECTRON_VERSION="23.1.2"
 ELECTRON_VERSION_MAJ="$(ver_cut 1 ${ELECTRON_VERSION})"
-ELECTRON_EGIT_COMMIT="b7cda611341759b290fba2d6d35b23544ba43f6c"
+ELECTRON_EGIT_COMMIT="724552865da880f6a40af50b9507de3bf0403433"
 ELECTRON_NODEJS_DEPS="
 bindings@1.5.0
 file-uri-to-path@1.0.0
@@ -120,7 +120,7 @@ QT_VER=5.15.3
 QT_SLOT=5
 
 SLOT="0"
-KEYWORDS=""
+KEYWORDS="~amd64"
 IUSE="server electron +qt5 qt6 test debug quarto panmirror doc clang"
 REQUIRED_USE="!server? ( ^^ ( electron qt5 qt6 ) )"
 
@@ -134,23 +134,22 @@ if [[ "${PV}" == *9999 ]];then
 	EGIT_REPO_URI="https://github.com/rstudio/${PN}"
 	EGIT_BRANCH="main"
 
-	RSTUDIO_BINARY_FILENAME="rstudio-2023.03.0-daily-328-amd64-debian.tar.gz"
+	RSTUDIO_BINARY_FILENAME="rstudio-2023.05.0-daily-89-amd64-debian.tar.gz"
 	#rstudio-2023.03.0-daily+31
+	#https://dailies.rstudio.com/rstudio/cherry-blossom/electron/jammy-amd64-xcopy/
+	RSTUDIO_BINARY_URI_PATH="https://s3.amazonaws.com/rstudio-ide-build/electron/jammy/amd64"
 	RSTUDIO_BINARY_DIR="${WORKDIR}/${RSTUDIO_BINARY_FILENAME/daily-/daily+}"
 	RSTUDIO_BINARY_DIR=${RSTUDIO_BINARY_DIR/%-amd64-debian.tar.gz}
-	#https://dailies.rstudio.com/rstudio/cherry-blossom/electron/jammy-amd64-xcopy/
-	SRC_URI+="panmirror? ( https://s3.amazonaws.com/rstudio-ide-build/electron/jammy/amd64/${RSTUDIO_BINARY_FILENAME} ) "
-	SRC_URI+="electron?  ( https://s3.amazonaws.com/rstudio-ide-build/electron/jammy/amd64/${RSTUDIO_BINARY_FILENAME} ) "
 else
 	RSTUDIO_SOURCE_FILENAME="v$(ver_rs 3 "+").tar.gz"
 	S="${WORKDIR}/${PN}-$(ver_rs 3 "-")"
 	SRC_URI="https://github.com/rstudio/rstudio/archive/${RSTUDIO_SOURCE_FILENAME} -> ${P}.tar.gz "
 
 	#https://posit.co/download/rstudio-desktop/
-	RSTUDIO_BINARY_FILENAME="rstudio-$(ver_rs 3 "-")-x86_64-fedora.tar.gz"
+	#https://s3.amazonaws.com/rstudio-ide-build/electron/jammy/amd64/rstudio-2023.03.0-388-amd64-debian.tar.gz
+	RSTUDIO_BINARY_URI_PATH="https://s3.amazonaws.com/rstudio-ide-build/electron/jammy/amd64"
+	RSTUDIO_BINARY_FILENAME="rstudio-$(ver_rs 3 "-")-amd64-debian.tar.gz"
 	RSTUDIO_BINARY_DIR="${WORKDIR}/rstudio-$(ver_rs 3 "+")"
-	SRC_URI+="panmirror? ( https://download1.rstudio.org/electron/centos7/x86_64/${RSTUDIO_BINARY_FILENAME} ) "
-	SRC_URI+="electron?  ( https://download1.rstudio.org/electron/centos7/x86_64/${RSTUDIO_BINARY_FILENAME} ) "
 fi
 
 LICENSE="
@@ -170,7 +169,8 @@ build_r_src_uri() {
 		echo "https://cloud.r-project.org/src/contrib/Archive/${package}/${full_name}.tar.gz -> R_${full_name}.tar.gz "
 	done
 }
-
+SRC_URI+="panmirror? ( ${RSTUDIO_BINARY_URI_PATH}/${RSTUDIO_BINARY_FILENAME} ) "
+SRC_URI+="electron?  ( ${RSTUDIO_BINARY_URI_PATH}/${RSTUDIO_BINARY_FILENAME} ) "
 SRC_URI+="electron?  ( $(npm_build_src_uri ${ELECTRON_NODEJS_DEPS}) ) "
 SRC_URI+="doc?       ( $(build_r_src_uri ${R_RMARKDOWN_PKGS}) ) "
 SRC_URI+="test?      ( $(build_r_src_uri ${R_TESTTHAT_PKGS}) ) "
@@ -283,13 +283,13 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2022.07.0.548-package-build.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-pandoc_path_fix.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
-	"${FILESDIR}/${PN}-9999-node_electron_cmake.patch"
+	"${FILESDIR}/${PN}-2023.03.0.386-node_electron_cmake.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-reenable-sandbox.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-libfmt.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-hunspell.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-add-support-for-RapidJSON.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-system-clang.patch"
-	"${FILESDIR}/${PN}-9999-panmirror_disable.patch"
+	"${FILESDIR}/${PN}-2023.03.0.386-panmirror_disable.patch"
 )
 
 DOCS=(CONTRIBUTING.md COPYING INSTALL NOTICE README.md version/news )
