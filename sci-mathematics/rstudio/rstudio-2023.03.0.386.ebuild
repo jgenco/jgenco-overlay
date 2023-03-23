@@ -133,23 +133,10 @@ if [[ "${PV}" == *9999 ]];then
 	inherit git-r3
 	EGIT_REPO_URI="https://github.com/rstudio/${PN}"
 	EGIT_BRANCH="main"
-
-	RSTUDIO_BINARY_FILENAME="rstudio-2023.03.0-daily-328-amd64-debian.tar.gz"
-	#rstudio-2023.03.0-daily+31
-	#https://dailies.rstudio.com/rstudio/cherry-blossom/electron/jammy-amd64-xcopy/
-	RSTUDIO_BINARY_URI_PATH="https://s3.amazonaws.com/rstudio-ide-build/electron/jammy/amd64"#
-	RSTUDIO_BINARY_DIR="${WORKDIR}/${RSTUDIO_BINARY_FILENAME/daily-/daily+}"
-	RSTUDIO_BINARY_DIR=${RSTUDIO_BINARY_DIR/%-amd64-debian.tar.gz}
 else
 	RSTUDIO_SOURCE_FILENAME="v$(ver_rs 3 "+").tar.gz"
 	S="${WORKDIR}/${PN}-$(ver_rs 3 "-")"
 	SRC_URI="https://github.com/rstudio/rstudio/archive/${RSTUDIO_SOURCE_FILENAME} -> ${P}.tar.gz "
-
-	#https://posit.co/download/rstudio-desktop/
-	#https://s3.amazonaws.com/rstudio-ide-build/electron/jammy/amd64/rstudio-2023.03.0-388-amd64-debian.tar.gz
-	RSTUDIO_BINARY_URI_PATH="https://s3.amazonaws.com/rstudio-ide-build/electron/jammy/amd64"
-	RSTUDIO_BINARY_FILENAME="rstudio-$(ver_rs 3 "-")-amd64-debian.tar.gz"
-	RSTUDIO_BINARY_DIR="${WORKDIR}/rstudio-$(ver_rs 3 "+")"
 fi
 
 LICENSE="
@@ -169,14 +156,16 @@ build_r_src_uri() {
 		echo "https://cloud.r-project.org/src/contrib/Archive/${package}/${full_name}.tar.gz -> R_${full_name}.tar.gz "
 	done
 }
-SRC_URI+="panmirror? ( ${RSTUDIO_BINARY_URI_PATH}/${RSTUDIO_BINARY_FILENAME} ) "
-SRC_URI+="electron?  ( ${RSTUDIO_BINARY_URI_PATH}/${RSTUDIO_BINARY_FILENAME} ) "
+#Note next release use '.' NOT '-' in title/tag
+SRC_URI+="panmirror? ( https://github.com/jgenco/jgenco-overlay-files/releases/download/rstudio-2023.03.0-386/${P}-panmirror.tar.xz ) "
+SRC_URI+="electron?  ( https://github.com/jgenco/jgenco-overlay-files/releases/download/rstudio-2023.03.0-386/${P}-electron.tar.xz  ) "
 SRC_URI+="electron?  ( $(npm_build_src_uri ${ELECTRON_NODEJS_DEPS}) ) "
 SRC_URI+="doc?       ( $(build_r_src_uri ${R_RMARKDOWN_PKGS}) ) "
 SRC_URI+="test?      ( $(build_r_src_uri ${R_TESTTHAT_PKGS}) ) "
 
 #If not using system electron modify unpack also
 SRC_URI+="electron?  (
+		https://github.com/electron/electron/releases/download/v${ELECTRON_VERSION}/electron-v${ELECTRON_VERSION}-linux-x64.zip
 		https://www.electronjs.org/headers/v${ELECTRON_VERSION}/node-v${ELECTRON_VERSION}-headers.tar.gz
 			-> electron-v${ELECTRON_VERSION}-headers.tar.gz
 		) "
@@ -340,11 +329,24 @@ src_unpack() {
 		unpack ${P}.tar.gz
 	fi
 
-	use panmirror || use electron && unpack ${RSTUDIO_BINARY_FILENAME}
+	use panmirror && unpack ${P}-panmirror.tar.xz
 	NPM_LOCK_FILE="${FILESDIR}/${PN}-electron-thin_package-lock.json"
 	use electron  &&  npm_build_cache ${ELECTRON_NODEJS_DEPS}
 
 	if use electron; then
+		mkdir "${WORKDIR}/electron" || die
+		pushd "${WORKDIR}/electron" || die
+		unpack ${P}-electron.tar.xz
+		rm -r .webpack/main/native_modules || die "Failed to remove bundled native_modules"
+		popd
+
+		mkdir "${WORKDIR}/electron-${ELECTRON_VERSION}" || die "failed to create electron dir"
+		pushd electron-${ELECTRON_VERSION} || die
+		unpack electron-v${ELECTRON_VERSION}-linux-x64.zip
+		mv electron rstudio || die
+
+		popd
+
 		#IF bundling electron
 		mkdir -p "${WORKDIR}/.electron-gyp"
 		pushd    "${WORKDIR}/.electron-gyp" > /dev/null
@@ -599,7 +601,7 @@ src_install() {
 	cmake_src_install
 	if use panmirror;then
 		insinto /usr/share/rstudio/www/js
-		doins -r "${RSTUDIO_BINARY_DIR}/resources/app/www/js/panmirror"
+		doins -r "${WORKDIR}/panmirror"
 	fi
 
 	if use server ;then
@@ -611,24 +613,17 @@ src_install() {
 	if use electron;then
 		#install electron files
 		insinto /usr/share/${PN}
-		doins "${RSTUDIO_BINARY_DIR}/rstudio"
-		doins "${RSTUDIO_BINARY_DIR}/"chrome*
-		doins "${RSTUDIO_BINARY_DIR}/"*{.so*,.pak,.bin,.dat}
-		doins "${RSTUDIO_BINARY_DIR}/vk_swiftshader_icd.json"
-		doins "${RSTUDIO_BINARY_DIR}/chrome_crashpad_handler"
-		doins -r "${RSTUDIO_BINARY_DIR}/locales"
+		doins -r "${WORKDIR}/electron-${ELECTRON_VERSION}/"*
 		fperms +x /usr/share/rstudio/rstudio
 		fperms +x /usr/share/rstudio/{chrome-sandbox,chrome_crashpad_handler}
 		fperms +x /usr/share/rstudio/{libEGL.so,libffmpeg.so,libGLESv2.so,libvk_swiftshader.so,libvulkan.so.1}
 
 		#install electron app files
 		insinto /usr/share/${PN}/resources/app
-		#removed bundled binaries
-		rm -r "${RSTUDIO_BINARY_DIR}/resources/app/.webpack/main/native_modules" \
-			|| die "Failed to remove bundled native_modules"
+
 		#install prepared js
-		doins -r "${RSTUDIO_BINARY_DIR}/resources/app/.webpack"
-		doins "${RSTUDIO_BINARY_DIR}/resources/app/package.json"
+		doins -r "${WORKDIR}/electron/.webpack"
+		doins "${WORKDIR}/electron/package.json"
 
 		#install new binaries
 		insinto /usr/share/${PN}/resources/app/.webpack/main/native_modules
@@ -645,7 +640,7 @@ src_install() {
 		if use server; then
 			dosym -r /usr/share/${PN}/resources/app/bin/rserver /usr/bin/rserver
 		fi
-		dodoc "${RSTUDIO_BINARY_DIR}/"{LICENSE,LICENSES.chromium.html}
+		dodoc "${WORKDIR}/electron-${ELECTRON_VERSION}/"{LICENSE,LICENSES.chromium.html}
 	elif use qt5 || use qt6 ; then
 		# This binary name is much to generic, so we'll change it
 		mv "${ED}/usr/bin/diagnostics" "${ED}/usr/bin/${PN}-diagnostics" || die "Failed to rename diagnostics"
