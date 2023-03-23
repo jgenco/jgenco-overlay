@@ -523,6 +523,9 @@ src_configure() {
 			|| die "Failed to remove google_analytics include"
 		echo -e "buildType: ${build_type/-/}\nversion: ${my_pv}" > docs/user/rstudio/_variables.yml ||
 			die "Failed to create _variables.yml"
+		#Quarto-Cli likes a certain version of pandoc this trys both
+		quarto check 2> quarto-check.first || export QUARTO_PANDOC="${EPREFIX}/usr/bin/pandoc-bin"
+		quarto check 2> quarto-check.second || die "Quarto Cli failed check"
 
 		#disable javadoc when use doc
 		EANT_DOC_TARGET=""
@@ -653,6 +656,7 @@ src_install() {
 	einstalldocs
 
 	if use doc;then
+		docompress -x usr/share/doc/${P}/user_guide
 		dodoc -r  docs/user/rstudio/user_guide
 	fi
 }
