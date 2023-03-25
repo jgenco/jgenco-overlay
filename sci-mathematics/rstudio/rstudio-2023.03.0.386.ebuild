@@ -265,7 +265,7 @@ BDEPEND="
 	~virtual/jdk-11:=
 "
 PATCHES=(
-	"${FILESDIR}/${PN}-2022.07.0.548-cmake-bundled-dependencies.patch"
+	"${FILESDIR}/${PN}-2023.03.0-386-cmake-bundled-dependencies.patch"
 	"${FILESDIR}/${PN}-1.4.1717-fix-boost-version-check.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-resource-path.patch"
 	"${FILESDIR}/${PN}-1.4.1106-server-paths.patch"
@@ -358,8 +358,6 @@ src_unpack() {
 
 		popd > /dev/null
 	fi
-
-	bundle_ln "/usr/share/hunspell" "/dependencies/dictionaries" "dictionaries"
 }
 src_prepare() {
 	#fix path rstudio bin path from "${EPREFIX}/usr/rstudio" to "${EPREFIX}/usr/bin/rstudio"
@@ -369,6 +367,9 @@ src_prepare() {
 
 	cmake_src_prepare
 	java-pkg-2_src_prepare
+
+	#/usr/share/hunspell might not exist if no dictionary is installed so no need to die
+	ln -s "${EPREFIX}/usr/share/hunspell" "${S}/dependencies/dictionaries"
 
 	bundle_ln "/usr/share/mathjax" "/dependencies/mathjax-27" "mathjax"
 
@@ -665,5 +666,12 @@ pkg_postinst() {
 		xdg_desktop_database_update
 		xdg_mimeinfo_database_update
 		xdg_icon_cache_update
+	fi
+	if [[ ! -d "${EPREFIX}/usr/share/hunspell" ]];then
+		elog "RStudio's spell check needs at least one"
+		elog "app-dicts/myspell-* dictionary to be installed."
+		elog ""
+		elog "or set the L10N variable in /etc/portage/make.conf"
+		elog "see https://wiki.gentoo.org/wiki/Localization"
 	fi
 }
