@@ -330,7 +330,8 @@ src_unpack() {
 	fi
 
 	use panmirror && unpack ${P}-panmirror.tar.xz
-	NPM_LOCK_FILE="${FILESDIR}/${PN}-electron-thin_package-lock.json"
+	#this depends on app-editors/vim-core find different way
+	#NPM_LOCK_FILE="${FILESDIR}/${PN}-electron-thin_package-lock.json"
 	use electron  &&  npm_build_cache ${ELECTRON_NODEJS_DEPS}
 
 	if use electron; then
