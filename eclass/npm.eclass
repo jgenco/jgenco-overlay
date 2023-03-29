@@ -100,10 +100,10 @@ npm_build_cache() {
 	touch ${NPM_CACHE_DIR}/update-notifier-last-checked
 	einfo "Building NPM cache..."
 
-	check_lock_file=""
+	local check_lock_file=""
 	for npm_lock in ${NPM_LOCK_FILE};do
 		[[ -f ${npm_lock} ]] || die "${npm_lock} not a file"
-		einfo "Checking lockfile: $npm_loc"
+		einfo "Checking lockfile: ${npm_lock}"
 		check_lock_file="TRUE"
 	done
 
@@ -113,6 +113,7 @@ npm_build_cache() {
 			sed "s#.*https://[^\/]\+/\([^/]*/\)\?\(.*\)/-/\(\2\)-\(.*\).*.tgz.*#package:\1\2@\4#;s#,\$##" | paste -s -d' \n' \
 			|sort |uniq > ${NPM_CACHE_DIR}/npmlines
 		#"
+		assert
 	else
 		einfo "NOT Checking npm lock file(s)"
 	fi
@@ -136,11 +137,12 @@ npm_build_cache() {
 				echo "Not Found"
 				die
 			fi
-			local pkg_size=$(wc -c ${pkg_path}| sed "s/ .*//")
-			local pkg_sha1=$(sha1sum ${pkg_path}| sed "s/ .*//")
-			local pkg_sha1_b64=$(echo ${pkg_sha1} | xxd -r -p|base64)
-			local pkg_sha512=$(sha512sum $pkg_path |sed "s/ .*//")
-			local pkg_sha512_b64=$(echo -n ${pkg_sha512}|xxd -r -p|base64 -w0)
+			#perl  -MMIME::Base64 -e "print encode_base64(pack \"H*\", \"${pkg_sha1}\");
+			local pkg_size=$(wc -c ${pkg_path}| cut -d\  -f1 ; assert )
+			local pkg_sha1=$(sha1sum ${pkg_path}| cut -d\  -f1 ; assert )
+			local pkg_sha1_b64=$(perl -e "print (pack \"H*\", \"${pkg_sha1}\");"|base64 ; assert )
+			local pkg_sha512=$(sha512sum $pkg_path | cut -d\  -f1 ; assert )
+			local pkg_sha512_b64=$(perl -e "print (pack \"H*\", \"${pkg_sha512}\");"|base64 -w0 ; assert )
 
 			[[ ${check_lock_file} == "TRUE" ]] && 
 				npm_check_pkg_hash "${npm_name_full}@${npm_ver}" ${pkg_sha1_b64} ${pkg_sha512_b64}
@@ -150,7 +152,7 @@ npm_build_cache() {
 			local npm_cache_cnt="${NPM_CACHE_DIR}/_cacache/content-v2"
 			local npm_url="make-fetch-happen:request-cache:${pkg_url}"
 
-			local npm_url_sha256=$(echo -n  ${npm_url} |sha256sum | sed "s/ .*//")
+			local npm_url_sha256=$(echo -n  ${npm_url} |sha256sum |  cut -d\  -f1 ; assert )
 			local npm_pkg_idx_path="${npm_cache_idx}/${npm_url_sha256:0:2}/${npm_url_sha256:2:2}"
 			mkdir -p ${npm_pkg_idx_path}
 			npm_pkg_idx_path+="/${npm_url_sha256:4:60}"
@@ -168,13 +170,13 @@ npm_build_cache() {
 			local meta_data="{\"key\":\"${npm_url}\",\"integrity\":\"sha512-${pkg_sha512_b64}\",\"time\":${cur_time}000,\"size\":${pkg_size}"
 			meta_data+=",\"metadata\":{\"time\":${cur_time}000}"
 			meta_data+="}"
-			local meta_data_sha1=$(echo -n $meta_data | sha1sum| sed "s/ .*//")
+			local meta_data_sha1=$(echo -n $meta_data | sha1sum| cut -d\  -f1 ; assert )
 			echo -ne "\n${meta_data_sha1}\t${meta_data}" >> ${npm_pkg_idx_path}
 
 			meta_data="{\"key\":\"${npm_url}\",\"integrity\":\"sha1-${pkg_sha1_b64}\",\"time\":${cur_time}000,\"size\":${pkg_size}"
 			meta_data+=",\"metadata\":{\"time\":${cur_time}000}"
 			meta_data+="}"
-			meta_data_sha1=$(echo -n $meta_data | sha1sum| sed "s/ .*//")
+			meta_data_sha1=$(echo -n $meta_data | sha1sum| cut -d\  -f1; assert)
 			echo -ne "\n${meta_data_sha1}\t${meta_data}" >> ${npm_pkg_idx_path}
 
 			ln -s ${pkg_path} ${npm_pkg_cnt_path_sha_512}
