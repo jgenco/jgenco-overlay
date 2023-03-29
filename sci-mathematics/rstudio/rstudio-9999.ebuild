@@ -9,7 +9,7 @@ inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-uti
 ELECTRON_PACKAGE_HASH="37208e6b3c9bc01afd3b755383ae2f012472c68d"
 ELECTRON_VERSION="23.1.2"
 ELECTRON_VERSION_MAJ="$(ver_cut 1 ${ELECTRON_VERSION})"
-ELECTRON_EGIT_COMMIT="724552865da880f6a40af50b9507de3bf0403433"
+ELECTRON_EGIT_COMMIT="7cbd5d44619335ab40cc9e0617e6492c72e471ee"
 ELECTRON_NODEJS_DEPS="
 bindings@1.5.0
 file-uri-to-path@1.0.0
@@ -119,45 +119,29 @@ xml2@1.3.3
 QT_VER=5.15.3
 QT_SLOT=5
 
-SLOT="0"
-KEYWORDS="~amd64"
-IUSE="server electron +qt5 qt6 test debug quarto panmirror doc clang"
-REQUIRED_USE="!server? ( ^^ ( electron qt5 qt6 ) )"
-
 DESCRIPTION="IDE for the R language"
 HOMEPAGE="
 	https://posit.co/products/open-source/rstudio/
 	https://github.com/rstudio/rstudio/"
 
+DAILY_COMMIT="7cbd5d44619335ab40cc9e0617e6492c72e471ee"
+P_PREBUILT=${P}
+[[ ${PV} == "9999" ]] && P_PREBUILT="${PN}-2023.05.0.92"
+
 if [[ "${PV}" == *9999 ]];then
 	inherit git-r3
 	EGIT_REPO_URI="https://github.com/rstudio/${PN}"
 	EGIT_BRANCH="main"
-
-	RSTUDIO_BINARY_FILENAME="rstudio-2023.05.0-daily-89-amd64-debian.tar.gz"
-	#rstudio-2023.03.0-daily+31
-	#https://dailies.rstudio.com/rstudio/cherry-blossom/electron/jammy-amd64-xcopy/
-	RSTUDIO_BINARY_URI_PATH="https://s3.amazonaws.com/rstudio-ide-build/electron/jammy/amd64"
-	RSTUDIO_BINARY_DIR="${WORKDIR}/${RSTUDIO_BINARY_FILENAME/daily-/daily+}"
-	RSTUDIO_BINARY_DIR=${RSTUDIO_BINARY_DIR/%-amd64-debian.tar.gz}
 else
 	RSTUDIO_SOURCE_FILENAME="v$(ver_rs 3 "+").tar.gz"
-	S="${WORKDIR}/${PN}-$(ver_rs 3 "-")"
-	SRC_URI="https://github.com/rstudio/rstudio/archive/${RSTUDIO_SOURCE_FILENAME} -> ${P}.tar.gz "
-
-	#https://posit.co/download/rstudio-desktop/
-	#https://s3.amazonaws.com/rstudio-ide-build/electron/jammy/amd64/rstudio-2023.03.0-388-amd64-debian.tar.gz
-	RSTUDIO_BINARY_URI_PATH="https://s3.amazonaws.com/rstudio-ide-build/electron/jammy/amd64"
-	RSTUDIO_BINARY_FILENAME="rstudio-$(ver_rs 3 "-")-amd64-debian.tar.gz"
-	RSTUDIO_BINARY_DIR="${WORKDIR}/rstudio-$(ver_rs 3 "+")"
+	if [[ ! -n "${DAILY_COMMIT}" ]];then
+		SRC_URI="https://github.com/rstudio/rstudio/archive/${RSTUDIO_SOURCE_FILENAME} -> ${P}.tar.gz "
+		S="${WORKDIR}/${PN}-$(ver_rs 3 "-")"
+	else
+		SRC_URI="https://github.com/rstudio/rstudio/archive/${DAILY_COMMIT}.tar.gz -> ${P}.tar.gz "
+		S="${WORKDIR}/${PN}-${DAILY_COMMIT}"
+	fi
 fi
-
-LICENSE="
-	AGPL-3 BSD MIT Apache-2.0 Boost-1.0 CC-BY-4.0 MIT GPL-3 ISC
-	test? ( EPL-1.0 )
-	panmirror? ( || ( AFL-2.1 BSD ) || ( MIT Apache-2.0 ) 0BSD Apache-2.0 BSD BSD-2 ISC LGPL-3 MIT PYTHON Unlicense )
-	electron? ( MIT Apache-2.0  BSD 0BSD BSD-2 BSD CC-BY-3.0 CC-BY-4.0 CC0-1.0 ISC PSF-2.4 || ( AFL-2.1 BSD ) || ( BSD GPL-2 ) || ( Unlicense Apache-2.0 ) )
-"
 
 build_r_src_uri() {
 	for rpkg in ${@}; do
@@ -169,18 +153,32 @@ build_r_src_uri() {
 		echo "https://cloud.r-project.org/src/contrib/Archive/${package}/${full_name}.tar.gz -> R_${full_name}.tar.gz "
 	done
 }
-SRC_URI+="panmirror? ( ${RSTUDIO_BINARY_URI_PATH}/${RSTUDIO_BINARY_FILENAME} ) "
-SRC_URI+="electron?  ( ${RSTUDIO_BINARY_URI_PATH}/${RSTUDIO_BINARY_FILENAME} ) "
+
+SRC_URI+="panmirror? ( https://github.com/jgenco/jgenco-overlay-files/releases/download/${P_PREBUILT}/${P_PREBUILT}-panmirror.tar.xz ) "
+SRC_URI+="electron?  ( https://github.com/jgenco/jgenco-overlay-files/releases/download/${P_PREBUILT}/${P_PREBUILT}-electron.tar.xz  ) "
 SRC_URI+="electron?  ( $(npm_build_src_uri ${ELECTRON_NODEJS_DEPS}) ) "
 SRC_URI+="doc?       ( $(build_r_src_uri ${R_RMARKDOWN_PKGS}) ) "
 SRC_URI+="test?      ( $(build_r_src_uri ${R_TESTTHAT_PKGS}) ) "
 
 #If not using system electron modify unpack also
 SRC_URI+="electron?  (
+		https://github.com/electron/electron/releases/download/v${ELECTRON_VERSION}/electron-v${ELECTRON_VERSION}-linux-x64.zip
 		https://www.electronjs.org/headers/v${ELECTRON_VERSION}/node-v${ELECTRON_VERSION}-headers.tar.gz
 			-> electron-v${ELECTRON_VERSION}-headers.tar.gz
 		) "
+
+IUSE="server electron +qt5 qt6 test debug quarto panmirror doc clang"
+REQUIRED_USE="!server? ( ^^ ( electron qt5 qt6 ) )"
 RESTRICT="mirror !test? ( test )"
+
+LICENSE="
+	AGPL-3 BSD MIT Apache-2.0 Boost-1.0 CC-BY-4.0 MIT GPL-3 ISC
+	test? ( EPL-1.0 )
+	panmirror? ( || ( AFL-2.1 BSD ) || ( MIT Apache-2.0 ) 0BSD Apache-2.0 BSD BSD-2 ISC LGPL-3 MIT PYTHON Unlicense )
+	electron? ( MIT Apache-2.0  BSD 0BSD BSD-2 BSD CC-BY-3.0 CC-BY-4.0 CC0-1.0 ISC PSF-2.4 || ( AFL-2.1 BSD ) || ( BSD GPL-2 ) || ( Unlicense Apache-2.0 ) )
+"
+SLOT="0"
+KEYWORDS=""
 
 RDEPEND="
 	server? (
@@ -276,7 +274,7 @@ BDEPEND="
 	~virtual/jdk-11:=
 "
 PATCHES=(
-	"${FILESDIR}/${PN}-2022.07.0.548-cmake-bundled-dependencies.patch"
+	"${FILESDIR}/${PN}-2023.03.0-386-cmake-bundled-dependencies.patch"
 	"${FILESDIR}/${PN}-1.4.1717-fix-boost-version-check.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-resource-path.patch"
 	"${FILESDIR}/${PN}-1.4.1106-server-paths.patch"
@@ -340,11 +338,25 @@ src_unpack() {
 		unpack ${P}.tar.gz
 	fi
 
-	use panmirror || use electron && unpack ${RSTUDIO_BINARY_FILENAME}
-	NPM_LOCK_FILE="${FILESDIR}/${PN}-electron-thin_package-lock.json"
+	use panmirror && unpack ${P_PREBUILT}-panmirror.tar.xz
+	#this depends on app-editors/vim-core find different way
+	#NPM_LOCK_FILE="${FILESDIR}/${PN}-electron-thin_package-lock.json"
 	use electron  &&  npm_build_cache ${ELECTRON_NODEJS_DEPS}
 
 	if use electron; then
+		mkdir "${WORKDIR}/electron" || die
+		pushd "${WORKDIR}/electron" || die
+		unpack ${P_PREBUILT}-electron.tar.xz
+		rm -r .webpack/main/native_modules || die "Failed to remove bundled native_modules"
+		popd
+
+		mkdir "${WORKDIR}/electron-${ELECTRON_VERSION}" || die "failed to create electron dir"
+		pushd electron-${ELECTRON_VERSION} || die
+		unpack electron-v${ELECTRON_VERSION}-linux-x64.zip
+		mv electron rstudio || die
+
+		popd
+
 		#IF bundling electron
 		mkdir -p "${WORKDIR}/.electron-gyp"
 		pushd    "${WORKDIR}/.electron-gyp" > /dev/null
@@ -356,8 +368,6 @@ src_unpack() {
 
 		popd > /dev/null
 	fi
-
-	bundle_ln "/usr/share/hunspell" "/dependencies/dictionaries" "dictionaries"
 }
 src_prepare() {
 	#fix path rstudio bin path from "${EPREFIX}/usr/rstudio" to "${EPREFIX}/usr/bin/rstudio"
@@ -367,6 +377,9 @@ src_prepare() {
 
 	cmake_src_prepare
 	java-pkg-2_src_prepare
+
+	#/usr/share/hunspell might not exist if no dictionary is installed so no need to die
+	ln -s "${EPREFIX}/usr/share/hunspell" "${S}/dependencies/dictionaries"
 
 	bundle_ln "/usr/share/mathjax" "/dependencies/mathjax-27" "mathjax"
 
@@ -463,6 +476,7 @@ src_configure() {
 	export RSTUDIO_VERSION_MINOR=$(ver_cut 2 ${my_pv})
 	export RSTUDIO_VERSION_PATCH=$(ver_cut 3 ${my_pv})
 	export RSTUDIO_VERSION_SUFFIX="${build_type,,}+$(ver_cut 4 ${my_pv})"
+	[[ -n "${DAILY_COMMIT}" ]] && export GIT_COMMIT=${DAILY_COMMIT}
 
 	CMAKE_BUILD_TYPE=$(usex debug Debug Release) #RelWithDebInfo Release
 	echo "cache=${WORKDIR}/node_cache" > "${S}/src/node/desktop/.npmrc"
@@ -523,6 +537,9 @@ src_configure() {
 			|| die "Failed to remove google_analytics include"
 		echo -e "buildType: ${build_type/-/}\nversion: ${my_pv}" > docs/user/rstudio/_variables.yml ||
 			die "Failed to create _variables.yml"
+		#Quarto-Cli likes a certain version of pandoc this trys both
+		quarto check 2> quarto-check.first || export QUARTO_PANDOC="${EPREFIX}/usr/bin/pandoc-bin"
+		quarto check 2> quarto-check.second || die "Quarto Cli failed check"
 
 		#disable javadoc when use doc
 		EANT_DOC_TARGET=""
@@ -596,7 +613,7 @@ src_install() {
 	cmake_src_install
 	if use panmirror;then
 		insinto /usr/share/rstudio/www/js
-		doins -r "${RSTUDIO_BINARY_DIR}/resources/app/www/js/panmirror"
+		doins -r "${WORKDIR}/panmirror"
 	fi
 
 	if use server ;then
@@ -608,24 +625,17 @@ src_install() {
 	if use electron;then
 		#install electron files
 		insinto /usr/share/${PN}
-		doins "${RSTUDIO_BINARY_DIR}/rstudio"
-		doins "${RSTUDIO_BINARY_DIR}/"chrome*
-		doins "${RSTUDIO_BINARY_DIR}/"*{.so*,.pak,.bin,.dat}
-		doins "${RSTUDIO_BINARY_DIR}/vk_swiftshader_icd.json"
-		doins "${RSTUDIO_BINARY_DIR}/chrome_crashpad_handler"
-		doins -r "${RSTUDIO_BINARY_DIR}/locales"
+		doins -r "${WORKDIR}/electron-${ELECTRON_VERSION}/"*
 		fperms +x /usr/share/rstudio/rstudio
 		fperms +x /usr/share/rstudio/{chrome-sandbox,chrome_crashpad_handler}
 		fperms +x /usr/share/rstudio/{libEGL.so,libffmpeg.so,libGLESv2.so,libvk_swiftshader.so,libvulkan.so.1}
 
 		#install electron app files
 		insinto /usr/share/${PN}/resources/app
-		#removed bundled binaries
-		rm -r "${RSTUDIO_BINARY_DIR}/resources/app/.webpack/main/native_modules" \
-			|| die "Failed to remove bundled native_modules"
+
 		#install prepared js
-		doins -r "${RSTUDIO_BINARY_DIR}/resources/app/.webpack"
-		doins "${RSTUDIO_BINARY_DIR}/resources/app/package.json"
+		doins -r "${WORKDIR}/electron/.webpack"
+		doins "${WORKDIR}/electron/package.json"
 
 		#install new binaries
 		insinto /usr/share/${PN}/resources/app/.webpack/main/native_modules
@@ -642,7 +652,7 @@ src_install() {
 		if use server; then
 			dosym -r /usr/share/${PN}/resources/app/bin/rserver /usr/bin/rserver
 		fi
-		dodoc "${RSTUDIO_BINARY_DIR}/"{LICENSE,LICENSES.chromium.html}
+		dodoc "${WORKDIR}/electron-${ELECTRON_VERSION}/"{LICENSE,LICENSES.chromium.html}
 	elif use qt5 || use qt6 ; then
 		# This binary name is much to generic, so we'll change it
 		mv "${ED}/usr/bin/diagnostics" "${ED}/usr/bin/${PN}-diagnostics" || die "Failed to rename diagnostics"
@@ -653,6 +663,7 @@ src_install() {
 	einstalldocs
 
 	if use doc;then
+		docompress -x usr/share/doc/${P}/user_guide
 		dodoc -r  docs/user/rstudio/user_guide
 	fi
 }
@@ -666,5 +677,12 @@ pkg_postinst() {
 		xdg_desktop_database_update
 		xdg_mimeinfo_database_update
 		xdg_icon_cache_update
+	fi
+	if [[ ! -d "${EPREFIX}/usr/share/hunspell" ]];then
+		elog "RStudio's spell check needs at least one"
+		elog "app-dicts/myspell-* dictionary to be installed."
+		elog ""
+		elog "or set the L10N variable in /etc/portage/make.conf"
+		elog "see https://wiki.gentoo.org/wiki/Localization"
 	fi
 }
