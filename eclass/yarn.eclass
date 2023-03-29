@@ -53,10 +53,10 @@ yarn_build_cache() {
 	einfo "Building Yarn cache..."
 	mkdir -p ${YARN_CACHE_DIR} || die "Failed to create yarn cache dir"
 
-	check_lock_file=""
+	local check_lock_file=""
 	for yarn_lock in ${YARN_LOCK_FILE};do
 		[[ -f ${yarn_lock} ]] || die "${yarn_lock} not a file"
-		einfo "Checking lockfile: $yarn_lock"
+		einfo "Checking lockfile: ${yarn_lock}"
 		check_lock_file="TRUE"
 	done
 
@@ -66,6 +66,7 @@ yarn_build_cache() {
 			grep  -E "^(package:|  integrity)"| paste -s -d' \n' > "${YARN_CACHE_DIR}/yarnlines" ||
 			die "Failed to create yarnlines"
 		#"
+		assert
 	else
 		einfo "NOT Checking yarn lock file(s)"
 	fi
@@ -89,11 +90,12 @@ yarn_build_cache() {
 				echo "Not Found"
 				exit
 			fi
-			local pkg_size=$(wc -c ${pkg_path}| sed "s/ .*//")
-			local pkg_sha1=$(sha1sum ${pkg_path}| sed "s/ .*//")
-			local pkg_sha1_b64=$(echo ${pkg_sha1} | xxd -r -p|base64)
-			local pkg_sha512=$(sha512sum $pkg_path |sed "s/ .*//")
-			local pkg_sha512_b64=$(echo -n ${pkg_sha512}|xxd -r -p|base64 -w0)
+			#perl  -MMIME::Base64 -e "print encode_base64(pack \"H*\", \"${pkg_sha1}\");
+			local pkg_size=$(wc -c ${pkg_path}| cut -d\  -f1 ; assert )
+			local pkg_sha1=$(sha1sum ${pkg_path}| cut -d\  -f1 ; assert )
+			local pkg_sha1_b64=$(perl -e "print (pack \"H*\", \"${pkg_sha1}\");"|base64 ; assert )
+			local pkg_sha512=$(sha512sum $pkg_path | cut -d\  -f1 ; assert )
+			local pkg_sha512_b64=$(perl -e "print (pack \"H*\", \"${pkg_sha512}\");"|base64 -w0 ; assert )
 
 			[[ ${check_lock_file} == "TRUE" ]] && 
 				yarn_check_pkg_hash "${yarn_name_full}@${yarn_ver}" ${pkg_sha1_b64} ${pkg_sha512_b64}
