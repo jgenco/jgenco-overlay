@@ -63,7 +63,7 @@ BDEPEND="
 	)
 "
 PATCHES=(
-	"${FILESDIR}/deno-1.29.0-fix_disable_tests.patch"
+	"${FILESDIR}/deno-1.31.0-fix_disable_tests.patch"
 )
 DOCS=(Releases.md)
 {% block variables -%}
@@ -193,6 +193,7 @@ src_install() {
 	pushd cli
 	cargo_src_install
 	popd
+	einstalldocs
 
 	newbashcomp deno_bash_comp deno
 }
@@ -209,5 +210,3 @@ pkg_postinst() {
 		:
 	fi
 }
-
-
