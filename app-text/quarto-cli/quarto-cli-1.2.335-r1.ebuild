@@ -139,7 +139,7 @@ SRC_URI+="test? ( $(build_r_src_uri ${RENV_TEST_PKGS} ) )"
 
 LICENSE="GPL-2+ MIT ZLIB BSD Apache-2.0 ISC || ( MIT GPL-3 )"
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 PATCHES="
 	${FILESDIR}/quarto-cli-1.2.335-pathfixes.patch
 	${FILESDIR}/quarto-cli-1.2.269-configuration.patch
@@ -147,8 +147,9 @@ PATCHES="
 DEPEND="
 	>=net-libs/deno-1.25.2 <net-libs/deno-1.26.0
 	|| (
-		>=app-text/pandoc-2.19.2
-		>=app-text/pandoc-bin-2.19.2
+		app-text/pandoc-cli
+		<app-text/pandoc-3
+		app-text/pandoc-bin
 	)
 	~dev-lang/dart-sass-1.32.8
 	~net-libs/deno-dom-0.1.23_alpha_p20220508
