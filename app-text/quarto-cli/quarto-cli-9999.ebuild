@@ -184,7 +184,10 @@ PATCHES="
 DEPEND="
 	app-arch/unzip
 	|| (
-		>=app-text/pandoc-${PANDOC_VERSION}
+		(
+			>=app-text/pandoc-${PANDOC_VERSION}
+			app-text/pandoc-cli
+		)
 		>=app-text/pandoc-bin-${PANDOC_VERSION}
 	)
 	~dev-lang/dart-sass-1.55.0
