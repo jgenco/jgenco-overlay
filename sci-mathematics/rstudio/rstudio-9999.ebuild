@@ -187,8 +187,9 @@ RDEPEND="
 		sys-libs/pam
 	)
 	|| (
-		>=app-text/pandoc-2.18
-		>=app-text/pandoc-bin-2.18
+		app-text/pandoc-cli
+		<app-text/pandoc-3
+		app-text/pandoc-bin
 	)
 	app-text/hunspell:=
 	quarto? ( >=app-text/quarto-cli-1.2.269 )
