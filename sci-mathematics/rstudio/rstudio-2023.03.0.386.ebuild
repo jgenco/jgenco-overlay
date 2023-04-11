@@ -120,7 +120,7 @@ QT_VER=5.15.3
 QT_SLOT=5
 
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 IUSE="server electron +qt5 qt6 test debug quarto panmirror doc clang"
 REQUIRED_USE="!server? ( ^^ ( electron qt5 qt6 ) )"
 
@@ -178,8 +178,9 @@ RDEPEND="
 		sys-libs/pam
 	)
 	|| (
-		>=app-text/pandoc-2.18
-		>=app-text/pandoc-bin-2.18
+		app-text/pandoc-cli
+		<app-text/pandoc-3
+		app-text/pandoc-bin
 	)
 	app-text/hunspell:=
 	quarto? ( >=app-text/quarto-cli-1.2.269 )
