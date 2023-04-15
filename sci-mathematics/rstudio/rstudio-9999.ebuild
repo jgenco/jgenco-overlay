@@ -6,10 +6,10 @@ EAPI=8
 inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm prefix
 
 #####Start of ELECTRON  package list#####
-ELECTRON_PACKAGE_HASH="37208e6b3c9bc01afd3b755383ae2f012472c68d"
+ELECTRON_PACKAGE_HASH="d084b384c23d6146bd14eb655c90fd1976f0efcf"
 ELECTRON_VERSION="23.1.2"
 ELECTRON_VERSION_MAJ="$(ver_cut 1 ${ELECTRON_VERSION})"
-ELECTRON_EGIT_COMMIT="7cbd5d44619335ab40cc9e0617e6492c72e471ee"
+ELECTRON_EGIT_COMMIT="2b33be08175490bb522147451d3ee3e0b7deea12"
 ELECTRON_NODEJS_DEPS="
 bindings@1.5.0
 file-uri-to-path@1.0.0
@@ -124,9 +124,9 @@ HOMEPAGE="
 	https://posit.co/products/open-source/rstudio/
 	https://github.com/rstudio/rstudio/"
 
-DAILY_COMMIT="7cbd5d44619335ab40cc9e0617e6492c72e471ee"
+DAILY_COMMIT="2b33be08175490bb522147451d3ee3e0b7deea12"
 P_PREBUILT=${P}
-[[ ${PV} == "9999" ]] && P_PREBUILT="${PN}-2023.05.0.92"
+[[ ${PV} == "9999" ]] && P_PREBUILT="${PN}-2023.05.0.229"
 
 if [[ "${PV}" == *9999 ]];then
 	inherit git-r3
@@ -304,13 +304,6 @@ install_r_packages() {
 	echo 'install.packages(pkgs_files,repos=NULL,Ncpus='$(makeopts_jobs)')' >> ${r_script}
 	R_LIBS="${R_LIB_PATH}" Rscript ${r_script} || die "Failed to install R packages"
 }
-bundle_rm() {
-	rm ${3} "${S}${1}" || die "Failed to remove bundled ${2}"
-}
-bundle_ln() {
-	[[ ! -d "${EPREFIX}${1}" && ! -f "${EPREFIX}${1}" ]] && die "${EPREFIX}${1} not a directory of file"
-	ln -s "${EPREFIX}${1}" "${S}${2}" || die "Failed to link bundled ${3}"
-}
 
 pkg_setup() {
 	use electron && QA_PREBUILT="
@@ -382,56 +375,38 @@ src_prepare() {
 	#/usr/share/hunspell might not exist if no dictionary is installed so no need to die
 	ln -s "${EPREFIX}/usr/share/hunspell" "${S}/dependencies/dictionaries"
 
-	bundle_ln "/usr/share/mathjax" "/dependencies/mathjax-27" "mathjax"
-
 	#SUSE has a good list of software bundled with rstudio
 	#https://build.opensuse.org/package/view_file/openSUSE:Factory/rstudio/rstudio.spec
-	#Remove Bundled deps ln -s to system libraries - see /src/gwt/.classpath
-	#gin and aopalliance
-	rm -r "${S}/src/gwt/lib/gin/2.1.2/"* || die "Failed to remove bundled jin"
-	bundle_ln  "/usr/share/aopalliance-1/lib/aopalliance.jar" "/src/gwt/lib/gin/2.1.2/aopalliance.jar" \
-			"aopalliance.jar"
-	bundle_ln  "/usr/share/javax-inject/lib/javax-inject.jar" "/src/gwt/lib/gin/2.1.2/javax-inject.jar" \
-			"javax-inject.jar"
-	for jar in gin guice-assistedinject-3.0 guice-3.0 ;do
-		bundle_ln "/usr/share/gin-2.1/lib/${jar}.jar" "/src/gwt/lib/gin/2.1.2/${jar}.jar" "${JAR}"
-	done
-
-	#gwt - they bundle a custom gwt build @github rstudio/gwt tree v1.4
-	#validation-api
-	rm "${S}/src/gwt/lib/gwt/gwt-rstudio/validation-api-"*.jar || die "Failed to remove bundled validation-api jars"
-	bundle_ln "/usr/share/validation-api-1.0/lib/validation-api.jar" \
-		"/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA.jar" "validation-api.jar"
-	bundle_ln "/usr/share/validation-api-1.0/sources/validation-api-src.zip" \
-		"/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA-sources.jar" "validation-api-src.zip"
-
-	#todo lib/junit-4.9b3.jar dev-java/junit - only for testing
-	#todo create elemental2
+	#gwt - they bundle a custom gwt build github.com/rstudio/gwt tree v1.4#
+	local debundles=(
+		"/dependencies/mathjax-27:/usr/share/mathjax"
+		"/src/gwt/lib/gin/2.1.2/aopalliance.jar:/usr/share/aopalliance-1/lib/aopalliance.jar"
+		"/src/gwt/lib/gin/2.1.2/javax-inject.jar:/usr/share/javax-inject/lib/javax-inject.jar"
+		"/src/gwt/lib/gin/2.1.2/gin.jar:/usr/share/gin-2.1/lib/gin.jar"
+		"/src/gwt/lib/gin/2.1.2/guice-assistedinject-3.0.jar:/usr/share/gin-2.1/lib/guice-assistedinject-3.0.jar"
+		"/src/gwt/lib/gin/2.1.2/guice-3.0.jar:/usr/share/gin-2.1/lib/guice-3.0.jar"
+		"/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA.jar:/usr/share/validation-api-1.0/lib/validation-api.jar"
+		"/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA-sources.jar:/usr/share/validation-api-1.0/sources/validation-api-src.zip"
+		"/src/cpp/ext/websocketpp/:/usr/include/websocketpp"
+		"/src/cpp/shared_core/include/shared_core/json/rapidjson/:/usr/include/rapidjson"
+		"/src/cpp/core/spelling/hunspell/:"
+		"/src/cpp/ext/fmt/:"
+	)
 
 	#clang-c/websocketpp/rapidjson - inspired by SUSE
-	#unbundle clang-c
 	if use clang; then
-		bundle_rm "/src/cpp/core/include/core/libclang/clang-c" "clang headers" "-r"
+		debundles+=("/src/cpp/core/include/core/libclang/clang-c/:")
 	fi
-	eprefixify src/cpp/core/libclang/LibClang.cpp
 
-	#unbundle websocketpp
-	bundle_rm "/src/cpp/ext/websocketpp/" "websocketpp" "-r"
-	bundle_ln "/usr/include/websocketpp" "/src/cpp/ext/websocketpp" "websocketpp"
-
-	#unbundle rapidjson
-	bundle_rm "/src/cpp/shared_core/include/shared_core/json/rapidjson/" "rapidjson" "-r"
-	bundle_ln  "/usr/include/rapidjson" "/src/cpp/shared_core/include/shared_core/json/rapidjson" \
-		"rapidjson"
-
-	#unbundle hunspell
-	bundle_rm "/src/cpp/core/spelling/hunspell" "hunspell" "-r"
+	#Remove Bundled deps ln -s to system libraries - see /src/gwt/.classpath
+	rm -r "${S}/src/gwt/lib/gin/2.1.2/"* || die "Failed to remove bundled jin"
+	rm "${S}/src/gwt/lib/gwt/gwt-rstudio/validation-api-"*.jar || die "Failed to remove bundled validation-api jars"
 
 	if ! use qt6;then
 		#unbundle qtsingleapplication
 		#the original ebuild had a complex grep/sed to fix library name for cmake
-		#I don't know what it was but now it doesn't change anything
-		bundle_rm "/src/cpp/desktop/3rdparty" "qtsingleapplication" "-r"
+		#I don't know what it did but now it didn't change anything
+		debundles+=("/src/cpp/desktop/3rdparty/:")
 		eapply "${FILESDIR}/${PN}-2022.12.0.353-qtsingleapplication.patch"
 	else
 		#qtsingleapplication I belive needs updated for QT6 not tested.
@@ -439,8 +414,19 @@ src_prepare() {
 		eapply "${FILESDIR}/rstudio-2022.12.0.353-qt6-cmake.patch" "${FILESDIR}/rstudio-2022.12.0.353-qt6-desktop.patch"
 	fi
 
-	#unbundle fmt
-	bundle_rm "/src/cpp/ext/fmt" "libfmt" -r
+	for entry in ${debundles[@]};do
+		local bundle_path="${entry%:*}"
+		local local_path="${entry#*:}"
+		[[ ${bundle_path} == "" ]] && die "Missing bundle_path"
+		[[ ${bundle_path:(-1)} == "/" ]] && 
+			( rm -r "${S}${bundle_path}" || die "Failed to remove ${bundle_path}" )
+		[[ ${local_path} != "" ]] &&
+			( ln -s "${EPREFIX}${local_path}" "${S}${bundle_path%/}" \
+			|| die "Failed to link ${local_path} -> ${bundle_path}" )
+	done
+
+	eprefixify src/cpp/core/libclang/LibClang.cpp
+
 
 	# make sure icons and mime stuff are with prefix
 	sed -i \
