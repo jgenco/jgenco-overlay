@@ -1,0 +1,340 @@
+This is based on https://github.com/quarto-dev/quarto-cli/pull/4809
+sed -i "s/0.166.0/0.177.0/g" package/scripts/deno_std/deno_std.ts  src/vendor/import_map.json src/dev_import_map.json src/import_map.json
+
+--- a/package/scripts/deno_std/deno_std.ts
++++ b/package/scripts/deno_std/deno_std.ts
+@@ -48,12 +48,12 @@ import * as base64 from "https://deno.land/std@0.177.0/encoding/base64.ts";
+ import * as base64url from "https://deno.land/std@0.177.0/encoding/base64url.ts";
+ import * as binary from "https://deno.land/std@0.177.0/encoding/binary.ts";
+ import * as csv from "https://deno.land/std@0.177.0/encoding/csv.ts";
+-import * as front_matter from "https://deno.land/std@0.177.0/encoding/front_matter.ts";
+ import * as hex from "https://deno.land/std@0.177.0/encoding/hex.ts";
+ import * as jsonc from "https://deno.land/std@0.177.0/encoding/jsonc.ts";
+ import * as toml from "https://deno.land/std@0.177.0/encoding/toml.ts";
+ import * as varint from "https://deno.land/std@0.177.0/encoding/varint.ts";
+ import * as yaml from "https://deno.land/std@0.177.0/encoding/yaml.ts";
++import * as front_matter from "https://deno.land/std@0.177.0/encoding/front_matter/mod.ts";
+ 
+ import * as flags from "https://deno.land/std@0.177.0/flags/mod.ts";
+ import * as fmt_bytes from "https://deno.land/std@0.177.0/fmt/bytes.ts";
+--- a/package/src/common/dependencies/deno.ts
++++ b/package/src/common/dependencies/deno.ts
+@@ -6,8 +6,7 @@
+ */
+ import { Dependency } from "./dependencies.ts";
+ import { Configuration } from "../config.ts";
+-import { join } from "path/mod.ts";
+-import { dirname } from "../../../../src/vendor/deno.land/std@0.166.0/path/win32.ts";
++import { join, dirname } from "path/mod.ts";
+ import { unzip } from "../../util/utils.ts";
+ 
+ export function deno(version: string): Dependency {
+--- a/package/src/util/utils.ts
++++ b/package/src/util/utils.ts
+@@ -1,4 +1,4 @@
+-import { writeAll } from "streams/conversion.ts";
++import { writeAll } from "streams/write_all.ts";
+ import { CmdResult, runCmd } from "./cmd.ts";
+ 
+ // Read an environment variable
+--- a/src/command/capabilities/cmd.ts
++++ b/src/command/capabilities/cmd.ts
+@@ -5,7 +5,7 @@
+ *
+ */
+ 
+-import { writeAllSync } from "streams/conversion.ts";
++import { writeAllSync } from "streams/write_all.ts";
+ 
+ import { Command } from "cliffy/command/mod.ts";
+ import { capabilities } from "./capabilities.ts";
+--- a/src/core/appdirs.ts
++++ b/src/core/appdirs.ts
+@@ -43,6 +43,10 @@ export function userDataDir(appName: string, roaming = false) {
+       return xdgUserDataDir(appName);
+     case "windows":
+       return windowsUserDataDir(appName, roaming);
++    // deno 1.32.1 can report "windows" | "darwin" | "linux" | "freebsd" | "netbsd" | "aix" | "solaris" | "illumos"
++    // we don't support those, so we need to guard here.
++    default:
++      throw new Error("never arrives here");
+   }
+ }
+ 
+@@ -54,6 +58,8 @@ export function userConfigDir(appName: string, roaming = false) {
+       return xdgUserConfigDir(appName);
+     case "windows":
+       return windowsUserDataDir(appName, roaming);
++    default:
++      throw new Error("never arrives here");
+   }
+ }
+ 
+@@ -65,6 +71,8 @@ export function userCacheDir(appName: string) {
+       return xdgUserCacheDir(appName);
+     case "windows":
+       return windowsUserDataDir(appName);
++    default:
++      throw new Error("never arrives here");
+   }
+ }
+ 
+@@ -76,6 +84,8 @@ export function userRuntimeDir(appName: string) {
+       return xdgUserRuntimeDir(appName);
+     case "windows":
+       return windowsUserDataDir(appName);
++    default:
++      throw new Error("never arrives here");
+   }
+ }
+ 
+--- a/src/core/console.ts
++++ b/src/core/console.ts
+@@ -5,7 +5,8 @@
+  */
+ 
+ import { ansi } from "cliffy/ansi/mod.ts";
+-import { readAllSync, writeAllSync } from "streams/conversion.ts";
++import { readAllSync } from "streams/read_all.ts";
++import { writeAllSync } from "streams/write_all.ts";
+ import { info } from "log/mod.ts";
+ import { runningInCI } from "./ci-info.ts";
+ import { SpinnerOptions } from "./console-types.ts";
+--- a/src/core/download.ts
++++ b/src/core/download.ts
+@@ -5,7 +5,7 @@
+ *
+ */
+ 
+-import { writeAll } from "streams/conversion.ts";
++import { writeAll } from "streams/write_all.ts";
+ import { progressBar } from "./console.ts";
+ 
+ export interface DownloadError extends Error {
+--- a/src/core/quarto.ts
++++ b/src/core/quarto.ts
+@@ -8,7 +8,7 @@ import { existsSync } from "fs/exists.ts";
+ import { extname, join } from "path/mod.ts";
+ import { info } from "log/mod.ts";
+ import * as colors from "fmt/colors.ts";
+-import { config, ConfigOptions, DotenvConfig } from "dotenv/mod.ts";
++import { load, LoadOptions } from "dotenv/mod.ts";
+ 
+ import { getenv } from "./env.ts";
+ import { exitWithCleanup } from "./cleanup.ts";
+@@ -24,6 +24,7 @@ export interface QuartoConfig {
+   isDebug(): boolean;
+ }
+ 
++type DotenvConfig = Record<string, string>;
+ let dotenvConfig: DotenvConfig;
+ 
+ export const quartoConfig = {
+@@ -41,15 +42,15 @@ export const quartoConfig = {
+   },
+   dotenv: async (): Promise<DotenvConfig> => {
+     if (!dotenvConfig) {
+-      const options: ConfigOptions = {
+-        defaults: join(quartoConfig.sharePath(), "env", "env.defaults"),
++      const options: LoadOptions = {
++        defaultsPath: join(quartoConfig.sharePath(), "env", "env.defaults"),
+       };
+       if (quartoConfig.isDebug()) {
+-        options.path = join(quartoConfig.sharePath(), "..", "..", ".env");
++        options.envPath = join(quartoConfig.sharePath(), "..", "..", ".env");
+       } else {
+-        options.path = options.defaults;
++        options.envPath = options.defaultsPath;
+       }
+-      dotenvConfig = await config(options);
++      dotenvConfig = await load(options);
+     }
+     return dotenvConfig;
+   },
+--- a/src/core/shell.ts
++++ b/src/core/shell.ts
+@@ -10,12 +10,15 @@ import { requireQuoting, safeWindowsExec } from "./windows.ts";
+ import { execProcess } from "./process.ts";
+ 
+ export async function openUrl(url: string) {
+-  const shellOpen = {
++  const shellOpen: Record<string, string> = {
+     windows: "explorer",
+     darwin: "open",
+     linux: "xdg-open",
+   };
+ 
++  if (!["windows", "darwin", "linux"].includes(Deno.build.os)) {
++    throw new Error("Unsupported OS");
++  }
+   const cmd = shellOpen[Deno.build.os];
+ 
+   // Because URLs may contain characters like '&' that need to be escaped
+--- a/src/dev_import_map.json
++++ b/src/dev_import_map.json
+@@ -55,7 +55,9 @@
+     "cliffy/command/mod.ts": "./vendor/deno.land/x/cliffy@v0.25.4/command/mod.ts",
+     "log/mod.ts": "./vendor/deno.land/std@0.177.0/log/mod.ts",
+     "path/mod.ts": "./vendor/deno.land/std@0.177.0/path/mod.ts",
+-    "streams/conversion.ts": "./vendor/deno.land/std@0.177.0/streams/conversion.ts",
++    "streams/copy.ts": "./vendor/deno.land/std@0.177.0/streams/copy.ts",
++    "streams/read_all.ts": "./vendor/deno.land/std@0.177.0/streams/read_all.ts",
++    "streams/write_all.ts": "./vendor/deno.land/std@0.177.0/streams/write_all.ts",
+     "semver/mod.ts": "./vendor/deno.land/x/semver@v1.4.0/mod.ts",
+     "node/fs.ts": "./vendor/deno.land/std@0.177.0/node/fs.ts",
+     "encoding/yaml.ts": "./vendor/deno.land/std@0.177.0/encoding/yaml.ts",
+@@ -113,7 +115,7 @@
+     "encoding/_yaml/type.ts": "./vendor/deno.land/std@0.177.0/encoding/_yaml/type.ts",
+     "encoding/_yaml/type/mod.ts": "./vendor/deno.land/std@0.177.0/encoding/_yaml/type/mod.ts",
+     "media_types/mod.ts": "./vendor/deno.land/x/media_types@v2.10.1/mod.ts",
+-    "io/buffer.ts": "./vendor/deno.land/std@0.177.0/io/buffer.ts",
++    "io/read_lines.ts": "./vendor/deno.land/std@0.177.0/io/read_lines.ts",
+     "xmlp/mod.ts": "./vendor/deno.land/x/xmlp@v0.2.8/mod.ts",
+     "cliffy/prompt/input.ts": "./vendor/deno.land/x/cliffy@v0.25.4/prompt/input.ts",
+     "crypto/mod.ts": "./vendor/deno.land/std@0.177.0/crypto/mod.ts",
+@@ -298,4 +300,4 @@
+       "/-/moment-guess@v1.2.4-bDXl7KQy0hLGNuGhyGb4/dist=es2019,mode=imports/optimized/moment-guess.js": "./vendor/cdn.skypack.dev/-/moment-guess@v1.2.4-bDXl7KQy0hLGNuGhyGb4/dist=es2019,mode=imports/optimized/moment-guess.js"
+     }
+   }
+-}
+\ No newline at end of file
++}
+--- a/src/extension/template.ts
++++ b/src/extension/template.ts
+@@ -9,7 +9,7 @@ import { join } from "path/mod.ts";
+ import { existsSync } from "fs/mod.ts";
+ import { resolvePathGlobs } from "../core/path.ts";
+ import { lines } from "../core/text.ts";
+-import { warning } from "https://deno.land/std@0.166.0/log/mod.ts";
++import { warning } from "log/mod.ts";
+ 
+ const kQuartoIgnore = ".quartoignore";
+ 
+--- a/src/format/pdf/format-pdf.ts
++++ b/src/format/pdf/format-pdf.ts
+@@ -46,7 +46,7 @@ import { RenderedFile, RenderServices } from "../../command/render/types.ts";
+ import { ProjectConfig, ProjectContext } from "../../project/types.ts";
+ import { BookExtension } from "../../project/types/book/book-shared.ts";
+ 
+-import { readLines } from "io/buffer.ts";
++import { readLines } from "io/read_lines.ts";
+ import { TempContext } from "../../core/temp.ts";
+ import { isLatexPdfEngine, pdfEngine } from "../../config/pdf.ts";
+ import { formatResourcePath } from "../../core/resources.ts";
+--- a/src/publish/rsconnect/bundle.ts
++++ b/src/publish/rsconnect/bundle.ts
+@@ -7,7 +7,7 @@
+ // deno-lint-ignore-file no-deprecated-deno-api
+ 
+ import { dirname, join } from "path/mod.ts";
+-import { copy } from "streams/conversion.ts";
++import { copy } from "streams/copy.ts";
+ import { ensureDirSync } from "fs/mod.ts";
+ 
+ import { createHash } from "node/crypto.ts";
+--- a/src/quarto-core/dotenv.ts
++++ b/src/quarto-core/dotenv.ts
+@@ -5,7 +5,7 @@
+ *
+ */
+ 
+-import { config, DotenvConfig, stringify } from "dotenv/mod.ts";
++import { load, stringify } from "dotenv/mod.ts";
+ import { join } from "path/mod.ts";
+ import { safeExistsSync } from "../core/path.ts";
+ import { isEqual } from "../core/lodash.ts";
+@@ -20,9 +20,9 @@ const kQuartoEnvRequired = `${kQuartoEnv}.required`;
+ // read the QUARTO_PROFILE from dotenv if it's there
+ export async function dotenvQuartoProfile(projectDir: string) {
+   // read config
+-  const conf = await config({
+-    defaults: join(projectDir, kQuartoEnv),
+-    path: join(projectDir, kQuartoEnvLocal),
++  const conf = await load({
++    defaultsPath: join(projectDir, kQuartoEnv),
++    envPath: join(projectDir, kQuartoEnvLocal),
+   });
+ 
+   // return profile if we have it
+@@ -34,6 +34,9 @@ export async function dotenvQuartoProfile(projectDir: string) {
+ // occur on a re-render in quarto)
+ const dotenvVariablesSet: string[] = [];
+ 
++// https://github.com/denoland/deno_std/pull/3134/files#diff-7d23db8c4e8837b2e3de75397b39d08efea4d5eddc00c7e0c36571d9c2514c8dL96
++type DotenvConfig = Record<string, string>;
++
+ // track previous variables defined (used to trigger event indicating a change)
+ let prevDotenvVariablesDefined: DotenvConfig | undefined;
+ 
+@@ -55,7 +58,7 @@ export async function dotenvSetVariables(projectDir: string) {
+   // read the dot env files in turn, track variables defined for validation
+   const dotenvVariablesDefined: DotenvConfig = {};
+   for (const dotenvFile of dotenvFiles) {
+-    const conf = await config({ path: dotenvFile });
++    const conf = await load({ envPath: dotenvFile });
+     for (const key in conf) {
+       // set into environment (and track that we did so for reversing out later)
+       if (Deno.env.get(key) === undefined) {
+@@ -79,10 +82,10 @@ export async function dotenvSetVariables(projectDir: string) {
+       definedEnvTempPath,
+       stringify(dotenvVariablesDefined),
+     );
+-    await config({
+-      path: definedEnvTempPath,
+-      example: dotenvRequired,
+-      safe: true,
++    await load({
++      envPath: definedEnvTempPath,
++      examplePath: dotenvRequired,
++      // safe: true, FIXME we need to figure out how to handle this now that `safe:` was deprecated and removed
+       allowEmptyValues: true,
+     });
+   }
+--- a/src/resources/deno_std/import_map.json
++++ b/src/resources/deno_std/import_map.json
+@@ -1,5 +1,5 @@
+ {
+   "imports": {
+-    "https://deno.land/std/": "../../vendor/deno.land/std@0.166.0/"
++    "https://deno.land/std/": "../../vendor/deno.land/std@0.177.0/"
+   }
+ }
+--- a/src/resources/deno_std/run_import_map.json
++++ b/src/resources/deno_std/run_import_map.json
+@@ -1,5 +1,5 @@
+ {
+   "imports": {
+-    "https://deno.land/std/": "https://deno.land/std@0.166.0/"
++    "https://deno.land/std/": "https://deno.land/std@0.177.0/"
+   }
+ }
+--- a/src/resources/scripts/check-usage.ts
++++ b/src/resources/scripts/check-usage.ts
+@@ -1,4 +1,4 @@
+-import { readLines } from "https://deno.land/std@0.76.0/io/bufio.ts";
++import { readLines } from "https://deno.land/std@0.177.0/io/read_lines.ts";
+ 
+ if (import.meta.main) {
+   const patterns: RegExp[] = Deno.args.map((arg) => new RegExp(arg));
+--- a/src/vendor/import_map.json
++++ b/src/vendor/import_map.json
+@@ -10,7 +10,9 @@
+     "acorn/acorn": "./cdn.skypack.dev/acorn@7.4.1.js",
+     "acorn/walk": "./cdn.skypack.dev/acorn-walk@7.2.0.js",
+     "path/mod.ts": "./deno.land/std@0.177.0/path/mod.ts",
+-    "streams/conversion.ts": "./deno.land/std@0.177.0/streams/conversion.ts",
++    "streams/copy.ts": "./deno.land/std@0.177.0/streams/copy.ts",
++    "streams/read_all.ts": "./deno.land/std@0.177.0/streams/read_all.ts",
++    "streams/write_all.ts": "./deno.land/std@0.177.0/streams/write_all.ts",
+     "semver/mod.ts": "./deno.land/x/semver@v1.4.0/mod.ts",
+     "node/fs.ts": "./deno.land/std@0.177.0/node/fs.ts",
+     "encoding/yaml.ts": "./deno.land/std@0.177.0/encoding/yaml.ts",
+@@ -72,7 +74,7 @@
+     "encoding/_yaml/type/mod.ts": "./deno.land/std@0.177.0/encoding/_yaml/type/mod.ts",
+     "observablehq/parser": "./cdn.skypack.dev/@observablehq/parser@4.5.0.js",
+     "media_types/mod.ts": "./deno.land/x/media_types@v2.10.1/mod.ts",
+-    "io/buffer.ts": "./deno.land/std@0.177.0/io/buffer.ts",
++    "io/read_lines.ts": "./deno.land/std@0.177.0/io/read_lines.ts",
+     "xmlp/mod.ts": "./deno.land/x/xmlp@v0.2.8/mod.ts",
+     "cliffy/prompt/input.ts": "./deno.land/x/cliffy@v0.25.4/prompt/input.ts",
+     "crypto/mod.ts": "./deno.land/std@0.177.0/crypto/mod.ts",

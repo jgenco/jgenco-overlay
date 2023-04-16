@@ -280,11 +280,11 @@ src_prepare() {
 	sed -i "s/std@0.166.0/std@${DENO_STD_VER}/" \
 		src/{,dev_}import_map.json \
 		src/vendor/import_map.json \
-		src/resources/deno_std/{,run_}import_map.json \
 		package/scripts/deno_std/deno_std.ts \
-		package/src/common/dependencies/deno.ts \
-		src/extension/template.ts \
 		|| die "Failed to update various files"
+
+	eapply "${FILESDIR}/quarto-cli-9999_deno-1.31_us.patch"
+
 	sed -i "s/cliffy@v0.25.4/cliffy@v${CLIFFY_VER}/" \
 		src/{,dev_}import_map.json \
 		src/vendor/import_map.json || die "Failed to update cliffy"
@@ -293,7 +293,6 @@ src_prepare() {
 	find -name "*.ts" -exec sed -i "s/std@0.170.0/std@${DENO_STD_VER}/" {} \; || die "failed to change version"
 	eapply "${FILESDIR}/cliffy-0.25.4_deno_std_0.177.0.patch"
 	popd
-	eapply "${FILESDIR}/"quarto-cli-9999_{deno-1.30,deno-1.30-extra,deno-1.31}.patch
 	#End updateing deps
 
 	deno_build_src
@@ -412,4 +411,11 @@ src_install() {
 		doins _quarto
 	fi
 	einstalldocs
+}
+pkg_postinst() {
+	elog "This ebuild uses a newer Deno(1.30-1.31) and Deno-std(${DENO_STD_VER})."
+	elog "It also uses the system Pandoc instead of official pandoc-${PANDOC_VERSION}"
+	elog "This is not supported by upstream."
+	elog "If you find or think you found a bug please try the official verson at:"
+	elog "* https://quarto.org/docs/download/ * before reporting an issue to quarto-cli"
 }
