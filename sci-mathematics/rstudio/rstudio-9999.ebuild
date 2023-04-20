@@ -364,17 +364,6 @@ src_unpack() {
 	fi
 }
 src_prepare() {
-	#fix path rstudio bin path from "${EPREFIX}/usr/rstudio" to "${EPREFIX}/usr/bin/rstudio"
-	#NOTE: the actual bin is "${EPREFIX}/usr/share/rstudio/rstudio" but we symlink in src_install
-	sed -i "s#/rstudio#/bin/rstudio#" src/node/desktop/resources/freedesktop/rstudio.desktop.in || \
-		die "Failed to set proper path for rstudio"
-
-	cmake_src_prepare
-	java-pkg-2_src_prepare
-
-	#/usr/share/hunspell might not exist if no dictionary is installed so no need to die
-	ln -s "${EPREFIX}/usr/share/hunspell" "${S}/dependencies/dictionaries"
-
 	#SUSE has a good list of software bundled with rstudio
 	#https://build.opensuse.org/package/view_file/openSUSE:Factory/rstudio/rstudio.spec
 	#gwt - they bundle a custom gwt build github.com/rstudio/gwt tree v1.4#
@@ -398,10 +387,6 @@ src_prepare() {
 		debundles+=("/src/cpp/core/include/core/libclang/clang-c/:")
 	fi
 
-	#Remove Bundled deps ln -s to system libraries - see /src/gwt/.classpath
-	rm -r "${S}/src/gwt/lib/gin/2.1.2/"* || die "Failed to remove bundled jin"
-	rm "${S}/src/gwt/lib/gwt/gwt-rstudio/validation-api-"*.jar || die "Failed to remove bundled validation-api jars"
-
 	if ! use qt6;then
 		#unbundle qtsingleapplication
 		#the original ebuild had a complex grep/sed to fix library name for cmake
@@ -414,6 +399,10 @@ src_prepare() {
 		eapply "${FILESDIR}/rstudio-2022.12.0.353-qt6-cmake.patch" "${FILESDIR}/rstudio-2022.12.0.353-qt6-desktop.patch"
 	fi
 
+	#Remove Bundled deps ln -s to system libraries - see /src/gwt/.classpath
+	rm -r "${S}/src/gwt/lib/gin/2.1.2/"* || die "Failed to remove bundled jin"
+	rm "${S}/src/gwt/lib/gwt/gwt-rstudio/validation-api-"*.jar || die "Failed to remove bundled validation-api jars"
+
 	for entry in ${debundles[@]};do
 		local bundle_path="${entry%:*}"
 		local local_path="${entry#*:}"
@@ -424,14 +413,6 @@ src_prepare() {
 			( ln -s "${EPREFIX}${local_path}" "${S}${bundle_path%/}" \
 			|| die "Failed to link ${local_path} -> ${bundle_path}" )
 	done
-
-	eprefixify src/cpp/core/libclang/LibClang.cpp
-
-
-	# make sure icons and mime stuff are with prefix
-	sed -i \
-		-e "s:/usr:${EPREFIX}/usr:g" \
-		CMakeGlobals.txt src/{cpp,node}/desktop/CMakeLists.txt || die "Failed to change to eprefix"
 
 	if  use electron;then
 		local electron_src_hash=$(sha1sum "${S}/src/node/desktop/package.json")
@@ -445,6 +426,22 @@ src_prepare() {
 		fi
 	fi
 
+	#/usr/share/hunspell might not exist if no dictionary is installed so no need to die
+	ln -s "${EPREFIX}/usr/share/hunspell" "${S}/dependencies/dictionaries"
+
+	eprefixify src/cpp/core/libclang/LibClang.cpp
+
+	# make sure icons and mime stuff are with prefix
+	sed -i -e "s:/usr:${EPREFIX}/usr:g" \
+		CMakeGlobals.txt src/{cpp,node}/desktop/CMakeLists.txt || die "Failed to change to eprefix"
+
+	#fix path rstudio bin path from "${EPREFIX}/usr/rstudio" to "${EPREFIX}/usr/bin/rstudio"
+	#NOTE: the actual bin is "${EPREFIX}/usr/share/rstudio/rstudio" but we symlink in src_install
+	sed -i "s#/rstudio#/bin/rstudio#" src/node/desktop/resources/freedesktop/rstudio.desktop.in || \
+		die "Failed to set proper path for rstudio"
+
+	cmake_src_prepare
+	java-pkg-2_src_prepare
 }
 src_configure() {
 	export PACKAGE_OS="Gentoo"
@@ -520,6 +517,7 @@ src_configure() {
 	fi
 
 	if use doc; then
+		#if docs/news is built remove "_ga-" lines from  docs/news/_quarto.yml
 		sed -i "/google_analytics.html/d" docs/user/rstudio/_quarto.yml \
 			|| die "Failed to remove google_analytics include"
 		echo -e "buildType: ${build_type/-/}\nversion: ${my_pv}" > docs/user/rstudio/_variables.yml ||
