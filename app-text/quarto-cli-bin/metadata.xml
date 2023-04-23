@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<upstream>
+		<doc>https://quarto.org/docs/guide/</doc>
+		<bugs-to>https://github.com/quarto-dev/quarto-cli/issues</bugs-to>
+		<remote-id type="github">quarto-dev/quarto-cli</remote-id>
+	</upstream>
+</pkgmetadata>
