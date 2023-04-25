@@ -11,14 +11,25 @@ IUSE="test"
 RESTRICT="!test? ( test )"
 #note:
 #     knitr bumped down to x.y
-RENV_HASH="fe5fc06cc7b3777f8c836b41aaac1ffe"
+RENV_HASH="e0fa802fd58080c84dd35ca4080e12776b5c2551"
 RENV_TEST_PKGS="
+cli@3.6.0
+glue@1.6.2
 rlang@1.0.6
+lifecycle@1.0.3
 Rcpp@1.0.10
 base64enc@0.1-3
 digest@0.6.31
 ellipsis@0.3.2
 fastmap@1.1.0
+sys@3.4.1
+fansi@1.0.4
+utf8@1.2.3
+vctrs@0.5.2
+withr@2.5.0
+pillar@1.8.1
+pkgconfig@2.0.3
+askpass@1.1
 fs@1.6.1
 rappdirs@0.3.3
 cachem@1.0.6
@@ -26,47 +37,52 @@ htmltools@0.5.4
 R6@2.5.1
 later@1.3.0
 magrittr@2.0.3
-cli@3.6.0
-glue@1.6.2
 xfun@0.37
-lifecycle@1.0.3
 triebeard@0.3.0
 promises@1.2.0.1
 jquerylib@0.1.4
-jsonlite@1.8.4
 memoise@2.0.1
-mime@0.12
 sass@0.4.5
+curl@5.0.0
+jsonlite@1.8.4
+mime@0.12
+openssl@2.0.5
+cpp11@0.4.3
+crayon@1.5.2
+hms@1.1.2
+prettyunits@1.1.1
+bit@4.0.5
+stringi@1.7.12
+generics@0.1.3
+tibble@3.1.8
+tidyselect@1.2.0
+dplyr@1.1.0
+purrr@1.0.1
+stringr@1.5.0
+bit64@4.0.5
+progress@1.2.2
+tzdb@0.3.0
+httr@1.4.5
+rstudioapi@0.14
 lattice@0.20-45
 colorspace@2.1-0
-fansi@1.0.4
-utf8@1.2.3
-sys@3.4.1
+ps@1.7.2
 bslib@0.4.2
 commonmark@1.8.1
-crayon@1.5.2
 fontawesome@0.5.0
 httpuv@1.6.9
 sourcetools@0.1.7-1
-withr@2.5.0
 xtable@1.8-4
-curl@5.0.0
 httpcode@0.3.0
 urltools@1.7.3
-stringi@1.7.12
-vctrs@0.5.2
 evaluate@0.20
 highr@0.10
 yaml@2.3.7
-stringr@1.5.0
 knitr@1.42
 tinytex@0.44
-cpp11@0.4.3
 crul@1.3
 shiny@1.7.4
-askpass@1.1
-pillar@1.8.1
-pkgconfig@2.0.3
+processx@3.8.0
 RColorBrewer@1.1-3
 farver@2.1.1
 labeling@0.4.2
@@ -74,39 +90,64 @@ munsell@0.5.0
 viridisLite@0.4.1
 Matrix@1.5-3
 nlme@3.1-162
-V8@4.2.2
+gargle@1.3.0
+uuid@1.1-0
+rematch@1.0.1
+clipr@0.8.0
+vroom@1.6.1
+backports@1.4.1
+tidyr@1.3.0
+systemfonts@1.0.4
+selectr@0.4-2
+textshaping@0.3.6
+broom@1.0.3
+timechange@0.2.0
+forcats@1.0.0
+readr@2.1.4
+cellranger@1.1.0
+googledrive@2.0.0
+ids@1.0.1
+rematch2@2.1.2
 MASS@7.3-58.2
 gtable@0.3.1
 isoband@0.2.7
 mgcv@1.8-41
 scales@1.2.1
-generics@0.1.3
-tibble@3.1.8
-tidyselect@1.2.0
-openssl@2.0.5
-uuid@1.1-0
+data.table@1.14.8
+DBI@1.1.3
+blob@1.2.3
+callr@3.7.3
+V8@4.2.2
 xml2@1.3.3
 zip@2.2.2
 gfonts@0.2.0
-systemfonts@1.0.4
-bit@4.0.5
 rmarkdown@2.20
 lazyeval@0.2.2
 crosstalk@1.2.0
 htmlwidgets@1.6.1
-DBI@1.1.3
-bit64@4.0.5
-blob@1.2.3
 plogr@0.2.0
-data.table@1.14.8
 gdtools@0.3.0
 officer@0.5.2
 bigD@0.2.0
 bitops@1.0-7
-dplyr@1.1.0
-ggplot2@3.4.1
 juicyjuice@0.1.0
+svglite@2.1.1
+webshot@0.5.4
+conflicted@1.2.0
+dbplyr@2.3.1
+dtplyr@1.3.0
+ggplot2@3.4.1
+googlesheets4@1.0.1
+haven@2.5.1
+lubridate@1.9.2
+modelr@0.1.10
+ragg@1.2.5
+readxl@1.4.2
+reprex@2.0.2
+rvest@1.0.3
+tidyverse@2.0.0
 renv@0.16.0
+kableExtra@1.3.4
 gt@0.8.0
 flextable@0.8.5
 RSQLite@2.3.0
@@ -177,9 +218,9 @@ LICENSE="GPL-2+ MIT ZLIB BSD Apache-2.0 ISC || ( MIT GPL-3 )"
 SLOT="0"
 KEYWORDS=""
 PATCHES="
-	${FILESDIR}/quarto-cli-9999-pathfixes.patch
-	${FILESDIR}/quarto-cli-9999-configuration.patch
-	${FILESDIR}/quarto-cli-9999-check.patch
+	${FILESDIR}/quarto-cli-1.3.340-pathfixes.patch
+	${FILESDIR}/quarto-cli-1.3.340-configuration.patch
+	${FILESDIR}/quarto-cli-1.3.340-check.patch
 "
 DEPEND="
 	app-arch/unzip
@@ -283,7 +324,7 @@ src_prepare() {
 		package/scripts/deno_std/deno_std.ts \
 		|| die "Failed to update various files"
 
-	eapply "${FILESDIR}/quarto-cli-9999_deno-1.31_us.patch"
+	eapply "${FILESDIR}/quarto-cli-1.3.340_deno-1.31_us.patch"
 
 	sed -i "s/cliffy@v0.25.4/cliffy@v${CLIFFY_VER}/" \
 		src/{,dev_}import_map.json \
@@ -352,7 +393,7 @@ src_compile() {
 	if has_version  ">=app-shells/zsh-4.3.5";then
 		./package/pkg-working/bin/quarto completions zsh > _quarto || die "Failed to build zsh completion"
 	fi
-	use test && install_r_packages ${RENV_TEST_PKGS}
+	use test && ( install_r_packages ${RENV_TEST_PKGS} || die )
 }
 src_test() {
 	pushd "${S}/tests" > /dev/null || die "Failed to move to tests"
