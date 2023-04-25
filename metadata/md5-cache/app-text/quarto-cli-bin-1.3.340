@@ -7,5 +7,5 @@ KEYWORDS=~amd64
 LICENSE=GPL-2+ MIT ZLIB BSD Apache-2.0 ISC || ( MIT GPL-3 )
 RDEPEND=app-arch/unzip >=dev-lang/R-4.1.0 dev-libs/libxml2 dev-vcs/git sys-apps/which x11-misc/xdg-utils
 SLOT=0
-SRC_URI=https://github.com/quarto-dev/quarto-cli/releases/download/v1.3.336/quarto-1.3.336-linux-amd64.tar.gz
+SRC_URI=https://github.com/quarto-dev/quarto-cli/releases/download/v1.3.340/quarto-1.3.340-linux-amd64.tar.gz
 _md5_=085cafae3cc65deba131ab3a4271d4c5
