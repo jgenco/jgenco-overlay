@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<use>
+		<flag name="docs">Install general,tutorial, and reference docs</flag>
+	</use>
+	<upstream>
+		<doc>https://typst.app/docs/</doc>
+		<bugs-to>https://github.com/typst/typst/issues</bugs-to>
+		<remote-id type="github">typst/typst</remote-id>
+	</upstream>
+</pkgmetadata>
