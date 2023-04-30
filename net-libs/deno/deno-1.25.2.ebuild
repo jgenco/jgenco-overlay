@@ -582,6 +582,8 @@ src_prepare() {
 		"${FILESDIR}/v8-0.42.0-disable-auto-ccache.patch" \
 		"${FILESDIR}/v8-0.40.2-jobfix.patch" \
 		"${FILESDIR}/v8-0.49.0-enable-gcc.patch"
+	#https://github.com/denoland/rusty_v8/pull/1209
+	sed -i  "/print_gn_args(&gn_out);/d" build.rs || die "Failed to rm print_gn_args"
 	default
 	}
 src_compile() {
