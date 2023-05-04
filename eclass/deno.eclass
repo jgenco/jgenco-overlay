@@ -166,3 +166,67 @@ deno_build_cache() {
 
 }
 fi
+#this needs app-misc/jq
+build_deno_npm() {
+	local untar=""
+	case ${1} in
+		"true" | "false" | "dummy")
+			untar=${1};;
+		*)
+			die "Bad argument ${1}";;
+	esac
+	shift
+	local registry_dir="${DENO_CACHE}/npm/registry.npmjs.org"
+	for pkg in ${@};do
+		if [[ ${untar} == "dummy" ]];then
+			einfo "Dummy ${pkg}"
+			mkdir -p "${registry_dir}/${pkg}" || die
+			echo "{\"name\":\"${pkg}\",\"versions\":{},\"dist-tags\": {}}" \
+				> "${registry_dir}/${pkg}/registry.json" || die
+			continue
+		fi
+		regex='((.*\/)?(.*))@(.*)'
+		[[ ${pkg} =~ ${regex} ]]
+			local npm_name_full=${BASH_REMATCH[1]}
+			local npm_scope=${BASH_REMATCH[2]%/}
+			local npm_name=${BASH_REMATCH[3]}
+			local npm_ver=${BASH_REMATCH[4]}
+			local file_ext="tgz"
+			local npm_filename="${npm_name}-${npm_ver}.${file_ext}"
+			local npm_filename_save="node_${npm_name_full/\//+}@${npm_ver}.${file_ext}"
+
+			local npm_dir="${npm_name}"
+			[[ ${npm_scope} != "" ]] && npm_dir="${npm_scope}/${npm_dir}"
+
+			mkdir -p "${registry_dir}/${npm_dir}/${npm_ver}" || die
+			einfo "${npm_name_full}@${npm_ver} - ${untar}"
+			pushd "${registry_dir}/${npm_dir}" > /dev/null || die
+				if [[ ${untar} == "true" ]];then
+					tar xaf "${DISTDIR}/$npm_filename_save" --strip-components=1 -C ${npm_ver} || die
+				fi
+				local registry='{"name":"'"${npm_name_full}"'","versions":{'
+				local ver_sep=""
+				for version in * ; do
+					[[ ! -d ${version} ]] && continue
+					registry+="${ver_sep}"
+					ver_sep=","
+					registry+="\"${version}"'":{"version":"'"${version}"'","dist":{"tarball":"","shasum":"","integrity": ""},'
+					if [[ -f ${version}/package.json ]];then
+						registry+='"dependencies":'
+						registry+="$(jq "if .dependencies != null then .dependencies else {} end" ${version}/package.json)" || die
+						registry+=',"peerDependencies":'
+						registry+="$(jq "if .peerDependencies != null then .peerDependencies else {} end" ${version}/package.json)" || die
+						registry+=',"peerDependenciesMeta":'
+						registry+="$(jq "if .peerDependenciesMeta != null then .peerDependenciesMeta else {} end" ${version}/package.json)" || die
+					else
+						registry+='"dependencies":{},'
+						registry+='"peerDependencies":{},'
+						registry+='"peerDependenciesMeta":{}'
+					fi
+					registry+="}"
+				done
+				registry+='},"dist-tags":{}}'
+				echo "${registry}" > registry.json || die
+			popd > /dev/null
+	done
+}
