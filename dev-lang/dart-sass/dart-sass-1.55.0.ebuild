@@ -3,10 +3,43 @@
 
 EAPI=8
 
+inherit npm
+
+TESTING_NPMS="
+	anymatch@3.1.3
+	binary-extensions@2.2.0
+	braces@3.0.2
+	chokidar@3.5.3
+	fill-range@7.0.1
+	fsevents@2.3.2
+	glob-parent@5.1.2
+	immutable@4.3.0
+	intercept-stdout@0.1.2
+	is-binary-path@2.1.0
+	is-extglob@2.1.1
+	is-glob@4.0.3
+	is-number@7.0.0
+	lodash._arraycopy@3.0.0
+	lodash._basevalues@3.0.0
+	lodash._getnative@3.9.1
+	lodash.isarguments@3.1.0
+	lodash.isarray@3.0.4
+	lodash.keys@3.1.2
+	lodash.toarray@3.0.2
+	normalize-path@3.0.0
+	picomatch@2.3.1
+	readdirp@3.6.0
+	to-regex-range@5.0.1
+"
+
 DESCRIPTION="The reference implementation of Sass, written in Dart. "
 HOMEPAGE="https://sass-lang.com/dart-sass"
 SRC_URI="
-https://github.com/sass/dart-sass/archive/refs/tags/${PV}.tar.gz -> ${P}.tar.gz
+	https://github.com/sass/dart-sass/archive/refs/tags/${PV}.tar.gz -> ${P}.tar.gz
+	test? (
+		https://github.com/sass/sass/archive/cc3a3b156e8b6c4bbf6fdf11351536b37733ca15.tar.gz -> sass-sass-20230505.tar.gz
+		$(npm_build_src_uri ${TESTING_NPMS})
+	)
 "
 
 #egrep "(name|url|version)" pubspec.lock |sed -E -l3 '{N;N; s/ +name: ([a-z_]+)\n +url: \"https:\/\/(.*)\"\n +version: \"(.*)\"/\2@\1@\3/}'
@@ -104,10 +137,11 @@ build_dart_uri(){
 }
 SRC_URI="${SRC_URI} $(build_dart_uri ${DART_BOARD})"
 
-LICENSE="MIT"
+LICENSE="MIT Apache-2.0 BSD"
 SLOT="0"
+IUSE="test"
 KEYWORDS="~amd64"
-RESTRICT="strip mirror"
+RESTRICT="strip mirror !test? ( test )"
 
 DEPEND="
 || (
@@ -116,7 +150,9 @@ DEPEND="
 	)
 "
 RDEPEND="${DEPEND}"
-BDEPEND=""
+BDEPEND="
+	test? ( net-libs/nodejs )
+"
 
 DOCS=(CHANGELOG.md LICENSE README.md)
 
@@ -130,40 +166,50 @@ src_unpack() {
 }
 	_EOF_
 	mkdir -p ${WORKDIR}/.pub-cache/hosted || die "Failed to create hosted dir"
-
-	local main_filename="${P}.tar.gz"
-	local file=""
+	unpack ${P}.tar.gz
 	local regex_pkg="dart_(.*)@(.*).tar.gz"
 	for file in  ${A}
 	do
-		if [[ ${file} == ${main_filename} ]]; then
-			unpack ${file}
-		elif [[ ${file} =~ ${regex_pkg} ]]; then
+		if [[ ${file} =~ ${regex_pkg} ]]; then
 			local package=${BASH_REMATCH[1]}
 			local version=${BASH_REMATCH[2]}
 			#this will need to fixed when other host are used
 			local mod_dir="${WORKDIR}/.pub-cache/hosted/pub.dartlang.org/${package}-${version}"
-			mkdir -p ${WORKDIR}/.pub-cache/hosted/pub.dartlang.org/.cache || die "Failed to create .cache dir"
-			mkdir -p ${mod_dir} || die "Failed to create $mod_dir"
+			mkdir -p "${WORKDIR}/.pub-cache/hosted/pub.dartlang.org/.cache" || die "Failed to create .cache dir"
+			mkdir -p "${mod_dir}" || die "Failed to create $mod_dir"
 
-			pushd ${mod_dir} > /dev/null || die "Failed to pushinto $mod_dir"
+			pushd "${mod_dir}" > /dev/null || die "Failed to pushinto $mod_dir"
 			unpack ${file}
 			popd > /dev/null
-		else
-			die "Regexes didn't match ${file}"
 		fi
 	done
-	mkdir ${S}/.dart_tool
+	mkdir "${S}/.dart_tool" || die
+
+	if use test; then
+		mkdir -p "${S}/build/language" || die
+		tar xaf "${DISTDIR}/sass-sass-20230505.tar.gz" --strip-components=1 -C "${S}/build/language" || die
+		cp "${FILESDIR}/${P}-package-lock.json" "${S}/package-lock.json" || die
+		echo "cache=${NPM_CACHE_DIR}" > "${S}/.npmrc" || die
+		npm_build_cache ${TESTING_NPMS} || die
+	fi
+}
+src_prepare() {
+	sed -i "s#cloneOrCheckout(\"https://github.com/sass/sass\", \"main\", name: 'language')#\"build/language\"#" \
+		tool/grind.dart || die
+	default
 }
 src_compile(){
 	export HOME="${WORKDIR}"
 	dart pub get --offline || die "Pub get failed"
 	dart compile exe -Dversion="${PV}" bin/sass.dart -o sass || die "Compile failed"
+	if use test; then
+		npm install || die "Failed to node_modules"
+		dart run grinder pkg-npm-dev || die "Failed to run pkg-npm-dev"
+	fi
 }
 src_test(){
-	# 7 test failed it suggest to run dart run grinder pkg-npm-dev
 	export HOME="${WORKDIR}"
-	dart test
+	dart test || die
 }
 src_install(){
 	dobin sass
