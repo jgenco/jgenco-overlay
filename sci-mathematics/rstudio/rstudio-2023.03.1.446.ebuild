@@ -156,9 +156,8 @@ build_r_src_uri() {
 		echo "https://cloud.r-project.org/src/contrib/Archive/${package}/${full_name}.tar.gz -> R_${full_name}.tar.gz "
 	done
 }
-#Note next release use '.' NOT '-' in title/tag
-SRC_URI+="panmirror? ( https://github.com/jgenco/jgenco-overlay-files/releases/download/rstudio-2023.03.0-386/${P}-panmirror.tar.xz ) "
-SRC_URI+="electron?  ( https://github.com/jgenco/jgenco-overlay-files/releases/download/rstudio-2023.03.0-386/${P}-electron.tar.xz  ) "
+SRC_URI+="panmirror? ( https://github.com/jgenco/jgenco-overlay-files/releases/download/rstudio-${PV}/${P}-panmirror.tar.xz ) "
+SRC_URI+="electron?  ( https://github.com/jgenco/jgenco-overlay-files/releases/download/rstudio-${PV}/${P}-electron.tar.xz  ) "
 SRC_URI+="electron?  ( $(npm_build_src_uri ${ELECTRON_NODEJS_DEPS}) ) "
 SRC_URI+="doc?       ( $(build_r_src_uri ${R_RMARKDOWN_PKGS}) ) "
 SRC_URI+="test?      ( $(build_r_src_uri ${R_TESTTHAT_PKGS}) ) "
