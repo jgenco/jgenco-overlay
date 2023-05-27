@@ -112,6 +112,7 @@ flextable@0.8.5
 RSQLite@2.3.0
 DT@0.27
 "
+ESBUILD_VER_ORIG="0.15.18"
 DENO_NPM="
 	anymatch@3.1.3
 	@babel/runtime@7.21.5
@@ -121,7 +122,7 @@ DENO_NPM="
 	csstype@3.1.2
 	@emotion/hash@0.9.1
 	esbuild@0.15.18
-	esbuild-linux-64@0.15.18
+	esbuild-linux-64@${ESBUILD_VER_ORIG}
 	fast-glob@3.2.12
 	fastq@1.15.0
 	fill-range@7.0.1
@@ -278,7 +279,6 @@ else
 	SRC_URI="https://github.com/quarto-dev/quarto-cli/archive/refs/tags/v${PV}.tar.gz   -> ${P}.tar.gz "
 fi
 
-
 build_r_src_uri() {
 	for rpkg in ${@}; do
 		[[ ${rpkg} =~ (.*)@(.*) ]]
@@ -379,30 +379,18 @@ src_unpack() {
 
 	pushd "${S}/src/vendor/deno.land/" > /dev/null || die "Failed to push to deno.land"
 	find -H std@${DENO_STD_VER} -regextype egrep -regex ".*\.(ts|mjs)$" | \
-		sed "s%^%https://deno.land/%" > "${WORKDIR}/full-import.list" || \
+	sed "s%^%https://deno.land/%" > "${WORKDIR}/full-import.list" || \
 		die "Failed to make import list"
 	popd
 	deno_src_unpack
 
-	local esbuild_ver_old="0.15.18"
 	ESBUILD_PLATFORMS=$(printf "esbuild-%s\n" ${ESBUILD_PLATFORMS})
 	ESBUILD_PLATFORMS+=" ${ESBUILD_PLATFORMS_EXT}"
-	ESBUILD_PLATFORMS=$(printf "%s@${esbuild_ver_old}\n" ${ESBUILD_PLATFORMS})
+	ESBUILD_PLATFORMS=$(printf "%s@${ESBUILD_VER_ORIG}\n" ${ESBUILD_PLATFORMS})
 	DENO_NPM_DUMMIES="sass stylus sugarss terser @types/node"
 	build_deno_npm dummy less ${DENO_NPM_DUMMIES}
 	build_deno_npm true ${DENO_NPM}
 	build_deno_npm false ${ESBUILD_PLATFORMS}
-
-	pushd "${S}/src/webui/quarto-preview" >> /dev/null || die
-
-	sed -i "s/sha512.*==//" deno.lock||die
-	ln -s ${DENO_CACHE} deno-x86_64-unknown-linux-gnu || die "failed to link to DENO_CACHE"
-	pushd "deno-x86_64-unknown-linux-gnu/npm/registry.npmjs.org" > /dev/null || die
-	rm "esbuild-linux-64/${esbuild_ver_old}/bin/esbuild" || die
-	cp "${EPREFIX}/usr/bin/esbuild" "esbuild-linux-64/${esbuild_ver_old}/bin/esbuild" || die
-	sed -i "s/${esbuild_ver_old}/$(esbuild  --version)/g" esbuild/${esbuild_ver_old}/{install.js,lib/main.js} || die
-	popd
-	popd
 }
 src_prepare() {
 	#the quarto files are a custom bash script based on the original
@@ -433,8 +421,17 @@ src_prepare() {
 
 	DENO_CACHE="${deno_cache_old}"
 	export DENO_DIR="${deno_dir_old}"
+
+	sed -i "s/sha512.*==//" src/webui/quarto-preview/deno.lock || die
+	pushd "${DENO_CACHE}/npm/registry.npmjs.org" > /dev/null || die
+	rm "esbuild-linux-64/${ESBUILD_VER_ORIG}/bin/esbuild" || die
+	cp "${EPREFIX}/usr/bin/esbuild" "esbuild-linux-64/${ESBUILD_VER_ORIG}/bin/esbuild" || die
+	sed -i "s/${ESBUILD_VER_ORIG}/$(esbuild  --version)/g" esbuild/${ESBUILD_VER_ORIG}/{install.js,lib/main.js} || die
+	popd
+
 	sed -i -E  "s/2.19.2(\", \"Pandoc)/${PANDOC_VERSION}\1/;s/1.32.8(\", \"Dart Sass)/1.55.0\1/" \
 		src/command/check/check.ts || die "Failed to correct versions"
+
 	default
 	eprefixify src/command/render/render-shared.ts quarto package/scripts/common/quarto
 }
@@ -452,13 +449,19 @@ src_compile() {
 
 	export QUARTO_ROOT="${S}"
 
-	pushd package/src || die "Failed to move to package/src"
-
 	[[ "${PV}" == "9999" ]] && MY_PV="99.9.9" || MY_PV=${PV}
-	einfo "Building ${P}...${MY_PV}..."
+
+	einfo "Building ${MY_PV}..."
+	pushd src/webui/quarto-preview > /dev/null || die
+	#run deno task build manually
+	deno task build || die "Failed to build prepare-dist"
+	rm {deno.lock,build.ts} || die
+	touch build.ts || die
+	popd
+
+	pushd package/src || die "Failed to move to package/src"
 	./quarto-bld prepare-dist --set-version ${MY_PV} --log-level info || die "Failed to run prepare-dist"
 	popd
-	[[ -f "${S}/package/pkg-working/share/preview/quarto-preview.js" ]] || die "Failed to make preview"
 	[[ ${PV} == "9999" ]] && ( echo "${EGIT_VERSION}" \
 		> package/pkg-working/share/commit || die "Failed to add commit" )
 
