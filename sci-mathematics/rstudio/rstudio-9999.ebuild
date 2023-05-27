@@ -5,20 +5,9 @@ EAPI=8
 
 inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm prefix
 
-#####Start of ELECTRON  package list#####
-ELECTRON_PACKAGE_HASH="d084b384c23d6146bd14eb655c90fd1976f0efcf"
-ELECTRON_VERSION="23.1.2"
-ELECTRON_VERSION_MAJ="$(ver_cut 1 ${ELECTRON_VERSION})"
-ELECTRON_EGIT_COMMIT="2b33be08175490bb522147451d3ee3e0b7deea12"
-ELECTRON_NODEJS_DEPS="
-bindings@1.5.0
-file-uri-to-path@1.0.0
-nan@2.17.0
-node-addon-api@5.0.0
-node-system-fonts@1.0.1
-unix-dgram@2.0.6
-"
-#####End   of ELECTRON package list#####
+ELECTRON_VERSION="23.3.0"
+DAILY_COMMIT="de89d550f6c7549387728cbf939bd65e37fb4810"
+DAILY_QUARTO_COMMIT="2e8a2f57d095ca9fc1b1c8314bdd880ff77615c5"
 
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
@@ -124,23 +113,20 @@ HOMEPAGE="
 	https://posit.co/products/open-source/rstudio/
 	https://github.com/rstudio/rstudio/"
 
-DAILY_COMMIT="2b33be08175490bb522147451d3ee3e0b7deea12"
 P_PREBUILT=${P}
-[[ ${PV} == "9999" ]] && P_PREBUILT="${PN}-2023.05.0.229"
 
 if [[ "${PV}" == *9999 ]];then
+	P_PREBUILT="${PN}-2023.05.0.375"
 	inherit git-r3
-	EGIT_REPO_URI="https://github.com/rstudio/${PN}"
-	EGIT_BRANCH="main"
 else
-	RSTUDIO_SOURCE_FILENAME="v$(ver_rs 3 "+").tar.gz"
 	if [[ ! -n "${DAILY_COMMIT}" ]];then
-		SRC_URI="https://github.com/rstudio/rstudio/archive/${RSTUDIO_SOURCE_FILENAME} -> ${P}.tar.gz "
+		SRC_URI="https://github.com/rstudio/rstudio/archive/v$(ver_rs 3 "+").tar.gz -> ${P}.tar.gz "
 		S="${WORKDIR}/${PN}-$(ver_rs 3 "-")"
 	else
 		SRC_URI="https://github.com/rstudio/rstudio/archive/${DAILY_COMMIT}.tar.gz -> ${P}.tar.gz "
 		S="${WORKDIR}/${PN}-${DAILY_COMMIT}"
 	fi
+	SRC_URI+="panmirror? ( https://github.com/quarto-dev/quarto/archive/${DAILY_QUARTO_COMMIT}.tar.gz -> quarto-${PV}.tar.gz ) "
 fi
 
 build_r_src_uri() {
@@ -153,19 +139,19 @@ build_r_src_uri() {
 		echo "https://cloud.r-project.org/src/contrib/Archive/${package}/${full_name}.tar.gz -> R_${full_name}.tar.gz "
 	done
 }
-
-SRC_URI+="panmirror? ( https://github.com/jgenco/jgenco-overlay-files/releases/download/${P_PREBUILT}/${P_PREBUILT}-panmirror.tar.xz ) "
-SRC_URI+="electron?  ( https://github.com/jgenco/jgenco-overlay-files/releases/download/${P_PREBUILT}/${P_PREBUILT}-electron.tar.xz  ) "
-SRC_URI+="electron?  ( $(npm_build_src_uri ${ELECTRON_NODEJS_DEPS}) ) "
-SRC_URI+="doc?       ( $(build_r_src_uri ${R_RMARKDOWN_PKGS}) ) "
-SRC_URI+="test?      ( $(build_r_src_uri ${R_TESTTHAT_PKGS}) ) "
-
-#If not using system electron modify unpack also
-SRC_URI+="electron?  (
+SRC_URI+="
+	panmirror? (
+		https://github.com/jgenco/jgenco-overlay-files/releases/download/${P_PREBUILT}/${P_PREBUILT}-panmirror-node_modules.tar.xz
+	)
+	electron? (
+		https://github.com/jgenco/jgenco-overlay-files/releases/download/${P_PREBUILT}/${P_PREBUILT}-electron-node_modules.tar.xz
 		https://github.com/electron/electron/releases/download/v${ELECTRON_VERSION}/electron-v${ELECTRON_VERSION}-linux-x64.zip
 		https://www.electronjs.org/headers/v${ELECTRON_VERSION}/node-v${ELECTRON_VERSION}-headers.tar.gz
 			-> electron-v${ELECTRON_VERSION}-headers.tar.gz
-		) "
+	)
+	doc? ( $(build_r_src_uri ${R_RMARKDOWN_PKGS}) )
+	test? ( $(build_r_src_uri ${R_TESTTHAT_PKGS}) )
+"
 
 IUSE="server electron +qt5 qt6 test debug quarto panmirror doc clang"
 REQUIRED_USE="!server? ( ^^ ( electron qt5 qt6 ) )"
@@ -249,9 +235,6 @@ RDEPEND="
 			dev-qt/qt5compat
 		)
 	)
-	electron? (
-		>=net-libs/nodejs-16.14.0[npm]
-	)
 	clang? (
 		sys-devel/clang
 	)
@@ -268,7 +251,15 @@ BDEPEND="
 	dev-cpp/websocketpp
 	dev-libs/rapidjson
 	dev-java/aopalliance:1
-	electron? ( app-arch/unzip )
+	panmirror? (
+		dev-util/esbuild
+		>=net-libs/nodejs-18.14.2
+		sys-apps/yarn
+	)
+	electron? (
+		app-arch/unzip
+		>=net-libs/nodejs-18.14.2[npm]
+	)
 	dev-java/gin:2.1
 	dev-java/javax-inject
 	=dev-java/validation-api-1.0*:1.0[source]
@@ -282,7 +273,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2022.07.0.548-package-build.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-pandoc_path_fix.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
-	"${FILESDIR}/${PN}-2023.03.0.386-node_electron_cmake.patch"
+	"${FILESDIR}/${PN}-9999-node_electron_cmake.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-reenable-sandbox.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-libfmt.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-hunspell.patch"
@@ -318,49 +309,64 @@ pkg_setup() {
 
 src_unpack() {
 	if [[ "${PV}" == *9999 ]];then
-		if use electron; then
-			#Electron package.json changes alot. This is a known good version
-			#EGIT_COMMIT=${ELECTRON_EGIT_COMMIT}
-			:
-		else
-			#A good last commit when testing a patch
-			#EGIT_COMMIT="b7cda611341759b290fba2d6d35b23544ba43f6c" # 2022-12-03
-			:
-		fi
+		EGIT_REPO_URI="https://github.com/rstudio/${PN}"
+		EGIT_BRANCH="main"
 		git-r3_src_unpack
 	else
 		unpack ${P}.tar.gz
 	fi
 
-	use panmirror && unpack ${P_PREBUILT}-panmirror.tar.xz
-	#this depends on app-editors/vim-core find different way
-	#NPM_LOCK_FILE="${FILESDIR}/${PN}-electron-thin_package-lock.json"
-	use electron  &&  npm_build_cache ${ELECTRON_NODEJS_DEPS}
+	if use panmirror;then
+		pushd "${S}/src/gwt/lib" > /dev/null|| die
+		if [[ "${PV}" == *9999 ]];then
+			EGIT_REPO_URI="https://github.com/quarto-dev/quarto"
+			EGIT_BRANCH="main"
+			EGIT_CHECKOUT_DIR="${S}/src/gwt/lib/quarto"
+			git-r3_src_unpack
+		else
+			unpack quarto-${PV}.tar.gz
+			mv quarto-${DAILY_QUARTO_COMMIT} quarto || die
+		fi
+		cd "${S}/src/gwt/lib/quarto" || die
+		unpack ${P_PREBUILT}-panmirror-node_modules.tar.xz
+		popd > /dev/null
+	fi
 
 	if use electron; then
-		mkdir "${WORKDIR}/electron" || die
-		pushd "${WORKDIR}/electron" || die
-		unpack ${P_PREBUILT}-electron.tar.xz
-		rm -r .webpack/main/native_modules || die "Failed to remove bundled native_modules"
-		popd
+		#prepare electron node_modules
+		pushd "${S}/src/node/desktop" > /dev/null|| die
+		unpack ${P_PREBUILT}-electron-node_modules.tar.xz
+		sed -i "s/npm ci && //" package.json || die
+		popd /dev/null
 
-		mkdir "${WORKDIR}/electron-${ELECTRON_VERSION}" || die "failed to create electron dir"
-		pushd electron-${ELECTRON_VERSION} || die
-		unpack electron-v${ELECTRON_VERSION}-linux-x64.zip
-		mv electron rstudio || die
+		#prepare electron binaries
+		local electron_hash=$(echo -n "https://github.com/electron/electron/releases/download/v${ELECTRON_VERSION}" |sha256sum |cut -f1 -d\  )
+		assert
+		mkdir -p "${WORKDIR}/.cache/electron/${electron_hash}" || die
+		#NOTE  might need to create ${WORKDIR}/.cache/electron/${electron_hash}/SHASUMS256.txt in the future
+		ln -s "${DISTDIR}/electron-v${ELECTRON_VERSION}-linux-x64.zip" \
+			"${WORKDIR}/.cache/electron/${electron_hash}/electron-v${ELECTRON_VERSION}-linux-x64.zip" || die
 
-		popd
-
-		#IF bundling electron
-		mkdir -p "${WORKDIR}/.electron-gyp"
-		pushd    "${WORKDIR}/.electron-gyp" > /dev/null
+		#prepare electron headers
+		mkdir -p "${WORKDIR}/.electron-gyp" || die
+		pushd    "${WORKDIR}/.electron-gyp" > /dev/null || die
 
 		unpack electron-v${ELECTRON_VERSION}-headers.tar.gz
 		mv node_headers ${ELECTRON_VERSION} || die "Failed to move electron headers"
 		#It only been 9 so far
-		echo "9" > ${ELECTRON_VERSION}/installVersion
+		echo "9" > ${ELECTRON_VERSION}/installVersion ||die
 
 		popd > /dev/null
+	fi
+	if use panmirror || use electron ;then
+		#prepare node headers
+		local nodejs_version=$(node -v) || die "Node version not found"
+		nodejs_version=${nodejs_version#v}
+		mkdir -p "${WORKDIR}/.cache/node-gyp/${nodejs_version}/include" || die
+		ln -s "${EPREFIX}/usr/include/node" "${WORKDIR}/.cache/node-gyp/${nodejs_version}/include/node" || die
+		#This tells it the headers where installed
+		#Don't know what 9 is
+		echo "9" > "${WORKDIR}/.cache/node-gyp/${nodejs_version}/installVersion" || die
 	fi
 }
 src_prepare() {
@@ -407,29 +413,28 @@ src_prepare() {
 		local bundle_path="${entry%:*}"
 		local local_path="${entry#*:}"
 		[[ ${bundle_path} == "" ]] && die "Missing bundle_path"
-		[[ ${bundle_path:(-1)} == "/" ]] && 
+		[[ ${bundle_path:(-1)} == "/" ]] &&
 			( rm -r "${S}${bundle_path}" || die "Failed to remove ${bundle_path}" )
 		[[ ${local_path} != "" ]] &&
 			( ln -s "${EPREFIX}${local_path}" "${S}${bundle_path%/}" \
 			|| die "Failed to link ${local_path} -> ${bundle_path}" )
 	done
 
-	if  use electron;then
-		local electron_src_hash=$(sha1sum "${S}/src/node/desktop/package.json")
-		if [[ ${ELECTRON_PACKAGE_HASH} != ${electron_src_hash:0:40} ]];then
-			die "Electron Hash doesn't match"
-		else
-			cp "${FILESDIR}/${PN}-electron-thin_package.json"      "${S}/src/node/desktop/package.json"
-			cp "${FILESDIR}/${PN}-electron-thin_package-lock.json" "${S}/src/node/desktop/package-lock.json"
-			#this directory is where RStudio would have put Electron and bundled JS
-			mkdir -p "${S}/src/node/desktop/out/RStudio-linux-x64"
-		fi
-	fi
-
 	#/usr/share/hunspell might not exist if no dictionary is installed so no need to die
 	ln -s "${EPREFIX}/usr/share/hunspell" "${S}/dependencies/dictionaries"
 
-	eprefixify src/cpp/core/libclang/LibClang.cpp
+	if use panmirror;then
+		pushd src/gwt/lib/quarto > /dev/null || die
+		eapply panmirror.patch
+
+		local esbuild_version="$(esbuild --version)" || die
+		sed -i "s/0.15.18/${esbuild_version}/g" \
+			node_modules/vite/node_modules/esbuild/lib/main.js || die
+
+		ln -s "${EPREFIX}/usr/bin/esbuild" node_modules/vite/node_modules/esbuild-linux-64/bin/esbuild || die
+		ln -s "${EPREFIX}/usr/bin/esbuild" node_modules/esbuild-linux-64/bin/esbuild || die
+		popd
+	fi
 
 	# make sure icons and mime stuff are with prefix
 	sed -i -e "s:/usr:${EPREFIX}/usr:g" \
@@ -442,6 +447,8 @@ src_prepare() {
 
 	cmake_src_prepare
 	java-pkg-2_src_prepare
+
+	eprefixify src/cpp/core/libclang/LibClang.cpp
 }
 src_configure() {
 	export PACKAGE_OS="Gentoo"
@@ -452,15 +459,16 @@ src_configure() {
 		local flower="$(<${S}/version/RELEASE)"
 		flower=${flower,,}
 		local base_commit=$(< ${S}/version/base_commit/${flower/ /-}.BASE_COMMIT)
-		my_pv+="$(git rev-list ${base_commit}..HEAD --count)"
+		my_pv+="$(git rev-list ${base_commit}..HEAD --count || echo "999")"
 		build_type="-$(<${S}/version/BUILDTYPE)"
 		export GIT_COMMIT=${EGIT_VERSION}
+	else
+		export GIT_COMMIT="$(gunzip -c "${DISTDIR}/rstudio-${PV}.tar.gz" |git get-tar-commit-id)"
 	fi
 	export RSTUDIO_VERSION_MAJOR=$(ver_cut 1 ${my_pv})
 	export RSTUDIO_VERSION_MINOR=$(ver_cut 2 ${my_pv})
 	export RSTUDIO_VERSION_PATCH=$(ver_cut 3 ${my_pv})
 	export RSTUDIO_VERSION_SUFFIX="${build_type,,}+$(ver_cut 4 ${my_pv})"
-	[[ -n "${DAILY_COMMIT}" ]] && export GIT_COMMIT=${DAILY_COMMIT}
 
 	CMAKE_BUILD_TYPE=$(usex debug Debug Release) #RelWithDebInfo Release
 	echo "cache=${WORKDIR}/node_cache" > "${S}/src/node/desktop/.npmrc"
@@ -537,6 +545,28 @@ src_configure() {
 
 }
 src_compile() {
+	local gyp_rebuild_folders=""
+	if use panmirror;then
+		gyp_rebuild_folders+=" $(find src/gwt/lib/quarto  -name binding.gyp |sed "s/\/binding.gyp//")"
+		pushd src/gwt/lib/quarto/apps/panmirror >/dev/null || die
+		PANMIRROR_OUTDIR="${S}/src/gwt/www/js/panmirror" yarn build || die
+		popd
+	fi
+	if use electron; then
+		gyp_rebuild_folders+=" $(find src/node/desktop  -name binding.gyp |sed "s/\/binding.gyp//")"
+		pushd src/node/desktop >/dev/null || die
+		einfo "Running ts-node"
+		npx ts-node scripts/generate.ts || die "Failed to run ts-node"
+		popd
+	fi
+	for folder in ${gyp_rebuild_folders};do
+		einfo "Rebuilding ${folder}"
+		pushd ${folder}> /dev/null || die
+		HOME="${WORKDIR}" XDG_CACHE_HOME="${WORKDIR}/.cache" \
+			"${EPREFIX}/usr/$(get_libdir)/node_modules/npm/bin/node-gyp-bin/node-gyp" rebuild \
+			|| die "Failed to rebuild ${folder}"
+		popd
+	done
 	export EANT_BUILD_XML="src/gwt/build.xml"
 	export EANT_BUILD_TARGET="build"
 	export ANT_OPTS="-Duser.home=${T} -Djava.util.prefs.userRoot=${T}"
@@ -596,11 +626,6 @@ src_test() {
 }
 src_install() {
 	cmake_src_install
-	if use panmirror;then
-		insinto /usr/share/rstudio/www/js
-		doins -r "${WORKDIR}/panmirror"
-	fi
-
 	if use server ;then
 		dopamd src/cpp/server/extras/pam/rstudio
 		newinitd "${FILESDIR}/rstudio-server" rstudio-server
@@ -608,28 +633,6 @@ src_install() {
 		doins "${FILESDIR}/rserver.conf" "${FILESDIR}/rsession.conf"
 	fi
 	if use electron;then
-		#install electron files
-		insinto /usr/share/${PN}
-		doins -r "${WORKDIR}/electron-${ELECTRON_VERSION}/"*
-		fperms +x /usr/share/rstudio/rstudio
-		fperms +x /usr/share/rstudio/{chrome-sandbox,chrome_crashpad_handler}
-		fperms +x /usr/share/rstudio/{libEGL.so,libffmpeg.so,libGLESv2.so,libvk_swiftshader.so,libvulkan.so.1}
-
-		#install electron app files
-		insinto /usr/share/${PN}/resources/app
-
-		#install prepared js
-		doins -r "${WORKDIR}/electron/.webpack"
-		doins "${WORKDIR}/electron/package.json"
-
-		#install new binaries
-		insinto /usr/share/${PN}/resources/app/.webpack/main/native_modules
-		doins "${S}/src/node/desktop/build/Release/"{desktop,dock}.node
-
-		insinto /usr/share/${PN}/resources/app/.webpack/main/native_modules/build/Release
-		doins "${S}/src/node/desktop/node_modules/unix-dgram/build/Release/unix_dgram.node"
-		doins "${S}/src/node/desktop/node_modules/node-system-fonts/build/Release/system-fonts.node"
-
 		mkdir -p "${ED}/usr/bin"
 		dosym -r /usr/share/${PN}/rstudio /usr/bin/rstudio
 		#quarto-cli wants this see:src/command/render/render-shared.ts
@@ -637,7 +640,8 @@ src_install() {
 		if use server; then
 			dosym -r /usr/share/${PN}/resources/app/bin/rserver /usr/bin/rserver
 		fi
-		dodoc "${WORKDIR}/electron-${ELECTRON_VERSION}/"{LICENSE,LICENSES.chromium.html}
+		dodoc "${ED}/usr/share/rstudio/"{LICENSE,LICENSES.chromium.html}
+		rm "${ED}/usr/share/rstudio/"{LICENSE,LICENSES.chromium.html} || die
 	elif use qt5 || use qt6 ; then
 		# This binary name is much to generic, so we'll change it
 		mv "${ED}/usr/bin/diagnostics" "${ED}/usr/bin/${PN}-diagnostics" || die "Failed to rename diagnostics"
