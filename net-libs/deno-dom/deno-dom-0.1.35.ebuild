@@ -90,7 +90,7 @@ S=${WORKDIR}/${PN}-${MY_PV}
 # use cargo-license for a more accurate license picture
 LICENSE="MIT Apache-2.0 Apache-2.0 Apache-2.0-with-LLVM-exceptions Boost-1.0 MIT Unicode-DFS-2016"
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 
 BDEPEND="
 	test? (
