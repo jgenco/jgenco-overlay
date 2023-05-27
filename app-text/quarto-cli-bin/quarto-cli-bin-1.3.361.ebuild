@@ -9,7 +9,7 @@ SRC_URI="https://github.com/quarto-dev/quarto-cli/releases/download/v${PV}/quart
 
 LICENSE="GPL-2+ MIT ZLIB BSD Apache-2.0 ISC || ( MIT GPL-3 )"
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 
 DEPEND="
 	app-arch/unzip
