@@ -84,7 +84,9 @@ if [[ ${BUNDLED} == "FALSE" ]];then
 	compare_file $(< ${QUARTO_SHARE_PATH}/version)  "${QUARTO_DIR}/quarto-version"
 fi
 QUARTO_DENO_OPTIONS+=" ${RELOAD_DENO_CACHE}"
+export DENO_TLS_CA_STORE=system,mozilla
 export DENO_NO_UPDATE_CHECK=1
+#echo ${PWD}
 #echo ${QUARTO_ACTION} ${QUARTO_DENO_OPTIONS} ${QUARTO_DENO_EXTRA_OPTIONS} "${QUARTO_IMPORT_ARGMAP}" "${QUARTO_TARGET}" "$@"
 #echo ${@}
 if [ "$QUARTO_TS_PROFILE" != "" ]; then
