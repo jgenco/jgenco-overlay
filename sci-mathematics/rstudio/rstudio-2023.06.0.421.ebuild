@@ -6,8 +6,8 @@ EAPI=8
 inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm prefix
 
 ELECTRON_VERSION="23.3.0"
-DAILY_COMMIT="de89d550f6c7549387728cbf939bd65e37fb4810"
-DAILY_QUARTO_COMMIT="2e8a2f57d095ca9fc1b1c8314bdd880ff77615c5"
+#DAILY_COMMIT="583b465ecc45e60ee9de085148cd2f9741cc5214"
+DAILY_QUARTO_COMMIT="01345470a8f80becb1e128be24f59d2c34fb3a85"
 
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
@@ -273,7 +273,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2022.07.0.548-package-build.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-pandoc_path_fix.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
-	"${FILESDIR}/${PN}-9999-node_electron_cmake.patch"
+	"${FILESDIR}/${PN}-2023.06.0.421-node_electron_cmake.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-reenable-sandbox.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-libfmt.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-hunspell.patch"
