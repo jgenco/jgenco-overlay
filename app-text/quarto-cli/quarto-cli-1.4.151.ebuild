@@ -308,6 +308,7 @@ PATCHES="
 "
 DEPEND="
 	app-arch/unzip
+	>=app-text/typst-0.5.0
 	|| (
 		(
 			>=app-text/pandoc-${PANDOC_VERSION}
