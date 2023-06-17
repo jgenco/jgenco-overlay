@@ -5,9 +5,10 @@ EAPI=8
 
 inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm prefix
 
+P_PREBUILT="${PN}-2023.06.0.421"
 ELECTRON_VERSION="23.3.0"
-DAILY_COMMIT="de89d550f6c7549387728cbf939bd65e37fb4810"
-DAILY_QUARTO_COMMIT="2e8a2f57d095ca9fc1b1c8314bdd880ff77615c5"
+DAILY_COMMIT="c485373ec970832fbdb1476e59ad29a6653fac17"
+DAILY_QUARTO_COMMIT="01345470a8f80becb1e128be24f59d2c34fb3a85"
 
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
@@ -113,12 +114,10 @@ HOMEPAGE="
 	https://posit.co/products/open-source/rstudio/
 	https://github.com/rstudio/rstudio/"
 
-P_PREBUILT=${P}
-
 if [[ "${PV}" == *9999 ]];then
-	P_PREBUILT="${PN}-2023.05.0.375"
 	inherit git-r3
 else
+	P_PREBUILT=${P}
 	if [[ ! -n "${DAILY_COMMIT}" ]];then
 		SRC_URI="https://github.com/rstudio/rstudio/archive/v$(ver_rs 3 "+").tar.gz -> ${P}.tar.gz "
 		S="${WORKDIR}/${PN}-$(ver_rs 3 "-")"
@@ -273,7 +272,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2022.07.0.548-package-build.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-pandoc_path_fix.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
-	"${FILESDIR}/${PN}-9999-node_electron_cmake.patch"
+	"${FILESDIR}/${PN}-2023.06.0.421-node_electron_cmake.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-reenable-sandbox.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-libfmt.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-hunspell.patch"
@@ -320,7 +319,8 @@ src_unpack() {
 		pushd "${S}/src/gwt/lib" > /dev/null|| die
 		if [[ "${PV}" == *9999 ]];then
 			EGIT_REPO_URI="https://github.com/quarto-dev/quarto"
-			EGIT_BRANCH="main"
+			#dependencies/common/install-panmirror
+			EGIT_BRANCH="release/rstudio-mountain-hydrangea"
 			EGIT_CHECKOUT_DIR="${S}/src/gwt/lib/quarto"
 			git-r3_src_unpack
 		else
@@ -526,7 +526,7 @@ src_configure() {
 
 	if use doc; then
 		#if docs/news is built remove "_ga-" lines from  docs/news/_quarto.yml
-		sed -i "/google_analytics.html/d" docs/user/rstudio/_quarto.yml \
+		sed -i "/_ga-\S\+-tag.html/d" docs/user/rstudio/_quarto.yml \
 			|| die "Failed to remove google_analytics include"
 		echo -e "buildType: ${build_type/-/}\nversion: ${my_pv}" > docs/user/rstudio/_variables.yml ||
 			die "Failed to create _variables.yml"
@@ -548,9 +548,6 @@ src_compile() {
 	local gyp_rebuild_folders=""
 	if use panmirror;then
 		gyp_rebuild_folders+=" $(find src/gwt/lib/quarto  -name binding.gyp |sed "s/\/binding.gyp//")"
-		pushd src/gwt/lib/quarto/apps/panmirror >/dev/null || die
-		PANMIRROR_OUTDIR="${S}/src/gwt/www/js/panmirror" yarn build || die
-		popd
 	fi
 	if use electron; then
 		gyp_rebuild_folders+=" $(find src/node/desktop  -name binding.gyp |sed "s/\/binding.gyp//")"
@@ -567,6 +564,11 @@ src_compile() {
 			|| die "Failed to rebuild ${folder}"
 		popd
 	done
+	if use panmirror;then
+		pushd src/gwt/lib/quarto/apps/panmirror >/dev/null || die
+		PANMIRROR_OUTDIR="${S}/src/gwt/www/js/panmirror" yarn build || die
+		popd
+	fi
 	export EANT_BUILD_XML="src/gwt/build.xml"
 	export EANT_BUILD_TARGET="build"
 	export ANT_OPTS="-Duser.home=${T} -Djava.util.prefs.userRoot=${T}"
