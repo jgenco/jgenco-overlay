@@ -14,8 +14,10 @@ CRATES="
 {%- endblock %}
 
 IAI_COMMIT="3f0f92736408ebce6545808b98e0cb2aea89b7dd"
+SVG2PDF_COMMIT="35f4bb87fb677473661c6d12919e01a6d64a716d"
 declare -A GIT_CRATES=(
 	[iai]="https://github.com/reknih/iai;${IAI_COMMIT};iai-%commit%"
+	[svg2pdf]="https://github.com/typst/svg2pdf;${SVG2PDF_COMMIT};svg2pdf-%commit%"
 )
 #NOTE: update typst.tera for long term changes
 {#
@@ -50,7 +52,9 @@ KEYWORDS={%- block keyword -%}"~amd64"{%- endblock %}
 {% block variables %}
 DEPEND=""
 RDEPEND="${DEPEND}"
-BDEPEND=""
+BDEPEND="
+	>=virtual/rust-1.70.0
+"
 
 DOCS=(ARCHITECTURE.md LICENSE NOTICE README.md docs/src/general/changelog.md)
 
@@ -66,6 +70,9 @@ QA_FLAGS_IGNORED="usr/bin/${PN}"
 src_compile() {
 	mkdir artifacts || die
 	export GEN_ARTIFACTS="${S}/artifacts"
+	local typst_hash="$(gunzip -c "${DISTDIR}/typst-${PV}.tar.gz" |git get-tar-commit-id)"
+	assert "Failed to get commit hash"
+	export TYPST_VERSION="${PV} (${typst_hash:0:8})"
 	cargo_src_compile
 }
 src_test() {
@@ -73,7 +80,7 @@ src_test() {
 }
 
 src_install() {
-	dobin target/release/typst
+	cargo_src_install --path cli
 	#fish and zsh also available
 	newbashcomp artifacts/typst.bash typst
 	doman artifacts/*.1
