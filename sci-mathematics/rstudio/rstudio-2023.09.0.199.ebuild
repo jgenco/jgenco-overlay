@@ -5,10 +5,10 @@ EAPI=8
 
 inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm prefix
 
-P_PREBUILT="${PN}-2023.06.0.421"
-ELECTRON_VERSION="23.3.0"
-DAILY_COMMIT="c485373ec970832fbdb1476e59ad29a6653fac17"
-DAILY_QUARTO_COMMIT="01345470a8f80becb1e128be24f59d2c34fb3a85"
+P_PREBUILT="${PN}-2023.09.0.199"
+ELECTRON_VERSION="25.2.0"
+DAILY_COMMIT="93434d9a8ed4b5da8da74f16c5f624770f95e300"
+DAILY_QUARTO_COMMIT="d12a2160ac84c5f7f3dc1be9057b9b4b526c4f3b"
 
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
@@ -177,7 +177,7 @@ RDEPEND="
 		app-text/pandoc-bin
 	)
 	app-text/hunspell:=
-	quarto? ( >=app-text/quarto-cli-1.2.269 )
+	quarto? ( >=app-text/quarto-cli-1.3.433 )
 	=dev-cpp/yaml-cpp-0.7.0-r2:=
 	>=dev-lang/R-3.3.0
 	>=dev-libs/boost-1.78:=
@@ -246,7 +246,7 @@ RDEPEND="
 
 DEPEND="${RDEPEND}"
 BDEPEND="
-	doc? ( >=app-text/quarto-cli-1.2.269 )
+	doc? ( >=app-text/quarto-cli-1.3.433 )
 	dev-cpp/websocketpp
 	dev-libs/rapidjson
 	dev-java/aopalliance:1
@@ -565,6 +565,7 @@ src_compile() {
 		popd
 	done
 	if use panmirror;then
+		einfo "Building Panmirror"
 		pushd src/gwt/lib/quarto/apps/panmirror >/dev/null || die
 		PANMIRROR_OUTDIR="${S}/src/gwt/www/js/panmirror" yarn build || die
 		popd
