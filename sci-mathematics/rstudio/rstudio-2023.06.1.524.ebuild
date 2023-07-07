@@ -113,7 +113,7 @@ HOMEPAGE="
 	https://posit.co/products/open-source/rstudio/
 	https://github.com/rstudio/rstudio/"
 
-P_PREBUILT=${P}
+P_PREBUILT="rstudio-2023.06.0.421"
 
 if [[ "${PV}" == *9999 ]];then
 	P_PREBUILT="${PN}-2023.05.0.375"
@@ -126,7 +126,7 @@ else
 		SRC_URI="https://github.com/rstudio/rstudio/archive/${DAILY_COMMIT}.tar.gz -> ${P}.tar.gz "
 		S="${WORKDIR}/${PN}-${DAILY_COMMIT}"
 	fi
-	SRC_URI+="panmirror? ( https://github.com/quarto-dev/quarto/archive/${DAILY_QUARTO_COMMIT}.tar.gz -> quarto-${PV}.tar.gz ) "
+	SRC_URI+="panmirror? ( https://github.com/quarto-dev/quarto/archive/${DAILY_QUARTO_COMMIT}.tar.gz -> quarto-${P_PREBUILT/rstudio-/}.tar.gz ) "
 fi
 
 build_r_src_uri() {
@@ -324,7 +324,7 @@ src_unpack() {
 			EGIT_CHECKOUT_DIR="${S}/src/gwt/lib/quarto"
 			git-r3_src_unpack
 		else
-			unpack quarto-${PV}.tar.gz
+			unpack quarto-${P_PREBUILT/rstudio-/}.tar.gz
 			mv quarto-${DAILY_QUARTO_COMMIT} quarto || die
 		fi
 		cd "${S}/src/gwt/lib/quarto" || die
@@ -526,7 +526,7 @@ src_configure() {
 
 	if use doc; then
 		#if docs/news is built remove "_ga-" lines from  docs/news/_quarto.yml
-		sed -i "/google_analytics.html/d" docs/user/rstudio/_quarto.yml \
+		sed -i "/_ga-\S\+-tag.html/d" docs/user/rstudio/_quarto.yml \
 			|| die "Failed to remove google_analytics include"
 		echo -e "buildType: ${build_type/-/}\nversion: ${my_pv}" > docs/user/rstudio/_variables.yml ||
 			die "Failed to create _variables.yml"
