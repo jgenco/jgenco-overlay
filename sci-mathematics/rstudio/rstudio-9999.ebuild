@@ -5,10 +5,10 @@ EAPI=8
 
 inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm prefix
 
-P_PREBUILT="${PN}-2023.06.0.421"
-ELECTRON_VERSION="23.3.0"
-DAILY_COMMIT="c485373ec970832fbdb1476e59ad29a6653fac17"
-DAILY_QUARTO_COMMIT="01345470a8f80becb1e128be24f59d2c34fb3a85"
+P_PREBUILT="${PN}-2023.09.0.199"
+ELECTRON_VERSION="25.2.0"
+DAILY_COMMIT="93434d9a8ed4b5da8da74f16c5f624770f95e300"
+DAILY_QUARTO_COMMIT="d12a2160ac84c5f7f3dc1be9057b9b4b526c4f3b"
 
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
@@ -117,7 +117,7 @@ HOMEPAGE="
 if [[ "${PV}" == *9999 ]];then
 	inherit git-r3
 else
-	P_PREBUILT=${P}
+	#P_PREBUILT=${P}
 	if [[ ! -n "${DAILY_COMMIT}" ]];then
 		SRC_URI="https://github.com/rstudio/rstudio/archive/v$(ver_rs 3 "+").tar.gz -> ${P}.tar.gz "
 		S="${WORKDIR}/${PN}-$(ver_rs 3 "-")"
@@ -125,7 +125,7 @@ else
 		SRC_URI="https://github.com/rstudio/rstudio/archive/${DAILY_COMMIT}.tar.gz -> ${P}.tar.gz "
 		S="${WORKDIR}/${PN}-${DAILY_COMMIT}"
 	fi
-	SRC_URI+="panmirror? ( https://github.com/quarto-dev/quarto/archive/${DAILY_QUARTO_COMMIT}.tar.gz -> quarto-${PV}.tar.gz ) "
+	SRC_URI+="panmirror? ( https://github.com/quarto-dev/quarto/archive/${DAILY_QUARTO_COMMIT}.tar.gz -> quarto-${P_PREBUILT/rstudio-}.tar.gz ) "
 fi
 
 build_r_src_uri() {
@@ -177,7 +177,7 @@ RDEPEND="
 		app-text/pandoc-bin
 	)
 	app-text/hunspell:=
-	quarto? ( >=app-text/quarto-cli-1.2.269 )
+	quarto? ( >=app-text/quarto-cli-1.3.433 )
 	=dev-cpp/yaml-cpp-0.7.0-r2:=
 	>=dev-lang/R-3.3.0
 	>=dev-libs/boost-1.78:=
@@ -246,7 +246,7 @@ RDEPEND="
 
 DEPEND="${RDEPEND}"
 BDEPEND="
-	doc? ( >=app-text/quarto-cli-1.2.269 )
+	doc? ( >=app-text/quarto-cli-1.3.433 )
 	dev-cpp/websocketpp
 	dev-libs/rapidjson
 	dev-java/aopalliance:1
@@ -320,11 +320,11 @@ src_unpack() {
 		if [[ "${PV}" == *9999 ]];then
 			EGIT_REPO_URI="https://github.com/quarto-dev/quarto"
 			#dependencies/common/install-panmirror
-			EGIT_BRANCH="release/rstudio-mountain-hydrangea"
+			EGIT_BRANCH="main"
 			EGIT_CHECKOUT_DIR="${S}/src/gwt/lib/quarto"
 			git-r3_src_unpack
 		else
-			unpack quarto-${PV}.tar.gz
+			unpack quarto-${P_PREBUILT/rstudio-}.tar.gz
 			mv quarto-${DAILY_QUARTO_COMMIT} quarto || die
 		fi
 		cd "${S}/src/gwt/lib/quarto" || die
@@ -565,6 +565,7 @@ src_compile() {
 		popd
 	done
 	if use panmirror;then
+		einfo "Building Panmirror"
 		pushd src/gwt/lib/quarto/apps/panmirror >/dev/null || die
 		PANMIRROR_OUTDIR="${S}/src/gwt/www/js/panmirror" yarn build || die
 		popd
