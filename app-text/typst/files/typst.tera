@@ -46,7 +46,7 @@ SRC_URI={%- block src_uri -%}{% raw -%}"
 # License set may be more restrictive as OR is not respected
 # use cargo-license for a more accurate license picture
 # webpki = ISC
-LICENSE={%- block license -%}"{{ license }}"{%- endblock %}
+LICENSE={%- block license -%}"{{ license }} SSLeay openssl"{%- endblock %}
 SLOT={%- block slot -%}"0"{%- endblock %}
 KEYWORDS={%- block keyword -%}"~amd64"{%- endblock %}
 {% block variables %}
