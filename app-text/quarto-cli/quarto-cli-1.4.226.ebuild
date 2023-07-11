@@ -296,7 +296,7 @@ SRC_URI+="
 	test? ( $(build_r_src_uri ${RENV_TEST_PKGS} ) )
 "
 
-PANDOC_VERSION="3.1.2"
+PANDOC_VERSION="3.1.5"
 
 LICENSE="GPL-2+ MIT ZLIB BSD Apache-2.0 ISC || ( MIT GPL-3 ) Unlicense 0BSD"
 SLOT="0"
@@ -308,7 +308,7 @@ PATCHES="
 "
 DEPEND="
 	app-arch/unzip
-	>=app-text/typst-0.5.0
+	>=app-text/typst-0.6.0
 	|| (
 		(
 			>=app-text/pandoc-${PANDOC_VERSION}

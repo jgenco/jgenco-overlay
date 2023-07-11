@@ -5,10 +5,9 @@ This patch makes quarto-cli find all of them in QUARTO_BIN_PATH
 causing them to fail.
 tests/smoke/extensions/extension-render-journals.test.ts:
 If await quarto([...]); fails Deno.chdir(wd); doesn't seem to fix the problem
-
 --- a/src/command/render/render-shared.ts
 +++ b/src/command/render/render-shared.ts
-@@ -194,7 +194,7 @@ export async function rswURL(port: number, path: string) {
+@@ -193,7 +193,7 @@ export async function rswURL(port: number, path: string) {
  async function rswPortToken(port: number) {
    const result = await execProcess(
      {
@@ -19,27 +18,27 @@ If await quarto([...]); fails Deno.chdir(wd); doesn't seem to fix the problem
      },
 --- a/src/core/dart-sass.ts
 +++ b/src/core/dart-sass.ts
-@@ -15,7 +15,7 @@ import { existsSync } from "fs/mod.ts";
+@@ -14,7 +14,7 @@ import { existsSync } from "fs/mod.ts";
  import { warnOnce } from "./log.ts";
  
  export function dartSassInstallDir() {
--  return toolsPath("dart-sass");
-+  return toolsPath("");
+-  return architectureToolsPath("dart-sass");
++  return architectureToolsPath("");
  }
  
  export async function dartSassVersion() {
-@@ -67,7 +67,7 @@ export async function dartCommand(args: string[]) {
+@@ -66,7 +66,7 @@ export async function dartCommand(args: string[]) {
      }
  
      const command = Deno.build.os === "windows" ? "sass.bat" : "sass";
--    return toolsPath(join("dart-sass", command));
-+    return toolsPath(command);
+-    return architectureToolsPath(join("dart-sass", command));
++    return architectureToolsPath(command);
    };
    const sass = resolvePath();
  
 --- a/src/core/devconfig.ts
 +++ b/src/core/devconfig.ts
-@@ -69,8 +69,7 @@ export function writeDevConfig(config: DevConfig, binPath: string) {
+@@ -71,8 +71,7 @@ export function writeDevConfig(config: DevConfig, binPath: string) {
  }
  
  export function readInstalledDevConfig(): DevConfig | null {
@@ -59,7 +58,7 @@ If await quarto([...]); fails Deno.chdir(wd); doesn't seem to fix the problem
    binPath: () => getenv("QUARTO_BIN_PATH"),
    toolsPath: () => join(getenv("QUARTO_BIN_PATH"), "tools"),
    sharePath: () => getenv("QUARTO_SHARE_PATH"),
-@@ -104,7 +105,7 @@ function terminatePreview(reason: string, cleanup?: VoidFunction) {
+@@ -108,7 +109,7 @@ function terminatePreview(reason: string, cleanup?: VoidFunction) {
  }
  
  function quartoSrcDir() {
@@ -70,7 +69,18 @@ If await quarto([...]); fails Deno.chdir(wd); doesn't seem to fix the problem
  function buildPreviewJs(srcDir: string, cleanup?: VoidFunction) {
 --- a/src/core/resources.ts
 +++ b/src/core/resources.ts
-@@ -67,7 +67,7 @@ export function toolsPath(binary: string): string {
+@@ -29,9 +29,7 @@ export function formatResourcePath(format: string, resource: string) {
+ }
+ 
+ export function architectureToolsPath(path: string) {
+-  const arch = Deno.build.arch;
+-  const archDir = join(arch, path);
+-  return toolsPath(archDir);
++  return toolsPath(path);
+ }
+ 
+ export function toolsPath(binary: string): string {
+@@ -72,7 +70,7 @@ export function toolsPath(binary: string): string {
      }
    }
  
@@ -94,7 +104,7 @@ If await quarto([...]); fails Deno.chdir(wd); doesn't seem to fix the problem
        await initDenoDom();
        const runTest = !test.context.prereq || await test.context.prereq();
        if (runTest) {
-@@ -192,7 +198,7 @@ export function test(test: TestDescriptor) {
+@@ -197,7 +203,7 @@ export function test(test: TestDescriptor) {
              ? fromFileUrl(context.origin)
              : (new URL(context.origin)).pathname;
  
