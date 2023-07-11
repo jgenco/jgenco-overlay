@@ -65,7 +65,6 @@ CRATES="
 	displaydoc-0.2.4
 	ecow-0.1.1
 	either-1.8.1
-	elsa-1.8.1
 	enum-ordinalize-3.1.13
 	env_logger-0.10.0
 	errno-0.3.1
@@ -189,17 +188,21 @@ CRATES="
 	regex-syntax-0.7.1
 	resvg-0.32.0
 	rgb-0.8.36
+	ring-0.16.20
 	roff-0.2.1
 	rosvgtree-0.3.0
 	roxmltree-0.18.0
 	rustc-hash-1.1.0
 	rustc_version-0.4.0
 	rustix-0.37.19
+	rustls-0.21.2
+	rustls-webpki-0.100.1
 	rustversion-1.0.12
 	rustybuzz-0.7.0
 	ryu-1.0.13
 	same-file-1.0.6
 	scopeguard-1.1.0
+	sct-0.7.0
 	semver-1.0.17
 	serde-1.0.163
 	serde_derive-1.0.163
@@ -212,6 +215,7 @@ CRATES="
 	siphasher-0.3.10
 	slotmap-1.0.6
 	smallvec-1.10.0
+	spin-0.5.2
 	stable_deref_trait-1.2.0
 	stacker-0.1.15
 	stderrlog-0.5.4
@@ -227,6 +231,7 @@ CRATES="
 	synstructure-0.12.6
 	syntect-5.0.0
 	tap-1.0.1
+	tar-0.4.38
 	tempfile-3.5.0
 	termcolor-1.1.3
 	textwrap-0.16.0
@@ -270,6 +275,8 @@ CRATES="
 	unicode-xid-0.2.4
 	unicode_names2-0.6.0
 	unscanny-0.1.0
+	untrusted-0.7.1
+	ureq-2.7.1
 	url-2.3.1
 	usvg-0.32.0
 	usvg-parser-0.32.0
@@ -286,6 +293,8 @@ CRATES="
 	wasm-bindgen-macro-0.2.86
 	wasm-bindgen-macro-support-0.2.86
 	wasm-bindgen-shared-0.2.86
+	web-sys-0.3.63
+	webpki-roots-0.23.1
 	weezl-0.1.7
 	wild-2.1.0
 	winapi-0.3.9
@@ -314,6 +323,7 @@ CRATES="
 	winnow-0.4.6
 	writeable-0.5.2
 	wyz-0.5.1
+	xattr-0.2.3
 	xmlparser-0.13.5
 	xmlwriter-0.1.0
 	xmp-writer-0.1.0
@@ -356,7 +366,7 @@ SRC_URI="
 # License set may be more restrictive as OR is not respected
 # use cargo-license for a more accurate license picture
 # webpki = ISC
-LICENSE="0BSD Apache-2.0 Apache-2.0-with-LLVM-exceptions Artistic-2 BSD BSD-2 Boost-1.0 CC0-1.0 CDDL ISC MIT MPL-2.0 Unicode-DFS-2016 Unlicense ZLIB"
+LICENSE="0BSD Apache-2.0 Apache-2.0-with-LLVM-exceptions Artistic-2 BSD BSD-2 Boost-1.0 CC0-1.0 CDDL ISC MIT MPL-2.0 Unicode-DFS-2016 Unlicense ZLIB SSLeay openssl"
 SLOT="0"
 KEYWORDS="~amd64"
 
