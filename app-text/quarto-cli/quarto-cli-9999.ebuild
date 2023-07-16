@@ -295,7 +295,7 @@ SRC_URI+="
 	test? ( $(build_r_src_uri ${RENV_TEST_PKGS} ) )
 "
 
-PANDOC_VERSION="3.1.2"
+PANDOC_VERSION="3.1.5"
 
 LICENSE="GPL-2+ MIT ZLIB BSD Apache-2.0 ISC || ( MIT GPL-3 ) Unlicense 0BSD"
 SLOT="0"
@@ -307,6 +307,7 @@ PATCHES="
 "
 DEPEND="
 	app-arch/unzip
+	>=app-text/typst-0.6.0
 	|| (
 		(
 			>=app-text/pandoc-${PANDOC_VERSION}
@@ -473,6 +474,7 @@ src_compile() {
 	if has_version  ">=app-shells/zsh-4.3.5";then
 		./package/pkg-working/bin/quarto completions zsh > _quarto || die "Failed to build zsh completion"
 	fi
+	rm package/pkg-working/share/man -r || die
 	use test && install_r_packages ${RENV_TEST_PKGS}
 }
 src_test() {
@@ -531,6 +533,9 @@ src_install() {
 		insinto /usr/share/zsh/site-functions
 		doins _quarto
 	fi
+
+	mv src/resources/man/quarto{-man.man,.1} || die
+	doman src/resources/man/quarto.1
 	einstalldocs
 }
 pkg_postinst() {
