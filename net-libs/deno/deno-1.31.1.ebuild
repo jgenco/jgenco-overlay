@@ -613,6 +613,11 @@ src_prepare() {
 	sed -i  "/print_gn_args(&gn_out);/d" build.rs || die "Failed to rm print_gn_args"
 	popd > /dev/null
 
+	pushd "${ECARGO_VENDOR}/$(find_crate ^dprint-plugin-json)" > /dev/null || die "dprint-plugin-json folder not found"
+	eapply "${FILESDIR}/dprint-plugin-json-0.17.0_lifetime.patch"
+	popd > /dev/null
+
+
 	default
 }
 src_compile() {
