@@ -570,7 +570,7 @@ KEYWORDS="amd64"
 BDEPEND="
 	dev-util/gn
 	dev-util/ninja
-	>=virtual/rust-1.60.0
+	>=virtual/rust-1.60.0 <virtual/rust-1.70
 	test? (
 		net-misc/curl
 	)
@@ -612,11 +612,6 @@ src_prepare() {
 	#https://github.com/denoland/rusty_v8/pull/1209
 	sed -i  "/print_gn_args(&gn_out);/d" build.rs || die "Failed to rm print_gn_args"
 	popd > /dev/null
-
-	pushd "${ECARGO_VENDOR}/$(find_crate ^dprint-plugin-json)" > /dev/null || die "dprint-plugin-json folder not found"
-	eapply "${FILESDIR}/dprint-plugin-json-0.17.0_lifetime.patch"
-	popd > /dev/null
-
 
 	default
 }
