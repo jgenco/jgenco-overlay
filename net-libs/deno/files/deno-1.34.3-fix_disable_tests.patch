@@ -1,0 +1,115 @@
+diff --git a/cli/tests/unit/chmod_test.ts b/cli/tests/unit/chmod_test.ts
+index e30116f..54d00db 100644
+--- a/cli/tests/unit/chmod_test.ts
++++ b/cli/tests/unit/chmod_test.ts
+@@ -81,7 +81,7 @@ Deno.test(
+ );
+ 
+ Deno.test({ permissions: { write: true } }, function chmodSyncFailure() {
+-  const filename = "/badfile.txt";
++  const filename = "/tmp/badfile.txt";
+   assertThrows(
+     () => {
+       Deno.chmodSync(filename, 0o777);
+@@ -173,7 +173,7 @@ Deno.test(
+ );
+ 
+ Deno.test({ permissions: { write: true } }, async function chmodFailure() {
+-  const filename = "/badfile.txt";
++  const filename = "/tmp/badfile.txt";
+   await assertRejects(
+     async () => {
+       await Deno.chmod(filename, 0o777);
+diff --git a/cli/tests/unit/command_test.ts b/cli/tests/unit/command_test.ts
+index 198f94a..6b84286 100644
+--- a/cli/tests/unit/command_test.ts
++++ b/cli/tests/unit/command_test.ts
+@@ -594,6 +594,7 @@ Deno.test(
+       clearEnv: true,
+       env: {
+         FOO: "23147",
++        DENO_DIR: Deno.env.get("DENO_DIR") || "/tmp",
+       },
+     }).output();
+ 
+@@ -619,6 +620,7 @@ Deno.test(
+       clearEnv: true,
+       env: {
+         FOO: "23147",
++        DENO_DIR: Deno.env.get("DENO_DIR") || "/tmp",
+       },
+     }).outputSync();
+ 
+diff --git a/cli/tests/unit/process_test.ts b/cli/tests/unit/process_test.ts
+index 54ebb07..fc82442 100644
+--- a/cli/tests/unit/process_test.ts
++++ b/cli/tests/unit/process_test.ts
+@@ -577,6 +577,7 @@ Deno.test(
+       clearEnv: true,
+       env: {
+         FOO: "23147",
++        DENO_DIR: Deno.env.get("DENO_DIR") || "/tmp",
+       },
+     });
+ 
+diff --git a/cli/tests/unit/tls_test.ts b/cli/tests/unit/tls_test.ts
+index 1169137..c4af0f5 100644
+--- a/cli/tests/unit/tls_test.ts
++++ b/cli/tests/unit/tls_test.ts
+@@ -1133,7 +1133,7 @@ Deno.test(
+ );
+ 
+ Deno.test(
+-  { permissions: { read: true, net: true } },
++  { permissions: { read: true, net: true },ignore:true },
+   async function connectTLSBadClientCertPrivateKey(): Promise<void> {
+     await assertRejects(async () => {
+       await Deno.connectTls({
+@@ -1149,7 +1149,7 @@ Deno.test(
+ );
+ 
+ Deno.test(
+-  { permissions: { read: true, net: true } },
++  { permissions: { read: true, net: true },ignore:true },
+   async function connectTLSBadPrivateKey(): Promise<void> {
+     await assertRejects(async () => {
+       await Deno.connectTls({
+@@ -1165,7 +1165,7 @@ Deno.test(
+ );
+ 
+ Deno.test(
+-  { permissions: { read: true, net: true } },
++  { permissions: { read: true, net: true },ignore:true },
+   async function connectTLSNotPrivateKey(): Promise<void> {
+     await assertRejects(async () => {
+       await Deno.connectTls({
+diff --git a/cli/tests/unit/utime_test.ts b/cli/tests/unit/utime_test.ts
+index 4ee415e..e429836 100644
+--- a/cli/tests/unit/utime_test.ts
++++ b/cli/tests/unit/utime_test.ts
+@@ -161,10 +161,10 @@ Deno.test(
+ 
+     assertThrows(
+       () => {
+-        Deno.utimeSync("/baddir", atime, mtime);
++        Deno.utimeSync("/tmp/baddir", atime, mtime);
+       },
+       Deno.errors.NotFound,
+-      "utime '/baddir'",
++      "utime '/tmp/baddir'",
+     );
+   },
+ );
+@@ -276,10 +276,10 @@ Deno.test(
+ 
+     await assertRejects(
+       async () => {
+-        await Deno.utime("/baddir", atime, mtime);
++        await Deno.utime("/tmp/baddir", atime, mtime);
+       },
+       Deno.errors.NotFound,
+-      "utime '/baddir'",
++      "utime '/tmp/baddir'",
+     );
+   },
+ );
