@@ -574,7 +574,7 @@ KEYWORDS="~amd64"
 BDEPEND="
 	dev-util/gn
 	dev-util/ninja
-	>=virtual/rust-1.68.0
+	>=virtual/rust-1.68.0 <virtual/rust-1.70
 	test? (
 		net-misc/curl
 	)
@@ -612,10 +612,6 @@ src_prepare() {
 	eapply "${FILESDIR}/v8-0.43.1-lockfile.patch" \
 		"${FILESDIR}/v8-0.42.0-disable-auto-ccache.patch" \
 		"${FILESDIR}/v8-0.40.2-jobfix.patch"
-	popd > /dev/null
-
-	pushd "${ECARGO_VENDOR}/$(find_crate ^dprint-plugin-json)" > /dev/null || die "dprint-plugin-json folder not found"
-	eapply "${FILESDIR}/dprint-plugin-json-0.17.0_lifetime.patch"
 	popd > /dev/null
 
 	default
