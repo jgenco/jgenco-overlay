@@ -321,7 +321,7 @@ DEPEND="
 	dev-libs/libxml2
 	>=dev-util/esbuild-0.15.6
 	dev-vcs/git
-	>=net-libs/deno-1.33.0 <net-libs/deno-1.34.0
+	>=net-libs/deno-1.33.0 <net-libs/deno-1.35.0
 	~net-libs/deno-dom-0.1.35
 	sys-apps/which
 	x11-misc/xdg-utils
