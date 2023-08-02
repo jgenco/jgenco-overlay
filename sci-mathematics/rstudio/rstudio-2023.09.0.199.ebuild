@@ -252,12 +252,12 @@ BDEPEND="
 	dev-java/aopalliance:1
 	panmirror? (
 		dev-util/esbuild
-		>=net-libs/nodejs-18.14.2
+		>=net-libs/nodejs-18.14.2[npm] <net-libs/nodejs-20.3.0[npm]
 		sys-apps/yarn
 	)
 	electron? (
 		app-arch/unzip
-		>=net-libs/nodejs-18.14.2[npm]
+		>=net-libs/nodejs-18.14.2[npm] <net-libs/nodejs-20.3.0[npm]
 	)
 	dev-java/gin:2.1
 	dev-java/javax-inject
