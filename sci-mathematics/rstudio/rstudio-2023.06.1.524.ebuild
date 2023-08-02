@@ -164,7 +164,7 @@ LICENSE="
 	electron? ( MIT Apache-2.0  BSD 0BSD BSD-2 BSD CC-BY-3.0 CC-BY-4.0 CC0-1.0 ISC PSF-2.4 || ( AFL-2.1 BSD ) || ( BSD GPL-2 ) || ( Unlicense Apache-2.0 ) )
 "
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 
 RDEPEND="
 	server? (
@@ -253,12 +253,12 @@ BDEPEND="
 	dev-java/aopalliance:1
 	panmirror? (
 		dev-util/esbuild
-		>=net-libs/nodejs-18.14.2
+		>=net-libs/nodejs-18.14.2[npm] <net-libs/nodejs-20.3.0[npm]
 		sys-apps/yarn
 	)
 	electron? (
 		app-arch/unzip
-		>=net-libs/nodejs-18.14.2[npm]
+		>=net-libs/nodejs-18.14.2[npm] <net-libs/nodejs-20.3.0[npm]
 	)
 	dev-java/gin:2.1
 	dev-java/javax-inject
