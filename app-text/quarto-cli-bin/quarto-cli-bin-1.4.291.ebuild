@@ -54,7 +54,6 @@ src_install() {
 	dostrip -x ${install_dir}/bin/tools/${ARCH_FOLDER}/dart-sass/sass
 
 	fperms +x ${install_dir}/bin/quarto
-	fperms +x ${install_dir}/bin/tools/pandoc
 	for bin in ${QA_PREBUILT};do
 		fperms +x /${bin}
 	done
