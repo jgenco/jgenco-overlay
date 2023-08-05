@@ -5,10 +5,12 @@ EAPI=8
 
 inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm prefix
 
-P_PREBUILT="${PN}-2023.09.0.199"
+P_PREBUILT="${PN}-2023.09.0.301"
 ELECTRON_VERSION="25.2.0"
-DAILY_COMMIT="93434d9a8ed4b5da8da74f16c5f624770f95e300"
-DAILY_QUARTO_COMMIT="d12a2160ac84c5f7f3dc1be9057b9b4b526c4f3b"
+DAILY_COMMIT="28b64e17812f42b7a7ae52ce1527ad812727ccb7"
+QUARTO_COMMIT="e0c6b8a0a66d610791b0309e9b93b38a4736afdb"
+QUARTO_BRANCH="main"
+QUARTO_DATE="20230804"
 
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
@@ -125,7 +127,8 @@ else
 		SRC_URI="https://github.com/rstudio/rstudio/archive/${DAILY_COMMIT}.tar.gz -> ${P}.tar.gz "
 		S="${WORKDIR}/${PN}-${DAILY_COMMIT}"
 	fi
-	SRC_URI+="panmirror? ( https://github.com/quarto-dev/quarto/archive/${DAILY_QUARTO_COMMIT}.tar.gz -> quarto-${P_PREBUILT/rstudio-}.tar.gz ) "
+	SRC_URI+="panmirror? ( https://github.com/quarto-dev/quarto/archive/${QUARTO_COMMIT}.tar.gz -> quarto-${QUARTO_BRANCH/release\/}-${QUARTO_DATE}.tar.gz ) "
+
 fi
 
 build_r_src_uri() {
@@ -251,13 +254,13 @@ BDEPEND="
 	dev-libs/rapidjson
 	dev-java/aopalliance:1
 	panmirror? (
-		dev-util/esbuild
-		>=net-libs/nodejs-18.14.2
+		<dev-util/esbuild-0.17
+		>=net-libs/nodejs-18.14.2[npm] <net-libs/nodejs-20.3.0[npm]
 		sys-apps/yarn
 	)
 	electron? (
 		app-arch/unzip
-		>=net-libs/nodejs-18.14.2[npm]
+		>=net-libs/nodejs-18.14.2[npm] <net-libs/nodejs-20.3.0[npm]
 	)
 	dev-java/gin:2.1
 	dev-java/javax-inject
@@ -266,7 +269,6 @@ BDEPEND="
 "
 PATCHES=(
 	"${FILESDIR}/${PN}-2023.03.0-386-cmake-bundled-dependencies.patch"
-	"${FILESDIR}/${PN}-1.4.1717-fix-boost-version-check.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-resource-path.patch"
 	"${FILESDIR}/${PN}-1.4.1106-server-paths.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-package-build.patch"
@@ -319,13 +321,12 @@ src_unpack() {
 		pushd "${S}/src/gwt/lib" > /dev/null|| die
 		if [[ "${PV}" == *9999 ]];then
 			EGIT_REPO_URI="https://github.com/quarto-dev/quarto"
-			#dependencies/common/install-panmirror
-			EGIT_BRANCH="main"
+			EGIT_BRANCH="${QUARTO_BRANCH}"
 			EGIT_CHECKOUT_DIR="${S}/src/gwt/lib/quarto"
 			git-r3_src_unpack
 		else
-			unpack quarto-${P_PREBUILT/rstudio-}.tar.gz
-			mv quarto-${DAILY_QUARTO_COMMIT} quarto || die
+			unpack quarto-${QUARTO_BRANCH/release\/}-${QUARTO_DATE}.tar.gz
+			mv quarto-${QUARTO_COMMIT} quarto || die
 		fi
 		cd "${S}/src/gwt/lib/quarto" || die
 		unpack ${P_PREBUILT}-panmirror-node_modules.tar.xz
@@ -469,6 +470,8 @@ src_configure() {
 	export RSTUDIO_VERSION_MINOR=$(ver_cut 2 ${my_pv})
 	export RSTUDIO_VERSION_PATCH=$(ver_cut 3 ${my_pv})
 	export RSTUDIO_VERSION_SUFFIX="${build_type,,}+$(ver_cut 4 ${my_pv})"
+
+	sed -i "1,10s/99.9.9/${my_pv}-${RSTUDIO_VERSION_SUFFIX}/" src/node/desktop/package.json || die
 
 	CMAKE_BUILD_TYPE=$(usex debug Debug Release) #RelWithDebInfo Release
 	echo "cache=${WORKDIR}/node_cache" > "${S}/src/node/desktop/.npmrc"
@@ -676,5 +679,9 @@ pkg_postinst() {
 		elog ""
 		elog "or set the L10N variable in /etc/portage/make.conf"
 		elog "see https://wiki.gentoo.org/wiki/Localization"
+	fi
+	if ! use electron || use server;then
+		elog "RStudio has a new downloadable feature (MIT) that integrates GitHub's Copilot"
+		elog "This feature relies on net-libs/nodejs in non-Electron and server versions."
 	fi
 }
