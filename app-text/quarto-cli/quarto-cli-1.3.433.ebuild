@@ -254,7 +254,7 @@ BDEPEND="
 			dev-lang/julia-bin
 		)
 	)
-	>=dev-util/esbuild-0.15.6
+	~dev-util/esbuild-0.15.6
 "
 python_check_deps() {
 	use test || return 0
