@@ -252,7 +252,7 @@ BDEPEND="
 	dev-libs/rapidjson
 	dev-java/aopalliance:1
 	panmirror? (
-		dev-util/esbuild
+		<dev-util/esbuild-0.17
 		>=net-libs/nodejs-18.14.2[npm] <net-libs/nodejs-20.3.0[npm]
 		sys-apps/yarn
 	)
