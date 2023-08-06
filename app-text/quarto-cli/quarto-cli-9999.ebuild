@@ -114,6 +114,7 @@ DT@0.27
 "
 ESBUILD_VER_ORIG="0.15.18"
 DENO_NPM="
+	ansi-output@0.0.1
 	anymatch@3.1.3
 	@babel/runtime@7.21.5
 	binary-extensions@2.2.0
@@ -268,13 +269,11 @@ DENO_IMPORT_LIST="${WORKDIR}/full-import.list"
 
 PYTHON_COMPAT=( python3_{8..11} )
 inherit bash-completion-r1 multiprocessing python-any-r1 prefix npm deno
-#NOTE previews for version x.y are simply x.y.[1..n]
-#     releases simply bump to x.y.n+1  no need to be fancy
+
 if [[ "${PV}" == *9999 ]];then
 	inherit git-r3
 	EGIT_REPO_URI="https://github.com/quarto-dev/${PN}"
 	EGIT_BRANCH="main"
-
 else
 	SRC_URI="https://github.com/quarto-dev/quarto-cli/archive/refs/tags/v${PV}.tar.gz   -> ${P}.tar.gz "
 fi
@@ -305,6 +304,7 @@ PATCHES="
 	${FILESDIR}/quarto-cli-1.3.340-configuration.patch
 	${FILESDIR}/quarto-cli-9999-check.patch
 "
+ESBUILD_DEP_SLOT="0.18"
 DEPEND="
 	app-arch/unzip
 	>=app-text/typst-0.6.0
@@ -318,9 +318,9 @@ DEPEND="
 	~dev-lang/dart-sass-1.55.0
 	>=dev-lang/R-4.1.0
 	dev-libs/libxml2
-	>=dev-util/esbuild-0.15.6
+	dev-util/esbuild:${ESBUILD_DEP_SLOT}
 	dev-vcs/git
-	>=net-libs/deno-1.33.0 <net-libs/deno-1.34.0
+	>=net-libs/deno-1.33.0 <net-libs/deno-1.35.0
 	~net-libs/deno-dom-0.1.35
 	sys-apps/which
 	x11-misc/xdg-utils
@@ -340,6 +340,7 @@ BDEPEND="
 		)
 	)
 	app-misc/jq
+	=dev-util/esbuild-0.15*:0
 "
 python_check_deps() {
 	use test || return 0
@@ -385,6 +386,7 @@ src_unpack() {
 	popd
 	deno_src_unpack
 
+
 	ESBUILD_PLATFORMS=$(printf "esbuild-%s\n" ${ESBUILD_PLATFORMS})
 	ESBUILD_PLATFORMS+=" ${ESBUILD_PLATFORMS_EXT}"
 	ESBUILD_PLATFORMS=$(printf "%s@${ESBUILD_VER_ORIG}\n" ${ESBUILD_PLATFORMS})
@@ -427,11 +429,13 @@ src_prepare() {
 	pushd "${DENO_CACHE}/npm/registry.npmjs.org" > /dev/null || die
 	rm "esbuild-linux-64/${ESBUILD_VER_ORIG}/bin/esbuild" || die
 	cp "${EPREFIX}/usr/bin/esbuild" "esbuild-linux-64/${ESBUILD_VER_ORIG}/bin/esbuild" || die
-	sed -i "s/${ESBUILD_VER_ORIG}/$(esbuild  --version)/g" esbuild/${ESBUILD_VER_ORIG}/{install.js,lib/main.js} || die
+	sed -i "s/${ESBUILD_VER_ORIG}/$(esbuild --version)/g" esbuild/${ESBUILD_VER_ORIG}/{install.js,lib/main.js} || die
 	popd
 
 	sed -i -E  "s/2.19.2(\", \"Pandoc)/${PANDOC_VERSION}\1/;s/1.32.8(\", \"Dart Sass)/1.55.0\1/" \
 		src/command/check/check.ts || die "Failed to correct versions"
+
+	sed -i "s/\"esbuild\"/\"esbuild-${ESBUILD_DEP_SLOT}\"/" src/core/esbuild.ts || die
 
 	default
 	eprefixify src/command/render/render-shared.ts quarto package/scripts/common/quarto
@@ -445,7 +449,7 @@ src_compile() {
 	export QUARTO_DENO_DOM="${EPREFIX}/usr/lib64/deno-dom.so"
 	export DENO_DOM_PLUGIN="${EPREFIX}/usr/lib64/deno-dom.so"
 	export QUARTO_PANDOC="${EPREFIX}/usr/bin/pandoc"
-	export QUARTO_ESBUILD="${EPREFIX}/usr/bin/esbuild"
+	export QUARTO_ESBUILD="${EPREFIX}/usr/bin/esbuild-${ESBUILD_DEP_SLOT}"
 	export QUARTO_DART_SASS="${EPREFIX}/usr/bin/sass"
 
 	export QUARTO_ROOT="${S}"
@@ -455,7 +459,7 @@ src_compile() {
 	einfo "Building ${MY_PV}..."
 	pushd src/webui/quarto-preview > /dev/null || die
 	#run deno task build manually
-	deno task build || die "Failed to build prepare-dist"
+	DENO_DIR="${DENO_CACHE}" deno task build || die "Failed to build prepare-dist"
 	rm {deno.lock,build.ts} || die
 	touch build.ts || die
 	popd
