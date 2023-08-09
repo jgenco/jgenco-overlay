@@ -231,10 +231,11 @@ RDEPEND="
 			~dev-qt/qtsingleapplication-2.6.1_p20171024
 		)
 		qt6? (
+			dev-qt/qt5compat:6
 			dev-qt/qtbase:6
 			dev-qt/qtwebchannel:6
 			dev-qt/qtwebengine:6
-			dev-qt/qt5compat
+			dev-qt/qtsvg:6
 		)
 	)
 	clang? (
