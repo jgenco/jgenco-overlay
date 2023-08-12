@@ -17,7 +17,6 @@ CRATES="
 	anstyle-wincon-1.0.1
 	arrayref-0.3.7
 	arrayvec-0.7.2
-	atty-0.2.14
 	autocfg-1.1.0
 	az-1.2.1
 	base64-0.21.0
@@ -25,6 +24,7 @@ CRATES="
 	bincode-1.3.3
 	bit-set-0.5.3
 	bit-vec-0.6.3
+	bit_field-0.10.2
 	bitflags-1.3.2
 	bitflags-2.3.1
 	bitvec-1.0.1
@@ -36,12 +36,10 @@ CRATES="
 	chinese-number-0.7.2
 	chinese-variant-1.0.9
 	chrono-0.4.24
-	clap-3.2.25
 	clap-4.2.7
 	clap_builder-4.2.7
 	clap_complete-4.2.3
 	clap_derive-4.2.0
-	clap_lex-0.2.4
 	clap_lex-0.4.1
 	clap_mangen-0.2.10
 	cobs-0.2.3
@@ -54,8 +52,9 @@ CRATES="
 	crc32fast-1.3.2
 	crossbeam-channel-0.5.8
 	crossbeam-deque-0.8.3
-	crossbeam-epoch-0.9.14
+	crossbeam-epoch-0.9.15
 	crossbeam-utils-0.8.15
+	crunchy-0.2.2
 	csv-1.2.1
 	csv-core-0.1.10
 	dashmap-5.4.0
@@ -67,30 +66,34 @@ CRATES="
 	either-1.8.1
 	enum-ordinalize-3.1.13
 	env_logger-0.10.0
+	equivalent-1.0.1
 	errno-0.3.1
 	errno-dragonfly-0.1.2
+	exr-1.7.0
 	fancy-regex-0.7.1
 	fastrand-1.9.0
 	fdeflate-0.3.0
 	filetime-0.2.21
 	flate2-1.0.26
 	float-cmp-0.9.0
+	flume-0.10.14
 	fnv-1.0.7
 	fontdb-0.13.1
 	form_urlencoded-1.1.0
 	fsevent-sys-4.1.0
 	funty-2.0.0
+	futures-core-0.3.28
+	futures-sink-0.3.28
 	getopts-0.2.21
 	getrandom-0.2.9
 	gif-0.12.0
-	glob-0.3.1
+	half-2.2.1
 	hashbrown-0.12.3
+	hashbrown-0.14.0
 	hayagriva-0.3.0
 	heck-0.4.1
-	hermit-abi-0.1.19
-	hermit-abi-0.2.6
 	hermit-abi-0.3.1
-	hypher-0.1.1
+	hypher-0.1.2
 	iana-time-zone-0.1.56
 	iana-time-zone-haiku-0.1.2
 	icu_collections-1.2.0
@@ -108,6 +111,7 @@ CRATES="
 	include_dir-0.7.3
 	include_dir_macros-0.7.3
 	indexmap-1.9.3
+	indexmap-2.0.0
 	inferno-0.11.15
 	inotify-0.9.6
 	inotify-sys-0.1.5
@@ -125,10 +129,12 @@ CRATES="
 	kqueue-sys-1.0.3
 	kurbo-0.9.5
 	lazy_static-1.4.0
+	lebe-0.5.2
 	libc-0.2.144
 	libdeflate-sys-0.11.0
 	libdeflater-0.11.0
 	libm-0.2.7
+	line-wrap-0.1.1
 	linked-hash-map-0.5.6
 	linux-raw-sys-0.3.7
 	lipsum-0.9.0
@@ -137,9 +143,10 @@ CRATES="
 	log-0.4.17
 	memchr-2.5.0
 	memmap2-0.5.10
-	memoffset-0.8.0
+	memoffset-0.9.0
 	miniz_oxide-0.7.1
 	mio-0.8.6
+	nanorand-0.7.0
 	notify-5.2.0
 	nu-ansi-term-0.46.0
 	num-bigint-0.4.3
@@ -147,31 +154,36 @@ CRATES="
 	num-integer-0.1.45
 	num-rational-0.4.1
 	num-traits-0.2.15
-	num_cpus-1.15.0
+	num_cpus-1.16.0
 	numerals-0.1.4
+	oklab-1.0.0
 	once_cell-1.17.1
 	open-4.1.0
 	option-ext-0.2.0
-	os_str_bytes-6.5.0
 	overload-0.1.1
 	oxipng-8.0.0
 	parking_lot_core-0.9.7
 	paste-1.0.12
 	pathdiff-0.2.1
-	pdf-writer-0.7.1
+	pdf-writer-0.8.0
 	percent-encoding-2.2.0
 	phf-0.11.1
 	phf_shared-0.11.1
 	pico-args-0.5.0
+	pin-project-1.1.0
+	pin-project-internal-1.1.0
 	pin-project-lite-0.2.9
 	pixglyph-0.1.0
+	plist-1.4.3
 	png-0.17.8
 	postcard-1.0.4
 	ppv-lite86-0.2.17
 	proc-macro2-1.0.58
 	psm-0.1.21
 	pulldown-cmark-0.9.2
+	qoi-0.4.1
 	quick-xml-0.26.0
+	quick-xml-0.28.2
 	quote-1.0.27
 	radium-0.7.0
 	rand-0.8.5
@@ -200,6 +212,7 @@ CRATES="
 	rustversion-1.0.12
 	rustybuzz-0.7.0
 	ryu-1.0.13
+	safemem-0.3.3
 	same-file-1.0.6
 	scopeguard-1.1.0
 	sct-0.7.0
@@ -209,6 +222,7 @@ CRATES="
 	serde_json-1.0.96
 	serde_spanned-0.6.2
 	serde_yaml-0.8.26
+	serde_yaml-0.9.25
 	sharded-slab-0.1.4
 	simd-adler32-0.3.5
 	simplecss-0.2.1
@@ -216,15 +230,16 @@ CRATES="
 	slotmap-1.0.6
 	smallvec-1.10.0
 	spin-0.5.2
+	spin-0.9.8
 	stable_deref_trait-1.2.0
 	stacker-0.1.15
-	stderrlog-0.5.4
 	str_stack-0.1.0
 	strict-num-0.1.0
 	strsim-0.10.0
 	strum-0.24.1
 	strum_macros-0.24.3
 	subsetter-0.1.1
+	svg2pdf-0.6.0
 	svgtypes-0.11.0
 	syn-1.0.109
 	syn-2.0.16
@@ -234,10 +249,10 @@ CRATES="
 	tar-0.4.38
 	tempfile-3.5.0
 	termcolor-1.1.3
-	textwrap-0.16.0
 	thiserror-1.0.40
 	thiserror-impl-1.0.40
 	thread_local-1.1.7
+	tiff-0.8.1
 	time-0.3.21
 	time-core-0.1.1
 	time-macros-0.2.9
@@ -274,6 +289,7 @@ CRATES="
 	unicode-width-0.1.10
 	unicode-xid-0.2.4
 	unicode_names2-0.6.0
+	unsafe-libyaml-0.2.9
 	unscanny-0.1.0
 	untrusted-0.7.1
 	ureq-2.7.1
@@ -296,7 +312,6 @@ CRATES="
 	web-sys-0.3.63
 	webpki-roots-0.23.1
 	weezl-0.1.7
-	wild-2.1.0
 	winapi-0.3.9
 	winapi-i686-pc-windows-gnu-0.4.0
 	winapi-util-0.1.5
@@ -335,14 +350,13 @@ CRATES="
 	zerofrom-derive-0.1.2
 	zerovec-0.9.4
 	zerovec-derive-0.9.4
-	zopfli-0.7.2
+	zopfli-0.7.4
+	zune-inflate-0.2.54
 "
 
 IAI_COMMIT="3f0f92736408ebce6545808b98e0cb2aea89b7dd"
-SVG2PDF_COMMIT="35f4bb87fb677473661c6d12919e01a6d64a716d"
 declare -A GIT_CRATES=(
 	[iai]="https://github.com/reknih/iai;${IAI_COMMIT};iai-%commit%"
-	[svg2pdf]="https://github.com/typst/svg2pdf;${SVG2PDF_COMMIT};svg2pdf-%commit%"
 )
 #NOTE: update typst.tera for long term changes
 
@@ -366,7 +380,7 @@ SRC_URI="
 # License set may be more restrictive as OR is not respected
 # use cargo-license for a more accurate license picture
 # webpki = ISC
-LICENSE="0BSD Apache-2.0 Apache-2.0-with-LLVM-exceptions Artistic-2 BSD BSD-2 Boost-1.0 CC0-1.0 CDDL ISC MIT MPL-2.0 Unicode-DFS-2016 Unlicense ZLIB SSLeay openssl"
+LICENSE="0BSD Apache-2.0 Apache-2.0-with-LLVM-exceptions Artistic-2 BSD BSD-2 Boost-1.0 CC-PD CC0-1.0 CDDL ISC MIT MPL-2.0 Unicode-DFS-2016 Unlicense ZLIB SSLeay openssl"
 SLOT="0"
 KEYWORDS="~amd64"
 
@@ -376,7 +390,7 @@ BDEPEND="
 	>=virtual/rust-1.70.0
 "
 
-DOCS=(ARCHITECTURE.md LICENSE NOTICE README.md docs/src/general/changelog.md)
+DOCS=(LICENSE NOTICE README.md docs/changelog.md)
 
 # rust does not use *FLAGS from make.conf, silence portage warning
 # update with proper path to binaries this crate installs, omit leading /
@@ -395,10 +409,10 @@ src_test() {
 }
 
 src_install() {
-	cargo_src_install --path cli
+	cargo_src_install --path crates/typst-cli
 	#fish and zsh also available
 	newbashcomp artifacts/typst.bash typst
 	doman artifacts/*.1
 	einstalldocs
-	use doc && dodoc -r docs/src/{general,reference,tutorial}
+	use doc && dodoc -r docs/{guides,reference,tutorial}
 }
