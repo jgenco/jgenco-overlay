@@ -14,10 +14,8 @@ CRATES="
 {%- endblock %}
 
 IAI_COMMIT="3f0f92736408ebce6545808b98e0cb2aea89b7dd"
-SVG2PDF_COMMIT="35f4bb87fb677473661c6d12919e01a6d64a716d"
 declare -A GIT_CRATES=(
 	[iai]="https://github.com/reknih/iai;${IAI_COMMIT};iai-%commit%"
-	[svg2pdf]="https://github.com/typst/svg2pdf;${SVG2PDF_COMMIT};svg2pdf-%commit%"
 )
 #NOTE: update typst.tera for long term changes
 {#
@@ -31,8 +29,6 @@ IUSE="test doc"
 RESTRICT="mirror !test? ( test )"
 
 DESCRIPTION={%- block description -%}"{{ description | trim }}"{%- endblock %}
-# Double check the homepage as the cargo_metadata crate
-# does not provide this value so instead repository is used
 HOMEPAGE="
 	https://typst.app/
 	{% raw -%}{%- endraw %}
@@ -42,10 +38,10 @@ SRC_URI={%- block src_uri -%}{% raw -%}"
 	$(cargo_crate_uris){%- endraw %}{%- endblock %}
 	https://github.com/typst/typst/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz
 "
-
-# License set may be more restrictive as OR is not respected
-# use cargo-license for a more accurate license picture
+{#
 # webpki = ISC
+# ring   = SSLeay openssl
+#}
 LICENSE={%- block license -%}"{{ license }} SSLeay openssl"{%- endblock %}
 SLOT={%- block slot -%}"0"{%- endblock %}
 KEYWORDS={%- block keyword -%}"~amd64"{%- endblock %}
@@ -56,7 +52,7 @@ BDEPEND="
 	>=virtual/rust-1.70.0
 "
 
-DOCS=(ARCHITECTURE.md LICENSE NOTICE README.md docs/src/general/changelog.md)
+DOCS=(LICENSE NOTICE README.md docs/changelog.md)
 
 # rust does not use *FLAGS from make.conf, silence portage warning
 # update with proper path to binaries this crate installs, omit leading /
@@ -80,10 +76,10 @@ src_test() {
 }
 
 src_install() {
-	cargo_src_install --path cli
+	cargo_src_install --path crates/typst-cli
 	#fish and zsh also available
 	newbashcomp artifacts/typst.bash typst
 	doman artifacts/*.1
 	einstalldocs
-	use doc && dodoc -r docs/src/{general,reference,tutorial}
+	use doc && dodoc -r docs/{guides,reference,tutorial}
 }
