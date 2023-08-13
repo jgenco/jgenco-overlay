@@ -27,9 +27,9 @@ DENO_LIBS=(
 "blueimp-md5@2.19.0 https://github.com/blueimp/JavaScript-MD5/archive/refs/tags/v_VER_.tar.gz JavaScript-MD5-_VER_ bundle /js/md5.js"
 "dayjs@1.8.21 https://github.com/iamkun/dayjs/archive/refs/tags/v_VER_.tar.gz dayjs-_VER_ bundle /src/index.js"
 "diff@5.0.0 https://github.com/kpdecker/jsdiff/archive/refs/tags/v_VER_.tar.gz jsdiff-_VER_ bundle /src/index.js"
-"lodash@4.17.21 https://github.com/lodash/lodash/archive/refs/tags/_VER_.tar.gz lodash-_VER_-es build /*.js"
+"lodash@4.17.21 https://github.com/lodash/lodash/archive/refs/tags/_VER_-es.tar.gz lodash-_VER_-es build /*.js"
 "moment-guess@1.2.4 https://github.com/apoorv-mishra/moment-guess/archive/refs/tags/v_VER_.tar.gz moment-guess-_VER_ bundle /src/index.js"
-"@observablehq/parser@4.5.0 https://github.com/observablehq/parser/archive/refs/tags/_VER_.tar.gz parser-_VER_ special_bundle special"
+"@observablehq/parser@4.5.0 https://github.com/observablehq/parser/archive/refs/tags/v_VER_.tar.gz parser-_VER_ special_bundle special"
 )
 declare -A DENO_PKG_HASH=(
 	["acorn-7.4.1"]="aIeX4aKa0RO2JeS9dtPa"
