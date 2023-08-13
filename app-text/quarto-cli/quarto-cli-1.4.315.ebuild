@@ -307,7 +307,7 @@ PATCHES="
 ESBUILD_DEP_SLOT="0.18"
 DEPEND="
 	app-arch/unzip
-	>=app-text/typst-0.6.0
+	>=app-text/typst-0.7.0
 	|| (
 		(
 			>=app-text/pandoc-${PANDOC_VERSION}
