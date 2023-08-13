@@ -254,12 +254,12 @@ BDEPEND="
 	dev-java/aopalliance:1
 	panmirror? (
 		<dev-util/esbuild-0.17
-		>=net-libs/nodejs-18.14.2[npm] <net-libs/nodejs-20.3.0[npm]
+		>=net-libs/nodejs-18.14.2[npm] <net-libs/nodejs-20.6.0[npm]
 		sys-apps/yarn
 	)
 	electron? (
 		app-arch/unzip
-		>=net-libs/nodejs-18.14.2[npm] <net-libs/nodejs-20.3.0[npm]
+		>=net-libs/nodejs-18.14.2[npm] <net-libs/nodejs-20.6.0[npm]
 	)
 	dev-java/gin:2.1
 	dev-java/javax-inject
@@ -333,6 +333,10 @@ src_unpack() {
 		popd > /dev/null
 	fi
 
+	#nodejs:/deps/npm/node_modules/node-gyp/package.json
+	local install_version="9"
+	has_version ">=net-libs/nodejs-20.4.0" && install_version="11"
+
 	if use electron; then
 		#prepare electron node_modules
 		pushd "${S}/src/node/desktop" > /dev/null|| die
@@ -354,8 +358,7 @@ src_unpack() {
 
 		unpack electron-v${ELECTRON_VERSION}-headers.tar.gz
 		mv node_headers ${ELECTRON_VERSION} || die "Failed to move electron headers"
-		#It only been 9 so far
-		echo "9" > ${ELECTRON_VERSION}/installVersion ||die
+		echo "${install_version}" > "${ELECTRON_VERSION}/installVersion" ||die
 
 		popd > /dev/null
 	fi
@@ -365,9 +368,7 @@ src_unpack() {
 		nodejs_version=${nodejs_version#v}
 		mkdir -p "${WORKDIR}/.cache/node-gyp/${nodejs_version}/include" || die
 		ln -s "${EPREFIX}/usr/include/node" "${WORKDIR}/.cache/node-gyp/${nodejs_version}/include/node" || die
-		#This tells it the headers where installed
-		#Don't know what 9 is
-		echo "9" > "${WORKDIR}/.cache/node-gyp/${nodejs_version}/installVersion" || die
+		echo "${install_version}" > "${WORKDIR}/.cache/node-gyp/${nodejs_version}/installVersion" || die
 	fi
 }
 src_prepare() {
@@ -564,7 +565,7 @@ src_compile() {
 		einfo "Rebuilding ${folder}"
 		pushd ${folder}> /dev/null || die
 		HOME="${WORKDIR}" XDG_CACHE_HOME="${WORKDIR}/.cache" \
-			"${EPREFIX}/usr/$(get_libdir)/node_modules/npm/bin/node-gyp-bin/node-gyp" rebuild \
+			"${EPREFIX}/usr/$(get_libdir)/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js" rebuild \
 			|| die "Failed to rebuild ${folder}"
 		popd
 	done
