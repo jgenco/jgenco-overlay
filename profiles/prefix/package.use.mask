@@ -1,0 +1,9 @@
+#RStudio has two problems when building with Electron on Prefix systems
+#First it either needs either SUID or on a linux host w/ CONFIG_USER_NS=y set
+#This should be overidable with --no-sandbox .
+#Second, while loading .node files the .node file will seek out host libraries
+#instead of the Prefix system libraries
+#The .node files might need to be compiled with rpath(s) set - I don't know
+#This could be tested with patchelf command - using even the Official binaries.
+#Do Other Electron apps(vscode,discorse,slack) work in prefix enviroments?
+sci-mathematics/rstudio electron
