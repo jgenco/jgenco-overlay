@@ -11,7 +11,7 @@ LICENSE="GPL-2+ MIT ZLIB BSD Apache-2.0 ISC || ( MIT GPL-3 ) Unlicense 0BSD"
 LICENSE+=" GPL-2+" #pandoc
 LICENSE+=" 0BSD Apache-2.0 Apache-2.0-with-LLVM-exceptions Artistic-2 BSD BSD-2 Boost-1.0 CC0-1.0 ISC MIT MPL-2.0 Unicode-DFS-2016 Unlicense ZLIB openssl SSLeay" #deno 1.33.1
 LICENSE+=" MIT Apache-2.0 Apache-2.0 Apache-2.0-with-LLVM-exceptions Boost-1.0 MIT Unicode-DFS-2016" #deno-dom 0.1.35
-LICENSE+=" 0BSD Apache-2.0 Apache-2.0-with-LLVM-exceptions Artistic-2 BSD BSD-2 Boost-1.0 CC0-1.0 CDDL ISC MIT MPL-2.0 Unicode-DFS-2016 Unlicense ZLIB SSLeay openssl" #typst 0.6.0
+LICENSE+=" 0BSD Apache-2.0 Apache-2.0-with-LLVM-exceptions Artistic-2 BSD BSD-2 Boost-1.0 CC-PD CC0-1.0 CDDL ISC MIT MPL-2.0 Unicode-DFS-2016 Unlicense ZLIB SSLeay openssl" #typst 0.7.0
 LICENSE+=" MIT Apache-2.0 BSD" #dart-sass 1.55.0
 LICENSE+=" MIT BSD-2" #esbuild 0.15.6
 
