@@ -5,12 +5,12 @@ EAPI=8
 
 inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm prefix
 
-P_PREBUILT="${PN}-2023.09.0.301"
-ELECTRON_VERSION="25.2.0"
-DAILY_COMMIT="28b64e17812f42b7a7ae52ce1527ad812727ccb7"
-QUARTO_COMMIT="e0c6b8a0a66d610791b0309e9b93b38a4736afdb"
+P_PREBUILT="${PN}-2023.09.0.397"
+ELECTRON_VERSION="25.5.0"
+DAILY_COMMIT="57fdf5da2ce3d58f28cbb461ae5c5647c448cae8"
+QUARTO_COMMIT="c1965856c29a7847d8deaaf5eaaef5b04fea8b6a"
 QUARTO_BRANCH="main"
-QUARTO_DATE="20230804"
+QUARTO_DATE="20230901"
 
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
@@ -256,12 +256,12 @@ BDEPEND="
 	dev-java/aopalliance:1
 	panmirror? (
 		<dev-util/esbuild-0.17
-		>=net-libs/nodejs-18.14.2[npm] <net-libs/nodejs-20.3.0[npm]
+		>=net-libs/nodejs-18.14.2[npm] <net-libs/nodejs-20.6.0[npm]
 		sys-apps/yarn
 	)
 	electron? (
 		app-arch/unzip
-		>=net-libs/nodejs-18.14.2[npm] <net-libs/nodejs-20.3.0[npm]
+		>=net-libs/nodejs-18.14.2[npm] <net-libs/nodejs-20.6.0[npm]
 	)
 	dev-java/gin:2.1
 	dev-java/javax-inject
@@ -269,9 +269,9 @@ BDEPEND="
 	~virtual/jdk-11:=
 "
 PATCHES=(
-	"${FILESDIR}/${PN}-2023.03.0-386-cmake-bundled-dependencies.patch"
+	"${FILESDIR}/${PN}-9999-cmake-bundled-dependencies.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-resource-path.patch"
-	"${FILESDIR}/${PN}-1.4.1106-server-paths.patch"
+	"${FILESDIR}/${PN}-9999-server-paths.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-package-build.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-pandoc_path_fix.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
@@ -334,6 +334,9 @@ src_unpack() {
 		popd > /dev/null
 	fi
 
+	local install_version="$(grep installVersion ${EPREFIX}/usr/$(get_libdir)/node_modules/npm/node_modules/node-gyp/package.json|sed -E 's/.* ([0-9]+),/\1/')"
+	[[ ${install_version} =~ ^[0-9]+$ ]] || die
+
 	if use electron; then
 		#prepare electron node_modules
 		pushd "${S}/src/node/desktop" > /dev/null|| die
@@ -355,8 +358,7 @@ src_unpack() {
 
 		unpack electron-v${ELECTRON_VERSION}-headers.tar.gz
 		mv node_headers ${ELECTRON_VERSION} || die "Failed to move electron headers"
-		#It only been 9 so far
-		echo "9" > ${ELECTRON_VERSION}/installVersion ||die
+		echo "${install_version}" > "${ELECTRON_VERSION}/installVersion" ||die
 
 		popd > /dev/null
 	fi
@@ -367,8 +369,7 @@ src_unpack() {
 		mkdir -p "${WORKDIR}/.cache/node-gyp/${nodejs_version}/include" || die
 		ln -s "${EPREFIX}/usr/include/node" "${WORKDIR}/.cache/node-gyp/${nodejs_version}/include/node" || die
 		#This tells it the headers where installed
-		#Don't know what 9 is
-		echo "9" > "${WORKDIR}/.cache/node-gyp/${nodejs_version}/installVersion" || die
+		echo "${install_version}" > "${WORKDIR}/.cache/node-gyp/${nodejs_version}/installVersion" || die
 	fi
 }
 src_prepare() {
@@ -564,7 +565,7 @@ src_compile() {
 		einfo "Rebuilding ${folder}"
 		pushd ${folder}> /dev/null || die
 		HOME="${WORKDIR}" XDG_CACHE_HOME="${WORKDIR}/.cache" \
-			"${EPREFIX}/usr/$(get_libdir)/node_modules/npm/bin/node-gyp-bin/node-gyp" rebuild \
+			"${EPREFIX}/usr/$(get_libdir)/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js" rebuild \
 			|| die "Failed to rebuild ${folder}"
 		popd
 	done
