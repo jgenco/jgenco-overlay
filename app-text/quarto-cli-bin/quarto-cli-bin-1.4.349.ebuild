@@ -5,7 +5,7 @@ EAPI=8
 
 DESCRIPTION="Open-source scientific and technical publishing system built on Pandoc."
 HOMEPAGE="https://quarto.org/"
-SRC_URI="https://github.com/quarto-dev/quarto-cli/releases/download/v${PV}/quarto-${PV}-linux-amd64.tar.gz"
+SRC_URI="https://github.com/quarto-dev/quarto-cli/releases/download/v${PV}/quarto-${PV}-linux-amd64.tar.gz -> ${P}-linux-amd64.tar.gz"
 
 LICENSE="GPL-2+ MIT ZLIB BSD Apache-2.0 ISC || ( MIT GPL-3 ) Unlicense 0BSD"
 LICENSE+=" GPL-2+" #pandoc
