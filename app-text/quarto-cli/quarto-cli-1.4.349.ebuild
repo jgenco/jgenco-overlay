@@ -294,7 +294,7 @@ SRC_URI+="
 	test? ( $(build_r_src_uri ${RENV_TEST_PKGS} ) )
 "
 
-PANDOC_VERSION="3.1.5"
+PANDOC_VERSION="3.1.7"
 
 LICENSE="GPL-2+ MIT ZLIB BSD Apache-2.0 ISC || ( MIT GPL-3 ) Unlicense 0BSD"
 SLOT="0"
@@ -432,7 +432,7 @@ src_prepare() {
 	sed -i "s/${ESBUILD_VER_ORIG}/$(esbuild --version)/g" esbuild/${ESBUILD_VER_ORIG}/{install.js,lib/main.js} || die
 	popd
 
-	sed -i -E  "s/2.19.2(\", \"Pandoc)/${PANDOC_VERSION}\1/;s/1.32.8(\", \"Dart Sass)/1.55.0\1/" \
+	sed -i -E  "s/2.19.2(\", \"Pandoc)/$(ver_cut 1-3 ${PANDOC_VERSION})\1/;s/1.32.8(\", \"Dart Sass)/1.55.0\1/" \
 		src/command/check/check.ts || die "Failed to correct versions"
 
 	sed -i "s/\"esbuild\"/\"esbuild-${ESBUILD_DEP_SLOT}\"/" src/core/esbuild.ts || die
