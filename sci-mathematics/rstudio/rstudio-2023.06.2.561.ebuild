@@ -226,7 +226,7 @@ RDEPEND="
 			>=dev-qt/qtwidgets-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtxml-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtxmlpatterns-${QT_VER}:${QT_SLOT}
-			~dev-qt/qtsingleapplication-2.6.1_p20171024
+			~dev-qt/qtsingleapplication-2.6.1_p20171024[X]
 		)
 		qt6? (
 			dev-qt/qt5compat:6
@@ -268,7 +268,6 @@ BDEPEND="
 "
 PATCHES=(
 	"${FILESDIR}/${PN}-2023.03.0-386-cmake-bundled-dependencies.patch"
-	"${FILESDIR}/${PN}-1.4.1717-fix-boost-version-check.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-resource-path.patch"
 	"${FILESDIR}/${PN}-1.4.1106-server-paths.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-package-build.patch"
