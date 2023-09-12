@@ -268,7 +268,7 @@ DENO_LIBS=(
 DENO_IMPORT_LIST="${WORKDIR}/full-import.list"
 
 PYTHON_COMPAT=( python3_{8..11} )
-inherit bash-completion-r1 multiprocessing python-any-r1 prefix npm deno
+inherit shell-completion multiprocessing python-any-r1 prefix npm deno
 
 if [[ "${PV}" == *9999 ]];then
 	inherit git-r3
@@ -472,12 +472,11 @@ src_compile() {
 
 	ln -s ../bin package/pkg-working/share || die "Failed to link bin dir"
 	cp package/pkg-working/share/version src/resources/version || die "Failed to create version"
-	./package/pkg-working/bin/quarto completions bash > _quarto.sh || die "Failed to build bash completion"
 
-	#>=app-shells/zsh-4.3.5 is what app-shells/gentoo-zsh-completions depends on NOT tested
-	if has_version  ">=app-shells/zsh-4.3.5";then
-		./package/pkg-working/bin/quarto completions zsh > _quarto || die "Failed to build zsh completion"
-	fi
+	./package/pkg-working/bin/quarto completions bash > quarto.sh || die "Failed to build bash completion"
+	./package/pkg-working/bin/quarto completions zsh  > _quarto || die "Failed to build zsh completion"
+	./package/pkg-working/bin/quarto completions fish > quarto.fish || die "Failed to build fish completion"
+
 	rm package/pkg-working/share/man -r || die
 	use test && install_r_packages ${RENV_TEST_PKGS}
 }
@@ -531,7 +530,9 @@ src_install() {
 	doins -r "${S}/package/pkg-working/bin/vendor"
 	rm "${ED}/usr/share/${PN}/"{COPYING.md,COPYRIGHT}
 
-	newbashcomp _quarto.sh quarto
+	newbashcomp quarto.sh quarto
+	dozshcomp _quarto
+	dofishcomp quarto.fish
 
 	if has_version  ">=app-shells/zsh-4.3.5";then
 		insinto /usr/share/zsh/site-functions
