@@ -228,7 +228,7 @@ RDEPEND="
 			>=dev-qt/qtwidgets-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtxml-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtxmlpatterns-${QT_VER}:${QT_SLOT}
-			~dev-qt/qtsingleapplication-2.6.1_p20171024
+			~dev-qt/qtsingleapplication-2.6.1_p20171024[X]
 		)
 		qt6? (
 			dev-qt/qt5compat:6
@@ -256,12 +256,12 @@ BDEPEND="
 	dev-java/aopalliance:1
 	panmirror? (
 		<dev-util/esbuild-0.17
-		>=net-libs/nodejs-18.14.2[npm] <net-libs/nodejs-20.6.0[npm]
+		>=net-libs/nodejs-18.14.2[npm]
 		sys-apps/yarn
 	)
 	electron? (
 		app-arch/unzip
-		>=net-libs/nodejs-18.14.2[npm] <net-libs/nodejs-20.6.0[npm]
+		>=net-libs/nodejs-18.14.2[npm]
 	)
 	dev-java/gin:2.1
 	dev-java/javax-inject
