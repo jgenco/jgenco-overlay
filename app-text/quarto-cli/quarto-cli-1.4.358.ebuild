@@ -310,7 +310,7 @@ DEPEND="
 	>=app-text/typst-0.7.0
 	|| (
 		(
-			>=app-text/pandoc-${PANDOC_VERSION}
+			>=dev-haskell/pandoc-${PANDOC_VERSION}
 			app-text/pandoc-cli
 		)
 		>=app-text/pandoc-bin-${PANDOC_VERSION}
