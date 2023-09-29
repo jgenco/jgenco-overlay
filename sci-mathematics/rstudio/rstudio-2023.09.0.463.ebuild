@@ -7,10 +7,10 @@ inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-uti
 
 P_PREBUILT="${PN}-2023.09.0.397"
 ELECTRON_VERSION="25.5.0"
-DAILY_COMMIT="57fdf5da2ce3d58f28cbb461ae5c5647c448cae8"
-QUARTO_COMMIT="c1965856c29a7847d8deaaf5eaaef5b04fea8b6a"
+#DAILY_COMMIT="57fdf5da2ce3d58f28cbb461ae5c5647c448cae8"
+QUARTO_COMMIT="88775d1172a5308fbc2f30391a246bb42715c39c"
 QUARTO_BRANCH="main"
-QUARTO_DATE="20230901"
+QUARTO_DATE="20230918"
 
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
@@ -228,7 +228,7 @@ RDEPEND="
 			>=dev-qt/qtwidgets-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtxml-${QT_VER}:${QT_SLOT}
 			>=dev-qt/qtxmlpatterns-${QT_VER}:${QT_SLOT}
-			~dev-qt/qtsingleapplication-2.6.1_p20171024
+			~dev-qt/qtsingleapplication-2.6.1_p20171024[X]
 		)
 		qt6? (
 			dev-qt/qt5compat:6
@@ -256,12 +256,12 @@ BDEPEND="
 	dev-java/aopalliance:1
 	panmirror? (
 		<dev-util/esbuild-0.17
-		>=net-libs/nodejs-18.14.2[npm] <net-libs/nodejs-20.6.0[npm]
+		>=net-libs/nodejs-18.14.2[npm]
 		sys-apps/yarn
 	)
 	electron? (
 		app-arch/unzip
-		>=net-libs/nodejs-18.14.2[npm] <net-libs/nodejs-20.6.0[npm]
+		>=net-libs/nodejs-18.14.2[npm]
 	)
 	dev-java/gin:2.1
 	dev-java/javax-inject
