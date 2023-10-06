@@ -166,7 +166,7 @@ LICENSE="
 	electron? ( MIT Apache-2.0  BSD 0BSD BSD-2 BSD CC-BY-3.0 CC-BY-4.0 CC0-1.0 ISC PSF-2.4 || ( AFL-2.1 BSD ) || ( BSD GPL-2 ) || ( Unlicense Apache-2.0 ) )
 "
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 
 RDEPEND="
 	server? (
@@ -269,9 +269,9 @@ BDEPEND="
 	~virtual/jdk-11:=
 "
 PATCHES=(
-	"${FILESDIR}/${PN}-9999-cmake-bundled-dependencies.patch"
+	"${FILESDIR}/${PN}-2023.09.0.463-cmake-bundled-dependencies.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-resource-path.patch"
-	"${FILESDIR}/${PN}-9999-server-paths.patch"
+	"${FILESDIR}/${PN}-2023.09.0.463-server-paths.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-package-build.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-pandoc_path_fix.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
