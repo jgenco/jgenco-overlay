@@ -5,12 +5,12 @@ EAPI=8
 
 inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm prefix
 
-P_PREBUILT="${PN}-2023.09.0.397"
-ELECTRON_VERSION="25.5.0"
-DAILY_COMMIT="57fdf5da2ce3d58f28cbb461ae5c5647c448cae8"
-QUARTO_COMMIT="c1965856c29a7847d8deaaf5eaaef5b04fea8b6a"
+P_PREBUILT="${PN}-2023.12.0.114"
+ELECTRON_VERSION="26.2.4"
+DAILY_COMMIT="b0908c96bb52bf2502cb3e6c9c62aff721871965"
+QUARTO_COMMIT="a39cda54cb0951a3809230e39caa2b00f2047f7e"
 QUARTO_BRANCH="main"
-QUARTO_DATE="20230901"
+QUARTO_DATE="20231007"
 
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
@@ -269,9 +269,9 @@ BDEPEND="
 	~virtual/jdk-11:=
 "
 PATCHES=(
-	"${FILESDIR}/${PN}-9999-cmake-bundled-dependencies.patch"
+	"${FILESDIR}/${PN}-2023.09.0.463-cmake-bundled-dependencies.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-resource-path.patch"
-	"${FILESDIR}/${PN}-9999-server-paths.patch"
+	"${FILESDIR}/${PN}-2023.09.0.463-server-paths.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-package-build.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-pandoc_path_fix.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
@@ -474,6 +474,8 @@ src_configure() {
 	export RSTUDIO_VERSION_SUFFIX="${build_type,,}+$(ver_cut 4 ${my_pv})"
 
 	sed -i "1,10s/99.9.9/${my_pv}-${RSTUDIO_VERSION_SUFFIX}/" src/node/desktop/package.json || die
+	#allow boost version 1.82.0 untill 1.83.0 is stabalized
+	sed -i "s/ 1.83.0/ 1.82.0/" src/cpp/CMakeLists.txt || die
 
 	CMAKE_BUILD_TYPE=$(usex debug Debug Release) #RelWithDebInfo Release
 	echo "cache=${WORKDIR}/node_cache" > "${S}/src/node/desktop/.npmrc"
