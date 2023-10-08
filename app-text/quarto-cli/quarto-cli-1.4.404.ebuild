@@ -386,7 +386,6 @@ src_unpack() {
 	popd
 	deno_src_unpack
 
-
 	ESBUILD_PLATFORMS=$(printf "esbuild-%s\n" ${ESBUILD_PLATFORMS})
 	ESBUILD_PLATFORMS+=" ${ESBUILD_PLATFORMS_EXT}"
 	ESBUILD_PLATFORMS=$(printf "%s@${ESBUILD_VER_ORIG}\n" ${ESBUILD_PLATFORMS})

@@ -5,17 +5,6 @@ This patch makes quarto-cli find all of them in QUARTO_BIN_PATH
 causing them to fail.
 tests/smoke/extensions/extension-render-journals.test.ts:
 If await quarto([...]); fails Deno.chdir(wd); doesn't seem to fix the problem
---- a/src/command/render/render-shared.ts
-+++ b/src/command/render/render-shared.ts
-@@ -193,7 +193,7 @@ export async function rswURL(port: number, path: string) {
- async function rswPortToken(port: number) {
-   const result = await execProcess(
-     {
--      cmd: ["/usr/lib/rstudio-server/bin/rserver-url", String(port)],
-+      cmd: ["@GENTOO_PORTAGE_EPREFIX@/usr/bin/rserver-url", String(port)],
-       stdout: "piped",
-       stderr: "piped",
-     },
 --- a/src/core/dart-sass.ts
 +++ b/src/core/dart-sass.ts
 @@ -14,7 +14,7 @@ import { existsSync } from "fs/mod.ts";
@@ -48,6 +37,17 @@ If await quarto([...]); fails Deno.chdir(wd); doesn't seem to fix the problem
    if (existsSync(configPath)) {
      return JSON.parse(Deno.readTextFileSync(configPath)) as DevConfig;
    } else {
+--- a/src/core/previewurl.ts
++++ b/src/core/previewurl.ts
+@@ -106,7 +106,7 @@ export async function rswURL(port: number, path: string) {
+ async function rswPortToken(port: number) {
+   const result = await execProcess(
+     {
+-      cmd: ["/usr/lib/rstudio-server/bin/rserver-url", String(port)],
++      cmd: ["@GENTOO_PORTAGE_EPREFIX@/usr/bin/rserver-url", String(port)],
+       stdout: "piped",
+       stderr: "piped",
+     },
 --- a/src/core/quarto.ts
 +++ b/src/core/quarto.ts
 @@ -27,6 +27,7 @@ export interface QuartoConfig {
@@ -69,7 +69,7 @@ If await quarto([...]); fails Deno.chdir(wd); doesn't seem to fix the problem
  function buildPreviewJs(srcDir: string, cleanup?: VoidFunction) {
 --- a/src/core/resources.ts
 +++ b/src/core/resources.ts
-@@ -29,9 +29,7 @@ export function formatResourcePath(format: string, resource: string) {
+@@ -30,9 +30,7 @@ export function formatResourcePath(format: string, resource: string) {
  }
  
  export function architectureToolsPath(path: string) {
@@ -80,7 +80,7 @@ If await quarto([...]); fails Deno.chdir(wd); doesn't seem to fix the problem
  }
  
  export function toolsPath(binary: string): string {
-@@ -72,7 +70,7 @@ export function toolsPath(binary: string): string {
+@@ -73,7 +71,7 @@ export function toolsPath(binary: string): string {
      }
    }
  
