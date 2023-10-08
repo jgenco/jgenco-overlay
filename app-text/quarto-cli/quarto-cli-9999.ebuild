@@ -268,7 +268,7 @@ DENO_LIBS=(
 DENO_IMPORT_LIST="${WORKDIR}/full-import.list"
 
 PYTHON_COMPAT=( python3_{8..11} )
-inherit bash-completion-r1 multiprocessing python-any-r1 prefix npm deno
+inherit shell-completion multiprocessing python-any-r1 prefix npm deno
 
 if [[ "${PV}" == *9999 ]];then
 	inherit git-r3
@@ -294,7 +294,7 @@ SRC_URI+="
 	test? ( $(build_r_src_uri ${RENV_TEST_PKGS} ) )
 "
 
-PANDOC_VERSION="3.1.5"
+PANDOC_VERSION="3.1.8"
 
 LICENSE="GPL-2+ MIT ZLIB BSD Apache-2.0 ISC || ( MIT GPL-3 ) Unlicense 0BSD"
 SLOT="0"
@@ -307,7 +307,7 @@ PATCHES="
 ESBUILD_DEP_SLOT="0.18"
 DEPEND="
 	app-arch/unzip
-	>=app-text/typst-0.6.0
+	>=app-text/typst-0.8.0
 	|| (
 		(
 			>=dev-haskell/pandoc-${PANDOC_VERSION}
@@ -386,7 +386,6 @@ src_unpack() {
 	popd
 	deno_src_unpack
 
-
 	ESBUILD_PLATFORMS=$(printf "esbuild-%s\n" ${ESBUILD_PLATFORMS})
 	ESBUILD_PLATFORMS+=" ${ESBUILD_PLATFORMS_EXT}"
 	ESBUILD_PLATFORMS=$(printf "%s@${ESBUILD_VER_ORIG}\n" ${ESBUILD_PLATFORMS})
@@ -432,7 +431,7 @@ src_prepare() {
 	sed -i "s/${ESBUILD_VER_ORIG}/$(esbuild --version)/g" esbuild/${ESBUILD_VER_ORIG}/{install.js,lib/main.js} || die
 	popd
 
-	sed -i -E  "s/2.19.2(\", \"Pandoc)/${PANDOC_VERSION}\1/;s/1.32.8(\", \"Dart Sass)/1.55.0\1/" \
+	sed -i -E  "s/2.19.2(\", \"Pandoc)/$(ver_cut 1-3 ${PANDOC_VERSION})\1/;s/1.32.8(\", \"Dart Sass)/1.55.0\1/" \
 		src/command/check/check.ts || die "Failed to correct versions"
 
 	sed -i "s/\"esbuild\"/\"esbuild-${ESBUILD_DEP_SLOT}\"/" src/core/esbuild.ts || die
@@ -472,12 +471,11 @@ src_compile() {
 
 	ln -s ../bin package/pkg-working/share || die "Failed to link bin dir"
 	cp package/pkg-working/share/version src/resources/version || die "Failed to create version"
-	./package/pkg-working/bin/quarto completions bash > _quarto.sh || die "Failed to build bash completion"
 
-	#>=app-shells/zsh-4.3.5 is what app-shells/gentoo-zsh-completions depends on NOT tested
-	if has_version  ">=app-shells/zsh-4.3.5";then
-		./package/pkg-working/bin/quarto completions zsh > _quarto || die "Failed to build zsh completion"
-	fi
+	./package/pkg-working/bin/quarto completions bash > quarto.sh || die "Failed to build bash completion"
+	./package/pkg-working/bin/quarto completions zsh  > _quarto || die "Failed to build zsh completion"
+	./package/pkg-working/bin/quarto completions fish > quarto.fish || die "Failed to build fish completion"
+
 	rm package/pkg-working/share/man -r || die
 	use test && install_r_packages ${RENV_TEST_PKGS}
 }
@@ -531,7 +529,9 @@ src_install() {
 	doins -r "${S}/package/pkg-working/bin/vendor"
 	rm "${ED}/usr/share/${PN}/"{COPYING.md,COPYRIGHT}
 
-	newbashcomp _quarto.sh quarto
+	newbashcomp quarto.sh quarto
+	dozshcomp _quarto
+	dofishcomp quarto.fish
 
 	if has_version  ">=app-shells/zsh-4.3.5";then
 		insinto /usr/share/zsh/site-functions
