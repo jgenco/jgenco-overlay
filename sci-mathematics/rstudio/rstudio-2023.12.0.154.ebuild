@@ -334,8 +334,10 @@ src_unpack() {
 		popd > /dev/null
 	fi
 
-	local install_version="$(grep installVersion ${EPREFIX}/usr/$(get_libdir)/node_modules/npm/node_modules/node-gyp/package.json|sed -E 's/.* ([0-9]+),/\1/')"
-	[[ ${install_version} =~ ^[0-9]+$ ]] || die
+	if use panmirror || use electron; then
+		local install_version="$(grep installVersion ${EPREFIX}/usr/$(get_libdir)/node_modules/npm/node_modules/node-gyp/package.json|sed -E 's/.* ([0-9]+),/\1/')"
+		[[ ${install_version} =~ ^[0-9]+$ ]] || die
+	fi
 
 	if use electron; then
 		#prepare electron node_modules
