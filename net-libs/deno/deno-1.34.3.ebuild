@@ -592,7 +592,7 @@ KEYWORDS="~amd64"
 BDEPEND="
 	dev-util/gn
 	dev-util/ninja
-	>=virtual/rust-1.70.0
+	>=virtual/rust-1.70.0 <virtual/rust-1.72
 	test? (
 		net-misc/curl
 	)
