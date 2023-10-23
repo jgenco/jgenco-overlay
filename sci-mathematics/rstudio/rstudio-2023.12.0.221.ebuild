@@ -7,10 +7,10 @@ inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-uti
 
 P_PREBUILT="${PN}-2023.12.0.114"
 ELECTRON_VERSION="26.2.4"
-DAILY_COMMIT="b0908c96bb52bf2502cb3e6c9c62aff721871965"
-QUARTO_COMMIT="a39cda54cb0951a3809230e39caa2b00f2047f7e"
+DAILY_COMMIT="6405c6ecd83217409d7fb153474284c8106eed8b"
+QUARTO_COMMIT="658dad57be28765f8a52a654ae331d01bc1e9e4a"
 QUARTO_BRANCH="main"
-QUARTO_DATE="20231007"
+QUARTO_DATE="20231019"
 
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
