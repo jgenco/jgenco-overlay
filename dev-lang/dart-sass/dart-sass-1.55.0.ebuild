@@ -145,8 +145,8 @@ RESTRICT="strip mirror !test? ( test )"
 
 DEPEND="
 || (
-	>=dev-lang/dart-2.12.0
-	>=dev-lang/dart-bin-2.12.0
+	>=dev-lang/dart-2.12.0     <dev-lang/dart-3
+	>=dev-lang/dart-bin-2.12.0 <dev-lang/dart-bin-3
 	)
 "
 RDEPEND="${DEPEND}"
