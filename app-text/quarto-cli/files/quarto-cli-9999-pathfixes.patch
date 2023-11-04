@@ -1,8 +1,8 @@
 * Quarto-cli bundles their binary deps near quarto.
 This patch makes quarto-cli find all of them in QUARTO_BIN_PATH
 * Creates QUARTO_BASE_PATH to replace paths relative to QUARTO_BIN_PATH
-* tests/test.ts: some test fail and clober the path for future test 
-causing them to fail.
+* tests/test.ts: some test fail and clober the path for future test
+  causing them to fail.
 tests/smoke/extensions/extension-render-journals.test.ts:
 If await quarto([...]); fails Deno.chdir(wd); doesn't seem to fix the problem
 --- a/src/core/dart-sass.ts
@@ -69,29 +69,18 @@ If await quarto([...]); fails Deno.chdir(wd); doesn't seem to fix the problem
  function buildPreviewJs(srcDir: string, cleanup?: VoidFunction) {
 --- a/src/core/resources.ts
 +++ b/src/core/resources.ts
-@@ -30,9 +30,7 @@ export function formatResourcePath(format: string, resource: string) {
- }
- 
- export function architectureToolsPath(path: string) {
--  const arch = Deno.build.arch;
--  const archDir = join(arch, path);
--  return toolsPath(archDir);
-+  return toolsPath(path);
- }
- 
- export function toolsPath(binary: string): string {
-@@ -73,7 +71,7 @@ export function toolsPath(binary: string): string {
+@@ -72,7 +72,7 @@ export function toolsPath(binary: string, defaultPath?: string): string {
+       }
      }
    }
- 
--  return join(quartoConfig.toolsPath(), binary);
+-  return join(quartoConfig.toolsPath(), defaultPath || binary);
 +  return join(quartoConfig.binPath(), binary);
  }
  
  export function pandocBinaryPath(): string {
 --- a/tests/test.ts
 +++ b/tests/test.ts
-@@ -123,6 +123,12 @@ export function test(test: TestDescriptor) {
+@@ -135,6 +135,12 @@ export function test(test: TestDescriptor) {
    const args: Deno.TestDefinition = {
      name: testName,
      async fn(context) {
@@ -104,7 +93,7 @@ If await quarto([...]); fails Deno.chdir(wd); doesn't seem to fix the problem
        await initDenoDom();
        const runTest = !test.context.prereq || await test.context.prereq();
        if (runTest) {
-@@ -197,7 +203,7 @@ export function test(test: TestDescriptor) {
+@@ -209,7 +215,7 @@ export function test(test: TestDescriptor) {
              ? fromFileUrl(context.origin)
              : (new URL(context.origin)).pathname;
  
