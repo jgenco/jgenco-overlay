@@ -15,15 +15,16 @@ CRATES="
 
 IAI_COMMIT="3f0f92736408ebce6545808b98e0cb2aea89b7dd"
 declare -A GIT_CRATES=(
-	[iai]="https://github.com/reknih/iai;${IAI_COMMIT};iai-%commit%"
+	[iai]="https://github.com/typst/iai;${IAI_COMMIT};iai-%commit%"
 )
 #NOTE: update typst.tera for long term changes
 {#
 #To update:
+#cd crates/typst-cli
 #cargo ebuild -T typs.tera
 #possibly update IAI_COMMIT
 #}
-inherit {% block inherit -%}cargo{%- endblock %} bash-completion-r1
+inherit {% block inherit -%}cargo{%- endblock %} shell-completion
 
 IUSE="test doc"
 RESTRICT="mirror !test? ( test )"
@@ -35,12 +36,16 @@ HOMEPAGE="
 {%- block homepage -%}{{ homepage }}{%- endblock %}
 "
 SRC_URI={%- block src_uri -%}{% raw -%}"
-	$(cargo_crate_uris){%- endraw %}{%- endblock %}
+	${CARGO_CRATE_URIS}{%- endraw %}{%- endblock %}
 	https://github.com/typst/typst/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz
 "
 {#
 # webpki = ISC
 # ring   = SSLeay openssl
+# icu_{collections,locid,locid_transform,properties,provider,
+# provider_adapters,provider_blob,provider_macro,segmenter}
+# litemap tinystr writeable yoke zerofrom = UNICODE LICENSE V3
+# https://github.com/unicode-org/icu4x/
 #}
 LICENSE={%- block license -%}"{{ license }} SSLeay openssl"{%- endblock %}
 SLOT={%- block slot -%}"0"{%- endblock %}
@@ -77,8 +82,9 @@ src_test() {
 
 src_install() {
 	cargo_src_install --path crates/typst-cli
-	#fish and zsh also available
 	newbashcomp artifacts/typst.bash typst
+	dofishcomp artifacts/typst.fish
+	dozshcomp artifacts/_typst
 	doman artifacts/*.1
 	einstalldocs
 	use doc && dodoc -r docs/{guides,reference,tutorial}
