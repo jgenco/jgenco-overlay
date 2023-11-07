@@ -1,0 +1,14 @@
+diff --git a/tool/grind.dart b/tool/grind.dart
+index 3eaded6..7c090f0 100644
+--- a/tool/grind.dart
++++ b/tool/grind.dart
+@@ -242,8 +242,7 @@ dart run protoc_plugin "\$@"
+   }
+ 
+   if (Platform.environment['UPDATE_SASS_PROTOCOL'] != 'false') {
+-    cloneOrCheckout("https://github.com/sass/sass.git", "main",
+-        name: 'language');
++    'build/language';
+   }
+ 
+   await runAsync("buf",
