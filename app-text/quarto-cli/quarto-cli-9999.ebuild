@@ -261,7 +261,7 @@ ESBUILD_PLATFORMS="
 	windows-arm64
 "
 ESBUILD_PLATFORMS_EXT="@esbuild/android-arm @esbuild/linux-loong64"
-DENO_STD_VER="0.185.0"
+DENO_STD_VER="0.204.0"
 DENO_LIBS=(
 "std@${DENO_STD_VER} https://github.com/denoland/deno_std/archive/refs/tags/_VER_.tar.gz deno_std-_VER_ NA NA"
 )
@@ -296,7 +296,7 @@ SRC_URI+="
 
 PANDOC_VERSION="3.1.8"
 
-LICENSE="GPL-2+ MIT ZLIB BSD Apache-2.0 ISC || ( MIT GPL-3 ) Unlicense 0BSD"
+LICENSE="MIT GPL-2+ ZLIB BSD Apache-2.0 ISC || ( MIT GPL-3 ) Unlicense 0BSD"
 SLOT="0"
 KEYWORDS=""
 PATCHES="
@@ -304,10 +304,10 @@ PATCHES="
 	${FILESDIR}/quarto-cli-1.3.340-configuration.patch
 	${FILESDIR}/quarto-cli-9999-check.patch
 "
-ESBUILD_DEP_SLOT="0.18"
+ESBUILD_DEP_SLOT="0.19"
 DEPEND="
 	app-arch/unzip
-	>=app-text/typst-0.8.0
+	~app-text/typst-0.9.0
 	|| (
 		(
 			>=dev-haskell/pandoc-${PANDOC_VERSION}
@@ -315,12 +315,12 @@ DEPEND="
 		)
 		>=app-text/pandoc-bin-${PANDOC_VERSION}
 	)
-	~dev-lang/dart-sass-1.55.0
+	~dev-lang/dart-sass-1.69.5
 	>=dev-lang/R-4.1.0
 	dev-libs/libxml2
 	dev-util/esbuild:${ESBUILD_DEP_SLOT}
 	dev-vcs/git
-	>=net-libs/deno-1.33.0 <net-libs/deno-1.35.0
+	>=net-libs/deno-1.37.2 <net-libs/deno-1.38.0
 	~net-libs/deno-dom-0.1.35
 	sys-apps/which
 	x11-misc/xdg-utils
@@ -409,6 +409,7 @@ src_prepare() {
 		--lock-write package/scripts/deno_std/deno_std.ts || die "Failed to create lockfile"
 	grep https src/resources/deno_std/deno_std.lock|sed "s/.*\(https.*\)\":.*/\1/" >\
 		src/resources/deno_std/deno_std.ts.list || die "Failed to make deno_std.ts.list"
+	echo "https://deno.land/std@${DENO_STD_VER}/types.d.ts" >> src/resources/deno_std/deno_std.ts.list
 
 	#build cache that comes with quarto-cli
 	local deno_cache_old="${DENO_CACHE}"
