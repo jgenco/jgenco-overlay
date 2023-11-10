@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<upstream>
+		<changelog>https://github.com/bufbuild/buf/blob/main/CHANGELOG.md</changelog>
+		<doc>https://buf.build/docs</doc>
+		<bugs-to>https://github.com/bufbuild/buf/issues</bugs-to>
+		<remote-id type="github">bufbuild/buf</remote-id>
+	</upstream>
+
+</pkgmetadata>
