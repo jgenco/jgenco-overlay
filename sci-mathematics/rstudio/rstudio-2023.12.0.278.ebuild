@@ -5,12 +5,12 @@ EAPI=8
 
 inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm prefix
 
-P_PREBUILT="${PN}-2023.12.0.114"
+P_PREBUILT="${PN}-2023.12.0.278"
 ELECTRON_VERSION="26.2.4"
-DAILY_COMMIT="6405c6ecd83217409d7fb153474284c8106eed8b"
-QUARTO_COMMIT="658dad57be28765f8a52a654ae331d01bc1e9e4a"
+DAILY_COMMIT="6b9436f529581d79c43abbea8cb08a0f6a3cdd60"
+QUARTO_COMMIT="022421bc40454f0805ded6fe551de640591b5159"
 QUARTO_BRANCH="main"
-QUARTO_DATE="20231019"
+QUARTO_DATE="20231110"
 
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
@@ -347,12 +347,15 @@ src_unpack() {
 		popd /dev/null
 
 		#prepare electron binaries
-		local electron_hash=$(echo -n "https://github.com/electron/electron/releases/download/v${ELECTRON_VERSION}" |sha256sum |cut -f1 -d\  )
+		local electron_url_hash=$(echo -n "https://github.com/electron/electron/releases/download/v${ELECTRON_VERSION}" |sha256sum |cut -f1 -d\ )
 		assert
-		mkdir -p "${WORKDIR}/.cache/electron/${electron_hash}" || die
-		#NOTE  might need to create ${WORKDIR}/.cache/electron/${electron_hash}/SHASUMS256.txt in the future
+		local electron_hash=$(sha256sum "${DISTDIR}/electron-v${ELECTRON_VERSION}-linux-x64.zip" |cut -f1 -d\ )
+		assert
+		mkdir -p "${WORKDIR}/.cache/electron/${electron_url_hash}" || die
+		echo "${electron_hash} *electron-v${ELECTRON_VERSION}-linux-x64.zip" >> \
+			"${WORKDIR}/.cache/electron/${electron_url_hash}/SHASUMS256.txt" || die
 		ln -s "${DISTDIR}/electron-v${ELECTRON_VERSION}-linux-x64.zip" \
-			"${WORKDIR}/.cache/electron/${electron_hash}/electron-v${ELECTRON_VERSION}-linux-x64.zip" || die
+			"${WORKDIR}/.cache/electron/${electron_url_hash}/electron-v${ELECTRON_VERSION}-linux-x64.zip" || die
 
 		#prepare electron headers
 		mkdir -p "${WORKDIR}/.electron-gyp" || die
