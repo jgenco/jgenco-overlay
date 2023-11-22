@@ -245,7 +245,7 @@ RDEPEND="
 	sys-apps/which
 	sys-libs/zlib
 	sys-process/lsof
-	~virtual/jdk-11:=
+	>=virtual/jdk-1.8:=
 "
 
 DEPEND="${RDEPEND}"
@@ -254,6 +254,13 @@ BDEPEND="
 	dev-cpp/websocketpp
 	dev-libs/rapidjson
 	dev-java/aopalliance:1
+	dev-java/injection-api
+	dev-java/error-prone-annotations
+	dev-java/failureaccess
+	dev-java/gin:2.1
+	dev-java/guava
+	dev-java/javax-inject
+	=dev-java/validation-api-1.0*:1.0[source]
 	panmirror? (
 		<dev-util/esbuild-0.17
 		>=net-libs/nodejs-18.14.2[npm]
@@ -263,10 +270,7 @@ BDEPEND="
 		app-arch/unzip
 		>=net-libs/nodejs-18.14.2[npm]
 	)
-	dev-java/gin:2.1
-	dev-java/javax-inject
-	=dev-java/validation-api-1.0*:1.0[source]
-	~virtual/jdk-11:=
+	>=virtual/jdk-1.8:=
 "
 PATCHES=(
 	"${FILESDIR}/${PN}-2023.09.0.463-cmake-bundled-dependencies.patch"
@@ -335,7 +339,7 @@ src_unpack() {
 	fi
 
 	if use panmirror || use electron; then
-		local install_version="$(grep installVersion ${EPREFIX}/usr/$(get_libdir)/node_modules/npm/node_modules/node-gyp/package.json|sed -E 's/.* ([0-9]+),/\1/')"
+		local install_version="$(grep installVersion "${EPREFIX}/usr/$(get_libdir)/node_modules/npm/node_modules/node-gyp/package.json" |sed -E 's/.* ([0-9]+),/\1/')"
 		[[ ${install_version} =~ ^[0-9]+$ ]] || die
 	fi
 
@@ -382,12 +386,15 @@ src_prepare() {
 	#https://build.opensuse.org/package/view_file/openSUSE:Factory/rstudio/rstudio.spec
 	#gwt - they bundle a custom gwt build github.com/rstudio/gwt tree v1.4#
 	local debundles=(
-		"/dependencies/mathjax-27:/usr/share/mathjax"
-		"/src/gwt/lib/gin/2.1.2/aopalliance.jar:/usr/share/aopalliance-1/lib/aopalliance.jar"
-		"/src/gwt/lib/gin/2.1.2/javax-inject.jar:/usr/share/javax-inject/lib/javax-inject.jar"
-		"/src/gwt/lib/gin/2.1.2/gin.jar:/usr/share/gin-2.1/lib/gin.jar"
-		"/src/gwt/lib/gin/2.1.2/guice-assistedinject-3.0.jar:/usr/share/gin-2.1/lib/guice-assistedinject-3.0.jar"
-		"/src/gwt/lib/gin/2.1.2/guice-3.0.jar:/usr/share/gin-2.1/lib/guice-3.0.jar"
+		"/src/gwt/lib/gin/2.1.2/aopalliance-1.0.jar:/usr/share/aopalliance-1/lib/aopalliance.jar"
+		"/src/gwt/lib/gin/2.1.2/jakarta.inject-api-2.0.1.jar:/usr/share/injection-api/lib/injection-api.jar"
+		"/src/gwt/lib/gin/2.1.2/javax.inject.jar:/usr/share/javax-inject/lib/javax-inject.jar"
+		"/src/gwt/lib/gin/2.1.2/gin-2.1.2.jar:/usr/share/gin-2.1/lib/gin.jar"
+#		"/src/gwt/lib/gin/2.1.2/guice-assistedinject-3.0.jar:/usr/share/gin-2.1/lib/guice-assistedinject-3.0.jar" #guice-assistedinject-6.0.0.jar - dev-java/guice
+#		"/src/gwt/lib/gin/2.1.2/guice-3.0.jar:/usr/share/gin-2.1/lib/guice-3.0.jar" #guice-6.0.0.jar - dev-java/guice
+		"/src/gwt/lib/gin/2.1.2/guava-32.1.3-jre.jar:/usr/share/guava/lib/guava.jar"
+		"/src/gwt/lib/gin/2.1.2/error_prone_annotations-2.23.0.jar:/usr/share/error-prone-annotations/lib/error-prone-annotations.jar"
+		"/src/gwt/lib/gin/2.1.2/failureaccess-1.0.2.jar:/usr/share/failureaccess/lib/failureaccess.jar"
 		"/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA.jar:/usr/share/validation-api-1.0/lib/validation-api.jar"
 		"/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA-sources.jar:/usr/share/validation-api-1.0/sources/validation-api-src.zip"
 		"/src/cpp/ext/websocketpp/:/usr/include/websocketpp"
@@ -413,21 +420,21 @@ src_prepare() {
 		eapply "${FILESDIR}/rstudio-2022.12.0.353-qt6-cmake.patch" "${FILESDIR}/rstudio-2022.12.0.353-qt6-desktop.patch"
 	fi
 
-	#Remove Bundled deps ln -s to system libraries - see /src/gwt/.classpath
-	rm -r "${S}/src/gwt/lib/gin/2.1.2/"* || die "Failed to remove bundled jin"
-	rm "${S}/src/gwt/lib/gwt/gwt-rstudio/validation-api-"*.jar || die "Failed to remove bundled validation-api jars"
-
 	for entry in ${debundles[@]};do
 		local bundle_path="${entry%:*}"
 		local local_path="${entry#*:}"
 		[[ ${bundle_path} == "" ]] && die "Missing bundle_path"
-		[[ ${bundle_path:(-1)} == "/" ]] &&
-			( rm -r "${S}${bundle_path}" || die "Failed to remove ${bundle_path}" )
+		if [[ ${bundle_path:(-1)} == "/" ]];then
+			( rm -r "${S}${bundle_path}" || die "Failed to remove dir ${bundle_path}" )
+		else
+			( rm "${S}${bundle_path}" || die "Failed to remove file ${bundle_path}" )
+		fi
 		[[ ${local_path} != "" ]] &&
 			( ln -s "${EPREFIX}${local_path}" "${S}${bundle_path%/}" \
 			|| die "Failed to link ${local_path} -> ${bundle_path}" )
 	done
 
+	ln -s "${EPREFIX}/usr/share/mathjax" "${S}/dependencies/mathjax-27" || die
 	#/usr/share/hunspell might not exist if no dictionary is installed so no need to die
 	ln -s "${EPREFIX}/usr/share/hunspell" "${S}/dependencies/dictionaries"
 
