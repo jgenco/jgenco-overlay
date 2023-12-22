@@ -7,8 +7,6 @@ EAPI=8
 
 CRATES="
 	adler@1.0.2
-	aes@0.8.3
-	ahash@0.7.7
 	ahash@0.8.6
 	aho-corasick@1.1.2
 	android-tzdata@0.1.1
@@ -24,34 +22,27 @@ CRATES="
 	autocfg@1.1.0
 	az@1.2.1
 	base64@0.21.5
-	base64ct@1.6.0
-	biblatex@0.8.1
+	biblatex@0.9.0
 	bincode@1.3.3
 	bit-set@0.5.3
 	bit-vec@0.6.3
 	bitflags@1.3.2
 	bitflags@2.4.1
 	bitvec@1.0.1
-	block-buffer@0.10.4
 	bumpalo@3.14.0
-	bytecheck@0.6.11
-	bytecheck_derive@0.6.11
 	bytemuck@1.14.0
 	byteorder@1.5.0
-	bzip2@0.4.4
-	bzip2-sys@0.1.11+1.0.8
 	cc@1.0.83
 	cfg-if@1.0.0
 	chinese-number@0.7.3
-	chinese-variant@1.0.9
+	chinese-variant@1.1.2
 	chrono@0.4.31
 	ciborium@0.2.1
 	ciborium-io@0.2.1
 	ciborium-ll@0.2.1
-	cipher@0.4.4
-	citationberg@0.1.0
-	clap@4.4.7
-	clap_builder@4.4.7
+	citationberg@0.1.1
+	clap@4.4.8
+	clap_builder@4.4.8
 	clap_complete@4.4.4
 	clap_derive@4.4.7
 	clap_lex@0.6.0
@@ -60,24 +51,19 @@ CRATES="
 	codespan-reporting@0.11.1
 	color_quant@1.1.0
 	colorchoice@1.0.0
-	comemo@0.3.0
-	comemo-macros@0.3.0
-	constant_time_eq@0.1.5
+	comemo@0.3.1
+	comemo-macros@0.3.1
 	core-foundation-sys@0.8.4
 	core_maths@0.1.0
-	cpufeatures@0.2.11
 	crc32fast@1.3.2
 	crossbeam-channel@0.5.8
 	crossbeam-deque@0.8.3
 	crossbeam-epoch@0.9.15
 	crossbeam-utils@0.8.16
-	crypto-common@0.1.6
 	csv@1.3.0
 	csv-core@0.1.11
 	dashmap@5.5.3
-	data-url@0.3.0
-	deranged@0.3.9
-	digest@0.10.7
+	data-url@0.3.1
 	dirs@5.0.1
 	dirs-sys@0.4.1
 	displaydoc@0.2.4
@@ -86,84 +72,81 @@ CRATES="
 	either@1.9.0
 	embedded-io@0.4.0
 	enum-ordinalize@3.1.15
-	env_logger@0.10.0
+	env_logger@0.10.1
 	env_proxy@0.4.1
 	equivalent@1.0.1
-	errno@0.3.5
+	errno@0.3.7
 	fancy-regex@0.11.0
 	fast-srgb8@1.0.0
 	fastrand@1.9.0
 	fastrand@2.0.1
-	fdeflate@0.3.0
+	fdeflate@0.3.1
 	filetime@0.2.22
 	flate2@1.0.28
 	float-cmp@0.9.0
 	fnv@1.0.7
 	fontconfig-parser@0.5.3
 	fontdb@0.15.0
-	form_urlencoded@1.2.0
+	form_urlencoded@1.2.1
 	fsevent-sys@4.1.0
 	funty@2.0.0
-	generic-array@0.14.7
 	getopts@0.2.21
-	getrandom@0.2.10
+	getrandom@0.2.11
 	gif@0.12.0
 	half@1.8.2
 	hashbrown@0.12.3
-	hashbrown@0.14.2
-	hayagriva@0.4.0
+	hashbrown@0.14.3
+	hayagriva@0.5.1
 	heck@0.4.1
 	hermit-abi@0.3.3
-	hmac@0.12.1
 	hypher@0.1.4
 	iana-time-zone@0.1.58
 	iana-time-zone-haiku@0.1.2
-	icu_collections@1.3.2
-	icu_locid@1.3.2
-	icu_locid_transform@1.3.2
-	icu_locid_transform_data@1.3.2
-	icu_properties@1.3.2
-	icu_properties_data@1.3.4
-	icu_provider@1.3.2
-	icu_provider_adapters@1.3.2
-	icu_provider_blob@1.3.2
-	icu_provider_macros@1.3.2
-	icu_segmenter@1.3.2
-	icu_segmenter_data@1.3.2
-	idna@0.4.0
+	icu_collections@1.4.0
+	icu_locid@1.4.0
+	icu_locid_transform@1.4.0
+	icu_locid_transform_data@1.4.0
+	icu_properties@1.4.0
+	icu_properties_data@1.4.0
+	icu_provider@1.4.0
+	icu_provider_adapters@1.4.0
+	icu_provider_blob@1.4.0
+	icu_provider_macros@1.4.0
+	icu_segmenter@1.4.0
+	icu_segmenter_data@1.4.0
+	idna@0.5.0
 	if_chain@1.0.2
 	image@0.24.7
 	imagesize@0.12.0
 	include_dir@0.7.3
 	include_dir_macros@0.7.3
 	indexmap@1.9.3
-	indexmap@2.0.2
+	indexmap@2.1.0
 	indexmap-nostd@0.4.0
-	inferno@0.11.17
+	inferno@0.11.19
 	inotify@0.9.6
 	inotify-sys@0.1.5
-	inout@0.1.3
 	instant@0.1.12
 	is-docker@0.2.0
 	is-terminal@0.4.9
 	is-wsl@0.4.0
 	itoa@1.0.9
-	jobserver@0.1.27
 	jpeg-decoder@0.3.0
-	js-sys@0.3.64
+	js-sys@0.3.66
 	kqueue@1.0.8
 	kqueue-sys@1.0.4
 	kurbo@0.9.5
 	lazy_static@1.4.0
-	libc@0.2.149
-	libdeflate-sys@0.14.0
-	libdeflater@0.14.0
+	libc@0.2.150
+	libdeflate-sys@1.19.0
+	libdeflater@1.19.0
 	libm@0.2.8
+	libredox@0.0.1
 	line-wrap@0.1.1
 	linked-hash-map@0.5.6
-	linux-raw-sys@0.4.10
+	linux-raw-sys@0.4.11
 	lipsum@0.9.0
-	litemap@0.7.1
+	litemap@0.7.2
 	lock_api@0.4.11
 	log@0.4.20
 	lzma-sys@0.1.20
@@ -181,18 +164,21 @@ CRATES="
 	num-traits@0.2.17
 	numerals@0.1.4
 	once_cell@1.18.0
-	open@5.0.0
+	open@5.0.1
 	option-ext@0.2.0
 	overload@0.1.1
+	oxipng@9.0.0
 	palette@0.7.3
 	palette_derive@0.7.3
 	parking_lot_core@0.9.9
-	password-hash@0.4.2
 	paste@1.0.14
 	pathdiff@0.2.1
-	pbkdf2@0.11.0
-	pdf-writer@0.9.1
-	percent-encoding@2.3.0
+	pdf-writer@0.9.2
+	percent-encoding@2.3.1
+	phf@0.11.2
+	phf_codegen@0.11.2
+	phf_generator@0.11.2
+	phf_shared@0.11.2
 	pico-args@0.5.0
 	pin-project-lite@0.2.13
 	pixglyph@0.2.0
@@ -200,12 +186,9 @@ CRATES="
 	plist@1.5.1
 	png@0.17.10
 	postcard@1.0.8
-	powerfmt@0.2.0
 	ppv-lite86@0.2.17
-	proc-macro2@1.0.69
+	proc-macro2@1.0.70
 	psm@0.1.21
-	ptr_meta@0.1.4
-	ptr_meta_derive@0.1.4
 	pulldown-cmark@0.9.3
 	quick-xml@0.26.0
 	quick-xml@0.28.2
@@ -218,27 +201,23 @@ CRATES="
 	rayon@1.8.0
 	rayon-core@1.12.0
 	rctree@0.5.0
-	redox_syscall@0.2.16
 	redox_syscall@0.3.5
 	redox_syscall@0.4.1
-	redox_users@0.4.3
+	redox_users@0.4.4
 	regex@1.10.2
 	regex-automata@0.4.3
 	regex-syntax@0.7.5
 	regex-syntax@0.8.2
-	rend@0.4.1
 	resvg@0.36.0
 	rgb@0.8.37
 	ring@0.17.5
-	rkyv@0.7.42
-	rkyv_derive@0.7.42
 	roff@0.2.1
 	roxmltree@0.18.1
 	rustc-hash@1.1.0
 	rustc_version@0.4.0
-	rustix@0.38.21
-	rustls@0.21.8
-	rustls-pemfile@1.0.3
+	rustix@0.38.25
+	rustls@0.21.9
+	rustls-pemfile@1.0.4
 	rustls-webpki@0.101.7
 	rustversion@1.0.14
 	rustybuzz@0.10.0
@@ -247,23 +226,21 @@ CRATES="
 	same-file@1.0.6
 	scopeguard@1.2.0
 	sct@0.7.1
-	seahash@4.1.0
+	self-replace@1.3.7
 	semver@1.0.20
-	serde@1.0.190
-	serde_derive@1.0.190
+	serde@1.0.193
+	serde_derive@1.0.193
 	serde_json@1.0.108
 	serde_spanned@0.6.4
 	serde_yaml@0.8.26
 	serde_yaml@0.9.27
-	sha1@0.10.6
-	sha2@0.10.8
 	sharded-slab@0.1.7
 	simd-adler32@0.3.7
-	simdutf8@0.1.4
 	simplecss@0.2.1
 	siphasher@0.3.11
+	siphasher@1.0.0
 	slotmap@1.0.6
-	smallvec@1.11.1
+	smallvec@1.11.2
 	spin@0.9.8
 	stable_deref_trait@1.2.0
 	stacker@0.1.15
@@ -273,41 +250,39 @@ CRATES="
 	strum@0.24.1
 	strum_macros@0.24.3
 	subsetter@0.1.1
-	subtle@2.5.0
-	svg2pdf@0.9.0
+	svg2pdf@0.9.1
 	svgtypes@0.12.0
 	syn@1.0.109
-	syn@2.0.38
+	syn@2.0.39
 	synstructure@0.13.0
 	syntect@5.1.0
 	tap@1.0.1
 	tar@0.4.40
 	tempfile@3.8.1
-	termcolor@1.3.0
+	termcolor@1.4.0
 	thiserror@1.0.50
 	thiserror-impl@1.0.50
 	thread_local@1.1.7
-	time@0.3.30
-	time-core@0.1.2
-	time-macros@0.2.15
+	time@0.3.20
+	time-core@0.1.0
+	time-macros@0.2.8
 	tiny-skia@0.11.2
 	tiny-skia-path@0.11.2
-	tinystr@0.7.4
+	tinystr@0.7.5
 	tinyvec@1.6.0
 	tinyvec_macros@0.1.1
-	toml@0.8.6
+	toml@0.8.8
 	toml_datetime@0.6.5
-	toml_edit@0.20.7
+	toml_edit@0.21.0
 	tracing@0.1.40
 	tracing-attributes@0.1.27
 	tracing-core@0.1.32
 	tracing-error@0.2.0
 	tracing-flame@0.2.0
-	tracing-log@0.1.4
-	tracing-subscriber@0.3.17
+	tracing-log@0.2.0
+	tracing-subscriber@0.3.18
 	ttf-parser@0.19.2
 	typed-arena@2.0.2
-	typenum@1.17.0
 	unic-langid@0.9.1
 	unic-langid-impl@0.9.1
 	unicase@2.7.0
@@ -323,33 +298,33 @@ CRATES="
 	unicode-vo@0.1.0
 	unicode-width@0.1.11
 	unicode-xid@0.2.4
-	unicode_names2@0.6.0
+	unicode_names2@1.2.0
+	unicode_names2_generator@1.2.0
 	unsafe-libyaml@0.2.9
 	unscanny@0.1.0
 	untrusted@0.9.0
-	ureq@2.8.0
-	url@2.4.1
+	ureq@2.9.1
+	url@2.5.0
 	usvg@0.36.0
 	usvg-parser@0.36.0
 	usvg-text-layout@0.36.0
 	usvg-tree@0.36.0
 	utf8_iter@1.0.3
 	utf8parse@0.2.1
-	uuid@1.5.0
 	valuable@0.1.0
 	version_check@0.9.4
 	walkdir@2.4.0
 	wasi@0.11.0+wasi-snapshot-preview1
-	wasm-bindgen@0.2.87
-	wasm-bindgen-backend@0.2.87
-	wasm-bindgen-macro@0.2.87
-	wasm-bindgen-macro-support@0.2.87
-	wasm-bindgen-shared@0.2.87
+	wasm-bindgen@0.2.89
+	wasm-bindgen-backend@0.2.89
+	wasm-bindgen-macro@0.2.89
+	wasm-bindgen-macro-support@0.2.89
+	wasm-bindgen-shared@0.2.89
 	wasmi@0.31.0
 	wasmi_arena@0.4.0
 	wasmi_core@0.13.0
 	wasmparser-nostd@0.100.1
-	webpki-roots@0.25.2
+	webpki-roots@0.25.3
 	weezl@0.1.7
 	winapi@0.3.9
 	winapi-i686-pc-windows-gnu@0.4.0
@@ -365,8 +340,8 @@ CRATES="
 	windows_x86_64_gnu@0.48.5
 	windows_x86_64_gnullvm@0.48.5
 	windows_x86_64_msvc@0.48.5
-	winnow@0.5.18
-	writeable@0.5.3
+	winnow@0.5.19
+	writeable@0.5.4
 	wyz@0.5.1
 	xattr@1.0.1
 	xmlparser@0.13.6
@@ -375,28 +350,22 @@ CRATES="
 	xz2@0.1.7
 	yaml-front-matter@0.1.0
 	yaml-rust@0.4.5
-	yoke@0.7.2
-	yoke-derive@0.7.2
-	zerocopy@0.7.20
-	zerocopy-derive@0.7.20
+	yoke@0.7.3
+	yoke-derive@0.7.3
+	zerocopy@0.7.26
+	zerocopy-derive@0.7.26
 	zerofrom@0.1.3
 	zerofrom-derive@0.1.3
-	zerovec@0.10.0
-	zerovec-derive@0.10.0
+	zerotrie@0.1.2
+	zerovec@0.10.1
+	zerovec-derive@0.10.1
 	zip@0.6.6
-	zopfli@0.7.4
-	zstd@0.11.2+zstd.1.5.2
-	zstd-safe@5.0.2+zstd.1.5.2
-	zstd-sys@2.0.9+zstd.1.5.5
+	zopfli@0.8.0
 "
 
 IAI_COMMIT="3f0f92736408ebce6545808b98e0cb2aea89b7dd"
-OXIPNG_COMMIT="b8ec65b3ca42dde33c85149b6e402e891527f802"
-SELF_REPLACE_COMMIT="2e6d5e4808bba73b713fd85cf5616b7d846143c2"
 declare -A GIT_CRATES=(
 	[iai]="https://github.com/typst/iai;${IAI_COMMIT};iai-%commit%"
-	[oxipng]="https://github.com/typst/oxipng;${OXIPNG_COMMIT};oxipng-%commit%"
-	[self-replace]="https://github.com/typst/self-replace;${SELF_REPLACE_COMMIT};self-replace-%commit%"
 )
 #NOTE: update typst.tera for long term changes
 
