@@ -1,7 +1,3 @@
-#Mask all non releases of RStudio
->=sci-mathematics/rstudio-2023.06.9.999
-
-
 #Mask all non releases of quarto-cli
 >=app-text/quarto-cli-1.4.0
 >=app-text/quarto-cli-bin-1.4.0
