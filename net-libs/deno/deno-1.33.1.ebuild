@@ -573,7 +573,7 @@ SLOT="0"
 KEYWORDS="~amd64"
 BDEPEND="
 	dev-util/gn
-	dev-util/ninja
+	dev-build/ninja
 	>=virtual/rust-1.68.0 <virtual/rust-1.70
 	test? (
 		net-misc/curl
