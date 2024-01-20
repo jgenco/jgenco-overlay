@@ -1,4 +1,4 @@
-# Copyright 2023 Gentoo Authors
+# Copyright 2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -7,101 +7,103 @@ inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-uti
 
 P_PREBUILT="${PN}-2024.04.0.115"
 ELECTRON_VERSION="28.0.0"
-DAILY_COMMIT="85194c08afcfcd0ef71a51755cbf194888af9647"
-QUARTO_COMMIT="d379a090ffcc482fd383f43b0d598e7c3cb6776b"
+DAILY_COMMIT="6c7ff83c7c21a9fd98643c06f6b410f49529f17f"
+QUARTO_COMMIT="0d28983647880818e065c3647aae016749c3c105"
 QUARTO_BRANCH="main"
-QUARTO_DATE="20231207"
+QUARTO_DATE="20240117"
 
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
 R_RMARKDOWN_PKGS="
-rlang@1.0.5
-glue@1.6.2
-cli@3.4.0
-fastmap@1.1.0
+rlang@1.1.3
+glue@1.7.0
+cli@3.6.2
+lifecycle@1.0.4
+fastmap@1.1.1
+ellipsis@0.3.2
+digest@0.6.34
 base64enc@0.1-3
-digest@0.6.29
-vctrs@0.4.1
-utf8@1.2.2
-lifecycle@1.0.2
-fansi@1.0.3
-colorspace@2.0-3
-lattice@0.20-45
-stringi@1.7.8
-magrittr@2.0.3
-xfun@0.32
-cachem@1.0.6
-htmltools@0.5.3
+vctrs@0.6.5
+utf8@1.2.4
+fansi@1.0.6
+colorspace@2.1-0
+lattice@0.22-5
+xfun@0.41
 rappdirs@0.3.3
 R6@2.5.1
-fs@1.5.2
+htmltools@0.5.7
+fs@1.6.3
+cachem@1.0.8
 pkgconfig@2.0.3
-pillar@1.8.1
-viridisLite@0.4.1
+pillar@1.9.0
+magrittr@2.0.3
+viridisLite@0.4.2
 RColorBrewer@1.1-3
 munsell@0.5.0
-labeling@0.4.2
+labeling@0.4.3
 farver@2.1.1
-Matrix@1.4-1
-nlme@3.1-159
-yaml@2.3.5
-stringr@1.4.1
-highr@0.9
-evaluate@0.16
+Matrix@1.6-5
+nlme@3.1-164
+stringi@1.8.3
+yaml@2.3.8
+highr@0.10
+evaluate@0.23
+sass@0.4.8
+mime@0.12
 memoise@2.0.1
+jsonlite@1.8.8
 jquerylib@0.1.4
-sass@0.4.2
-jsonlite@1.8.0
-withr@2.5.0
-tibble@3.1.8
-scales@1.2.1
-mgcv@1.8-40
-MASS@7.3-58.1
-isoband@0.2.5
-gtable@0.3.1
-tinytex@0.41
-knitr@1.40
-bslib@0.4.0
-rmarkdown@2.16
-ggplot2@3.3.6
+withr@2.5.2
+tibble@3.2.1
+scales@1.3.0
+mgcv@1.9-1
+MASS@7.3-60.0.1
+isoband@0.2.7
+gtable@0.3.4
+tinytex@0.49
+stringr@1.5.1
+knitr@1.45
+fontawesome@0.5.2
+bslib@0.6.1
+rmarkdown@2.25
+ggplot2@3.4.4
 "
 #####End   of RMARKDOWN package list#####
 #####Start of TESTHAT   package list#####
 #also includes xml2
 R_TESTTHAT_PKGS="
-rlang@1.0.5
-glue@1.6.2
-cli@3.4.0
-vctrs@0.4.1
-utf8@1.2.2
-lifecycle@1.0.2
-fansi@1.0.3
+rlang@1.1.3
+glue@1.7.0
+cli@3.6.2
+lifecycle@1.0.4
+vctrs@0.6.5
+utf8@1.2.4
+fansi@1.0.6
 pkgconfig@2.0.3
-pillar@1.8.1
+pillar@1.9.0
 magrittr@2.0.3
-tibble@3.1.8
-crayon@1.5.1
-rprojroot@2.0.3
 R6@2.5.1
-ps@1.7.1
+ps@1.7.5
+processx@3.8.3
+tibble@3.2.1
+crayon@1.5.2
+desc@1.4.3
+callr@3.7.3
 rematch2@2.1.2
 diffobj@0.3.5
-fs@1.5.2
-desc@1.4.2
-crayon@1.5.1
-processx@3.7.0
-withr@2.5.0
-waldo@0.4.0
+withr@2.5.2
+rprojroot@2.0.4
+pkgbuild@1.4.3
+fs@1.6.3
+waldo@0.5.2
 praise@1.0.0
-pkgload@1.3.0
-jsonlite@1.8.0
-evaluate@0.16
-ellipsis@0.3.2
-digest@0.6.29
-callr@3.7.2
-brio@1.1.3
-testthat@3.1.4
-xml2@1.3.3
+pkgload@1.3.3
+jsonlite@1.8.8
+evaluate@0.23
+digest@0.6.34
+brio@1.1.4
+testthat@3.2.1
+xml2@1.3.6
 "
 #####End   of TESTHAT   package list#####
 
@@ -286,6 +288,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2022.12.0.353-add-support-for-RapidJSON.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-system-clang.patch"
 	"${FILESDIR}/${PN}-2023.03.0.386-panmirror_disable.patch"
+	"${FILESDIR}/${PN}-2024.04.0.249-disable-check-for-updates.patch"
 )
 
 DOCS=(CONTRIBUTING.md COPYING INSTALL NOTICE README.md version/news )
@@ -470,7 +473,7 @@ src_configure() {
 	local my_pv=${PV}
 	local build_type=""
 	if [[ ${PV} == "9999" ]];then
-		my_pv="$(<${S}/version/CALENDAR_VERSION).0."
+		my_pv="$(<${S}/version/CALENDAR_VERSION).$(<${S}/version/PATCH)."
 		local flower="$(<${S}/version/RELEASE)"
 		flower=${flower,,}
 		local base_commit=$(< ${S}/version/base_commit/${flower/ /-}.BASE_COMMIT)
