@@ -300,9 +300,9 @@ LICENSE="MIT GPL-2+ ZLIB BSD Apache-2.0 ISC || ( MIT GPL-3 ) Unlicense 0BSD"
 SLOT="0"
 KEYWORDS="~amd64"
 PATCHES="
-	${FILESDIR}/quarto-cli-9999-pathfixes.patch
+	${FILESDIR}/quarto-cli-1.4.549-pathfixes.patch
 	${FILESDIR}/quarto-cli-1.3.340-configuration.patch
-	${FILESDIR}/quarto-cli-9999-check.patch
+	${FILESDIR}/quarto-cli-1.4.549-check.patch
 "
 ESBUILD_DEP_SLOT="0.19"
 DEPEND="
