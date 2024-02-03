@@ -298,7 +298,7 @@ PANDOC_VERSION="3.1.11"
 
 LICENSE="MIT GPL-2+ ZLIB BSD Apache-2.0 ISC || ( MIT GPL-3 ) Unlicense 0BSD"
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 PATCHES="
 	${FILESDIR}/quarto-cli-1.4.549-pathfixes.patch
 	${FILESDIR}/quarto-cli-1.3.340-configuration.patch
@@ -432,7 +432,7 @@ src_prepare() {
 	sed -i "s/${ESBUILD_VER_ORIG}/$(esbuild --version)/g" esbuild/${ESBUILD_VER_ORIG}/{install.js,lib/main.js} || die
 	popd
 
-	sed -i -E  "s/2.19.2(\", \"Pandoc)/$(ver_cut 1-3 ${PANDOC_VERSION})\1/;s/1.32.8(\", \"Dart Sass)/1.55.0\1/" \
+	sed -i -E  "s/2.19.2(\", \"Pandoc)/$(ver_cut 1-3 ${PANDOC_VERSION})\1/;s/1.32.8(\", \"Dart Sass)/1.69.5\1/" \
 		src/command/check/check.ts || die "Failed to correct versions"
 
 	sed -i "s/\"esbuild\"/\"esbuild-${ESBUILD_DEP_SLOT}\"/" src/core/esbuild.ts || die
@@ -533,11 +533,6 @@ src_install() {
 	newbashcomp quarto.sh quarto
 	dozshcomp _quarto
 	dofishcomp quarto.fish
-
-	if has_version  ">=app-shells/zsh-4.3.5";then
-		insinto /usr/share/zsh/site-functions
-		doins _quarto
-	fi
 
 	mv src/resources/man/quarto{-man.man,.1} || die
 	doman src/resources/man/quarto.1
