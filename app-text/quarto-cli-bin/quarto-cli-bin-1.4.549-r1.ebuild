@@ -16,7 +16,7 @@ LICENSE+=" MIT Apache-2.0 BSD" #dart-sass 1.55.0
 LICENSE+=" MIT BSD-2" #esbuild 0.15.6
 
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 
 DEPEND="
 	app-arch/unzip
@@ -60,5 +60,6 @@ src_install() {
 	done
 
 	mkdir "${ED}/opt/bin"
+	dosym -r /opt/quarto-cli/bin/quarto /opt/bin/quarto
 	dosym -r /opt/quarto-cli/bin/quarto /opt/bin/quarto-bin
 }
