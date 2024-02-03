@@ -1,3 +1,0 @@
-#Mask all non releases of quarto-cli
->=app-text/quarto-cli-1.4.0
->=app-text/quarto-cli-bin-1.4.0
