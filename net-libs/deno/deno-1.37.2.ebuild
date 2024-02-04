@@ -629,7 +629,7 @@ LICENSE="0BSD Apache-2.0 Apache-2.0-with-LLVM-exceptions Artistic-2 BSD BSD-1 BS
 SLOT="0"
 KEYWORDS="amd64"
 BDEPEND="
-	dev-util/gn
+	dev-build/gn
 	dev-build/ninja
 	>=virtual/rust-1.73.0 <virtual/rust-1.74.0
 	test? (
