@@ -631,7 +631,7 @@ KEYWORDS="amd64"
 BDEPEND="
 	dev-build/gn
 	dev-build/ninja
-	>=virtual/rust-1.73.0 <virtual/rust-1.74.0
+	>=virtual/rust-1.73 <virtual/rust-1.75
 	test? (
 		net-misc/curl
 	)
