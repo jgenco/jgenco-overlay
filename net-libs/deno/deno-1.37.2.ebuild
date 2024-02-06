@@ -681,6 +681,7 @@ src_compile() {
 		gb_conf+=" is_clang=true"
 	else
 		export DISABLE_CLANG=true
+		gn_conf+=" use_custom_libcxx=false"
 	fi
 
 	if tc-ld-is-lld && tc-is-clang;then
@@ -710,7 +711,7 @@ src_compile() {
 	einfo "GN_ARGS=${GN_ARGS}"
 
 	pushd cli > /dev/null || die "Failed to change dir cli"
-	cargo_src_compile
+	cargo_src_compile -vv
 	popd > /dev/null
 
 	if use test;then
