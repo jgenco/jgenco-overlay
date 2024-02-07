@@ -671,6 +671,10 @@ src_prepare() {
 		"${FILESDIR}/v8-0.40.2-jobfix.patch"
 	popd > /dev/null
 
+	pushd "${ECARGO_VENDOR}/$(find_crate ^libffi-sys@)/libffi" > /dev/null || die
+	eapply "${FILESDIR}/libffi-sys-2.3.0-trampoline-c99.patch"
+	popd > /dev/null
+
 	default
 }
 src_compile() {
@@ -678,7 +682,7 @@ src_compile() {
 	#GCC-12 issued warnings and caused it to fail
 	local gn_conf="treat_warnings_as_errors=false"
 	if tc-is-clang; then
-		gb_conf+=" is_clang=true"
+		gn_conf+=" is_clang=true"
 	else
 		export DISABLE_CLANG=true
 		gn_conf+=" use_custom_libcxx=false"
