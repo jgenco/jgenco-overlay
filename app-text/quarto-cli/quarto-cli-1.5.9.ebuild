@@ -534,11 +534,6 @@ src_install() {
 	dozshcomp _quarto
 	dofishcomp quarto.fish
 
-	if has_version  ">=app-shells/zsh-4.3.5";then
-		insinto /usr/share/zsh/site-functions
-		doins _quarto
-	fi
-
 	mv src/resources/man/quarto{-man.man,.1} || die
 	doman src/resources/man/quarto.1
 	einstalldocs
