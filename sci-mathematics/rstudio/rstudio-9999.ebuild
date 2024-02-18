@@ -5,12 +5,13 @@ EAPI=8
 
 inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm prefix
 
-P_PREBUILT="${PN}-2024.04.0.115"
-ELECTRON_VERSION="28.0.0"
-DAILY_COMMIT="85194c08afcfcd0ef71a51755cbf194888af9647"
-QUARTO_COMMIT="d379a090ffcc482fd383f43b0d598e7c3cb6776b"
+P_PREBUILT="${PN}-2024.04.0.438"
+ELECTRON_VERSION="28.2.2"
+DAILY_COMMIT="fac89e1c4179fd23f47ff218bb106fd4e5cf2917"
+QUARTO_COMMIT="f9edec34e53817e9c9f73cb349f524a82bcc6474"
+QUARTO_CLI_VER="1.4.550"
 QUARTO_BRANCH="main"
-QUARTO_DATE="20231207"
+QUARTO_DATE="20240208"
 
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
@@ -182,8 +183,13 @@ RDEPEND="
 		app-text/pandoc-bin
 	)
 	app-text/hunspell:=
-	quarto? ( >=app-text/quarto-cli-1.3.433 )
-	=dev-cpp/yaml-cpp-0.7.0-r2:=
+	quarto? (
+		|| (
+			>=app-text/quarto-cli-${QUARTO_CLI_VER}
+			>=app-text/quarto-cli-bin-${QUARTO_CLI_VER}
+		)
+	)
+	>=dev-cpp/yaml-cpp-0.8.0:=
 	>=dev-lang/R-3.3.0
 	>=dev-libs/boost-1.78:=
 	>=dev-libs/libfmt-8.1.1:=
@@ -252,7 +258,12 @@ RDEPEND="
 
 DEPEND="${RDEPEND}"
 BDEPEND="
-	doc? ( >=app-text/quarto-cli-1.3.433 )
+	doc? (
+		|| (
+			>=app-text/quarto-cli-${QUARTO_CLI_VER}
+			>=app-text/quarto-cli-bin-${QUARTO_CLI_VER}
+		)
+	)
 	dev-cpp/websocketpp
 	dev-libs/rapidjson
 	dev-java/aopalliance:1
@@ -275,10 +286,10 @@ BDEPEND="
 	>=virtual/jdk-1.8:=
 "
 PATCHES=(
-	"${FILESDIR}/${PN}-2023.09.0.463-cmake-bundled-dependencies.patch"
+	"${FILESDIR}/${PN}-9999-cmake-bundled-dependencies.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-resource-path.patch"
-	"${FILESDIR}/${PN}-2023.09.0.463-server-paths.patch"
-	"${FILESDIR}/${PN}-2022.07.0.548-package-build.patch"
+	"${FILESDIR}/${PN}-9999-server-paths.patch"
+	"${FILESDIR}/${PN}-9999-package-build.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-pandoc_path_fix.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
 	"${FILESDIR}/${PN}-2023.06.0.421-node_electron_cmake.patch"
@@ -288,7 +299,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2022.12.0.353-add-support-for-RapidJSON.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-system-clang.patch"
 	"${FILESDIR}/${PN}-2023.03.0.386-panmirror_disable.patch"
-	"${FILESDIR}/${PN}-2024.04.0.249-disable-check-for-updates.patch"
+	"${FILESDIR}/${PN}-2023.12.1.402-node_path_fix.patch"
 )
 
 DOCS=(CONTRIBUTING.md COPYING INSTALL NOTICE README.md version/news )
@@ -531,6 +542,7 @@ src_configure() {
 		-DRSTUDIO_BIN_PATH="${EPREFIX}/usr/bin"
 		-DQUARTO_ENABLED=$(usex quarto)
 		-DRSTUDIO_USE_SYSTEM_SOCI=TRUE
+		-DRSTUDIO_DISABLE_CHECK_FOR_UPDATES=1
 	)
 
 	use clang && mycmakeargs+=( -DSYSTEM_LIBCLANG_PATH=$(get_llvm_prefix))
@@ -643,7 +655,9 @@ src_test() {
 	mkdir -p "${HOME}/.local/share/rstudio" || die "Failed to make .local dir"
 	pushd "${BUILD_DIR}/src/cpp" || die "Failed to change to ${BUILD_DIR}/src/cpp"
 	#--scope core,rserver,rsession,r
-	R_LIBS="${R_LIB_PATH}" ./rstudio-tests || die
+	#NOTE: a bug introduced by resource-path.patch make this use the
+	#INSTALLED files instead of TO BE INSTALLED files:(
+	JENKINS_URL="false" R_LIBS="${R_LIB_PATH}" ./rstudio-tests || die
 	#FAIL 1 | WARN 0 | SKIP 1 | PASS 1030
 	#FAIL = probably simply need package: purr
 	#SKIP = test-document-apis.R - NYI

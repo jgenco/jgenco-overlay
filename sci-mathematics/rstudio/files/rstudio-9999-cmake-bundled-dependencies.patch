@@ -1,0 +1,50 @@
+Upstream insists on installing mathjax and pandoc using the bundled scripts. An
+error is thrown during configuration if these dependencies are not found in the
+src directory. This patch removes those checks, since we can install the
+dependencies using other means.
+dictionary removed b/c it might point to a non-existent directory at build time
+--- a/src/cpp/session/CMakeLists.txt
++++ b/src/cpp/session/CMakeLists.txt
+@@ -71,11 +71,7 @@ endif()
+ 
+ 
+ # validate our dependencies exist
+-foreach(VAR RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR
+-            RSTUDIO_DEPENDENCIES_MATHJAX_DIR
+-            RSTUDIO_DEPENDENCIES_PANDOC_DIR
+-            RSTUDIO_DEPENDENCIES_QUARTO_DIR)
+-
++foreach(VAR RSTUDIO_DEPENDENCIES_MATHJAX_DIR)
+  
+    # skip quarto if not enabled
+    if("${VAR}" STREQUAL "RSTUDIO_DEPENDENCIES_QUARTO_DIR" AND NOT QUARTO_ENABLED)
+@@ -696,12 +692,6 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
+    install(DIRECTORY "${RSTUDIO_DEPENDENCIES_MATHJAX_DIR}"
+            DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
+ 
+-   # install node
+-   install(
+-      DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/node/${RSTUDIO_NODE_VERSION}/"
+-      DESTINATION "${RSTUDIO_INSTALL_BIN}/node"
+-      USE_SOURCE_PERMISSIONS)
+-
+    # install quarto (or pandoc if quarto disabled)
+    if(QUARTO_ENABLED)
+       # install some quarto folders into Resources, as needed
+@@ -727,16 +717,8 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
+                   EXCLUDE)
+          endif()
+       else()
+-         install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}"
+-               DESTINATION "${RSTUDIO_INSTALL_BIN}"
+-               USE_SOURCE_PERMISSIONS
+-               PATTERN ".gitignore"
+-               EXCLUDE)
+       endif()
+    else()
+-      install(DIRECTORY "${RSTUDIO_DEPENDENCIES_PANDOC_DIR}/"
+-              DESTINATION "${RSTUDIO_INSTALL_BIN}/pandoc"
+-              USE_SOURCE_PERMISSIONS)
+    endif()
+ 
+    # install embedded packages
