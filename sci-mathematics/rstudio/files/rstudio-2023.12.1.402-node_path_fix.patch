@@ -1,0 +1,11 @@
+--- a/src/cpp/session/include/session/SessionConstants.hpp
++++ b/src/cpp/session/include/session/SessionConstants.hpp
+@@ -153,7 +153,7 @@
+ # define kDefaultPandocPath        "bin/pandoc"
+ #endif
+ 
+-#define kDefaultNodePath           "bin/node"
++#define kDefaultNodePath           RSTUDIO_BIN_PATH
+ #define kDefaultQuartoPath         "bin/quarto"
+ #define kDefaultRsclangPath        "bin/rsclang"
+ 

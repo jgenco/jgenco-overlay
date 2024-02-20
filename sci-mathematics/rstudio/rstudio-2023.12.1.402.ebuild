@@ -8,14 +8,14 @@ inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-uti
 P_PREBUILT="${PN}-2023.12.0.278"
 ELECTRON_VERSION="26.2.4"
 #DAILY_COMMIT="6b9436f529581d79c43abbea8cb08a0f6a3cdd60"
-QUARTO_COMMIT="d379a090ffcc482fd383f43b0d598e7c3cb6776b"
+QUARTO_COMMIT="f9edec34e53817e9c9f73cb349f524a82bcc6474"
 QUARTO_BRANCH="main"
-QUARTO_DATE="20231207"
+QUARTO_DATE="20240208"
 
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
 R_RMARKDOWN_PKGS="
-rlang@1.0.5
+rlang@1.1.3
 glue@1.6.2
 cli@3.4.0
 fastmap@1.1.0
@@ -69,7 +69,7 @@ ggplot2@3.3.6
 #####Start of TESTHAT   package list#####
 #also includes xml2
 R_TESTTHAT_PKGS="
-rlang@1.0.5
+rlang@1.1.3
 glue@1.6.2
 cli@3.4.0
 vctrs@0.4.1
@@ -101,7 +101,7 @@ digest@0.6.29
 callr@3.7.2
 brio@1.1.3
 testthat@3.1.4
-xml2@1.3.3
+xml2@1.3.6
 "
 #####End   of TESTHAT   package list#####
 
@@ -121,7 +121,7 @@ if [[ "${PV}" == *9999 ]];then
 else
 	#P_PREBUILT=${P}
 	if [[ ! -n "${DAILY_COMMIT}" ]];then
-		SRC_URI="https://github.com/rstudio/rstudio/archive/v$(ver_rs 3 "+").tar.gz -> ${P}.tar.gz "
+		SRC_URI="https://github.com/rstudio/rstudio/archive/$(ver_rs 3 "+").tar.gz -> ${P}.tar.gz "
 		S="${WORKDIR}/${PN}-$(ver_rs 3 "-")"
 	else
 		SRC_URI="https://github.com/rstudio/rstudio/archive/${DAILY_COMMIT}.tar.gz -> ${P}.tar.gz "
@@ -282,6 +282,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2022.12.0.353-add-support-for-RapidJSON.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-system-clang.patch"
 	"${FILESDIR}/${PN}-2023.03.0.386-panmirror_disable.patch"
+	"${FILESDIR}/${PN}-2023.12.1.402-node_path_fix.patch"
 )
 
 DOCS=(CONTRIBUTING.md COPYING INSTALL NOTICE README.md version/news )
@@ -633,7 +634,9 @@ src_test() {
 	mkdir -p "${HOME}/.local/share/rstudio" || die "Failed to make .local dir"
 	pushd "${BUILD_DIR}/src/cpp" || die "Failed to change to ${BUILD_DIR}/src/cpp"
 	#--scope core,rserver,rsession,r
-	R_LIBS="${R_LIB_PATH}" ./rstudio-tests || die
+	#NOTE: a bug introduced by resource-path.patch make this use the
+	#INSTALLED files instead of TO BE INSTALLED files:(
+	JENKINS_URL="false" R_LIBS="${R_LIB_PATH}" ./rstudio-tests || die
 	#FAIL 1 | WARN 0 | SKIP 1 | PASS 1030
 	#FAIL = probably simply need package: purr
 	#SKIP = test-document-apis.R - NYI
