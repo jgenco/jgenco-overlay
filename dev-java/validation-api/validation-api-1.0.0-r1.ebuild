@@ -9,7 +9,9 @@ inherit java-pkg-2 java-pkg-simple
 
 DESCRIPTION="Bean Validation (JSR-303) API"
 HOMEPAGE="https://beanvalidation.org/"
-SRC_URI="https://repository.jboss.org/nexus/service/local/repo_groups/public/content/javax/validation/${PN}/${PV}.GA/${P}.GA-sources.jar"
+SRC_URI="https://repo1.maven.org/maven2/javax/validation/${PN}/${PV}.GA/${P}.GA-sources.jar"
+
+RESTRICT="mirror"
 
 LICENSE="Apache-2.0"
 SLOT="1.0"
