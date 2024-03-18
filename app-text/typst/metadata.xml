@@ -3,6 +3,7 @@
 <pkgmetadata>
 	<use>
 		<flag name="doc">Install general,tutorial, and reference docs</flag>
+		<flag name="embed-fonts">Embeds fonts from https://github.com/typst/typst-assets</flag>
 	</use>
 	<upstream>
 		<doc>https://typst.app/docs/</doc>
