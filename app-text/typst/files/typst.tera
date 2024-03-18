@@ -13,9 +13,8 @@ CRATES="
 {%- endfor -%}"
 {%- endblock %}
 
-IAI_COMMIT="3f0f92736408ebce6545808b98e0cb2aea89b7dd"
 declare -A GIT_CRATES=(
-	[iai]="https://github.com/typst/iai;${IAI_COMMIT};iai-%commit%"
+	[typst-dev-assets]="https://github.com/typst/typst-dev-assets;e0ef7ad46f28a440c41bc8e78563ace86cc02678;typst-dev-assets-%commit%"
 )
 #NOTE: update typst.tera for long term changes
 {#
@@ -26,7 +25,7 @@ declare -A GIT_CRATES=(
 #}
 inherit {% block inherit -%}cargo{%- endblock %} shell-completion
 
-IUSE="test doc"
+IUSE="doc embed-fonts test"
 RESTRICT="mirror !test? ( test )"
 
 DESCRIPTION={%- block description -%}"{{ description | trim }}"{%- endblock %}
@@ -42,19 +41,24 @@ SRC_URI={%- block src_uri -%}{% raw -%}"
 {#
 # webpki = ISC
 # ring   = SSLeay openssl
+# libfuzzer = UoI-NCSA
+# unicode-ident  = Unicode-DFS-2016
 # icu_{collections,locid,locid_transform,properties,provider,
 # provider_adapters,provider_blob,provider_macro,segmenter}
-# litemap tinystr writeable yoke zerofrom = UNICODE LICENSE V3
+# litemap tinystr writeable yoke zerofrom zerotrie
+# zerovec zerovec-derive = UNICODE LICENSE V3
+
 # https://github.com/unicode-org/icu4x/
 #}
-LICENSE={%- block license -%}"{{ license }} SSLeay openssl"{%- endblock %}
+LICENSE={%- block license -%}"{{ license }} SSLeay openssl UoI-NCSA "{%- endblock %}
+LICENSE+=" embed-fonts? ( OFL-1.1 GFL BitstreamVera )"
 SLOT={%- block slot -%}"0"{%- endblock %}
 KEYWORDS={%- block keyword -%}"~amd64"{%- endblock %}
 {% block variables %}
 DEPEND=""
 RDEPEND="${DEPEND}"
 BDEPEND="
-	>=virtual/rust-1.70.0
+	>=virtual/rust-1.74.0
 "
 
 DOCS=(LICENSE NOTICE README.md docs/changelog.md)
@@ -62,30 +66,44 @@ DOCS=(LICENSE NOTICE README.md docs/changelog.md)
 # rust does not use *FLAGS from make.conf, silence portage warning
 # update with proper path to binaries this crate installs, omit leading /
 QA_FLAGS_IGNORED="usr/bin/${PN}"
-
 {% endblock %}
 
 {%- block phases -%}
 {%- endblock -%}
+src_prepare() {
+	sed -i "s/^strip = true$/strip = false/" Cargo.toml || die
+	default
+}
+
+src_configure() {
+	local myfeatures=(
+		$(usev embed-fonts)
+	)
+	cargo_src_configure --no-default-features
+}
 
 src_compile() {
-	mkdir artifacts || die
 	export GEN_ARTIFACTS="${S}/artifacts"
 	local typst_hash="$(gunzip -c "${DISTDIR}/typst-${PV}.tar.gz" |git get-tar-commit-id)"
 	assert "Failed to get commit hash"
 	export TYPST_VERSION="${PV} (${typst_hash:0:8})"
 	cargo_src_compile
 }
+
 src_test() {
 	cargo_src_test --all
 }
 
 src_install() {
 	cargo_src_install --path crates/typst-cli
-	newbashcomp artifacts/typst.bash typst
-	dofishcomp artifacts/typst.fish
-	dozshcomp artifacts/_typst
-	doman artifacts/*.1
+
+	pushd ${GEN_ARTIFACTS} || die
+	newbashcomp typst.bash typst
+	dofishcomp typst.fish
+	dozshcomp _typst
+	doman *.1
+	popd
+
 	einstalldocs
 	use doc && dodoc -r docs/{guides,reference,tutorial}
 }
