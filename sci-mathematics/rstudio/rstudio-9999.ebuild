@@ -7,7 +7,7 @@ inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-uti
 
 P_PREBUILT="${PN}-2024.04.0.555"
 ELECTRON_VERSION="28.2.6"
-DAILY_COMMIT="cacdea5ba0e61afafe9b7b3db52b62d2ad009a22"
+DAILY_COMMIT="9d695aab7a753db36455d07e1d6c5f162f077335"
 QUARTO_COMMIT="3bd070a1ffabd0b2dc80c67f5d9fa9a2d8bee896"
 QUARTO_CLI_VER="1.4.551"
 QUARTO_BRANCH="main"
@@ -269,7 +269,6 @@ BDEPEND="
 	dev-java/aopalliance:1
 	dev-java/injection-api
 	dev-java/error-prone-annotations
-	dev-java/failureaccess
 	dev-java/gin:2.1
 	dev-java/guava
 	dev-java/javax-inject
@@ -362,7 +361,7 @@ src_unpack() {
 		pushd "${S}/src/node/desktop" > /dev/null|| die
 		unpack ${P_PREBUILT}-electron-node_modules.tar.xz
 		sed -i "s/npm ci && //" package.json || die
-		popd /dev/null
+		popd > /dev/null
 
 		#prepare electron binaries
 		local electron_url_hash=$(echo -n "https://github.com/electron/electron/releases/download/v${ELECTRON_VERSION}" |sha256sum |cut -f1 -d\ )
@@ -408,7 +407,7 @@ src_prepare() {
 #		"/src/gwt/lib/gin/2.1.2/guice-3.0.jar:/usr/share/gin-2.1/lib/guice-3.0.jar" #guice-6.0.0.jar - dev-java/guice
 		"/src/gwt/lib/gin/2.1.2/guava-32.1.3-jre.jar:/usr/share/guava/lib/guava.jar"
 		"/src/gwt/lib/gin/2.1.2/error_prone_annotations-2.23.0.jar:/usr/share/error-prone-annotations/lib/error-prone-annotations.jar"
-		"/src/gwt/lib/gin/2.1.2/failureaccess-1.0.2.jar:/usr/share/failureaccess/lib/failureaccess.jar"
+		#"/src/gwt/lib/gin/2.1.2/failureaccess-1.0.2.jar:/usr/share/failureaccess/lib/failureaccess.jar"
 		"/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA.jar:/usr/share/validation-api-1.0/lib/validation-api.jar"
 		"/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA-sources.jar:/usr/share/validation-api-1.0/sources/validation-api-src.zip"
 		"/src/cpp/ext/websocketpp/:/usr/include/websocketpp"
@@ -482,14 +481,13 @@ src_prepare() {
 src_configure() {
 	export PACKAGE_OS="Gentoo"
 	local my_pv=${PV}
-	local build_type=""
+	local build_type="$(<${S}/version/BUILDTYPE)"
 	if [[ ${PV} == "9999" ]];then
 		my_pv="$(<${S}/version/CALENDAR_VERSION).$(<${S}/version/PATCH)."
 		local flower="$(<${S}/version/RELEASE)"
 		flower=${flower,,}
 		local base_commit=$(< ${S}/version/base_commit/${flower/ /-}.BASE_COMMIT)
 		my_pv+="$(git rev-list ${base_commit}..HEAD --count || echo "999")"
-		build_type="-$(<${S}/version/BUILDTYPE)"
 		export GIT_COMMIT=${EGIT_VERSION}
 	else
 		export GIT_COMMIT="$(gunzip -c "${DISTDIR}/rstudio-${PV}.tar.gz" |git get-tar-commit-id)"
@@ -497,12 +495,10 @@ src_configure() {
 	export RSTUDIO_VERSION_MAJOR=$(ver_cut 1 ${my_pv})
 	export RSTUDIO_VERSION_MINOR=$(ver_cut 2 ${my_pv})
 	export RSTUDIO_VERSION_PATCH=$(ver_cut 3 ${my_pv})
-	export RSTUDIO_VERSION_SUFFIX="${build_type,,}+$(ver_cut 4 ${my_pv})"
+	export RSTUDIO_VERSION_SUFFIX="-${build_type,,}+$(ver_cut 4 ${my_pv})"
 
-	sed -i "1,10s/99.9.9/${my_pv}-${RSTUDIO_VERSION_SUFFIX}/" src/node/desktop/package.json || die
-	#allow boost version 1.82.0 untill 1.83.0 is stabalized
-	sed -i "s/ 1.83.0/ 1.82.0/" src/cpp/CMakeLists.txt || die
-
+	sed -i "3s/RStudio/rstudio/" src/node/desktop/package.json || die
+	sed -i "4s/99.9.9/$(ver_cut 1-3)${RSTUDIO_VERSION_SUFFIX}/" src/node/desktop/package.json || die
 	CMAKE_BUILD_TYPE=$(usex debug Debug Release) #RelWithDebInfo Release
 	echo "cache=${WORKDIR}/node_cache" > "${S}/src/node/desktop/.npmrc"
 	echo "nodedir=${WORKDIR}/.electron-gyp/${ELECTRON_VERSION}" >> "${S}/src/node/desktop/.npmrc"
@@ -562,7 +558,7 @@ src_configure() {
 		#if docs/news is built remove "_ga-" lines from  docs/news/_quarto.yml
 		sed -i "/_ga-\S\+-tag.html/d" docs/user/rstudio/_quarto.yml \
 			|| die "Failed to remove google_analytics include"
-		echo -e "buildType: ${build_type/-/}\nversion: ${my_pv}" > docs/user/rstudio/_variables.yml ||
+		echo -e "buildType: ${build_type}\nversion: ${my_pv}" > docs/user/rstudio/_variables.yml ||
 			die "Failed to create _variables.yml"
 		#Quarto-Cli likes a certain version of pandoc this trys both
 		quarto check 2> quarto-check.first || export QUARTO_PANDOC="${EPREFIX}/usr/bin/pandoc-bin"
