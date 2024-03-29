@@ -29,7 +29,7 @@ export DENO_DIR="${HOME}/.cache/deno"
 QUARTO_DIR="${HOME}/.local/share/quarto"
 
 QUARTO_ACTION="run"
-QUARTO_DENO_OPTIONS="--unstable --no-config ${QUARTO_CACHE_OPTIONS} --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi ${QUARTO_DENO_OPTIONS}"
+QUARTO_DENO_OPTIONS="--unstable-ffi --no-config ${QUARTO_CACHE_OPTIONS} --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi ${QUARTO_DENO_OPTIONS}"
 RELOAD_DENO_CACHE=""
 function compare_file(){
 	VER_CUR=$1
