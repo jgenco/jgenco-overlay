@@ -18,7 +18,7 @@ CRATES="
 #To update: download @ https://github.com/denoland/deno
 #cd cli
 #cargo ebuild -T deno.tera
-#set DENO_STD_VER=https://github.com/denoland/deno/tree/main/test_util std/version.ts
+#set DENO_STD_VER=https://github.com/denoland/deno/tree/main/tests/util std/version.ts
 #set CHECKREQS_DISK_BUILD
 #TODO
 #Use ninja-utils eclass to support dev-util/samurai?
@@ -28,10 +28,10 @@ CRATES="
 # * https://github.com/denoland/rusty_v8#the-rusty_v8_archive-environment-variable
 #}
 DENO_STD_VER=""
-
+V8_VER=""
 inherit {% block inherit -%}cargo{%- endblock %} llvm multiprocessing toolchain-funcs check-reqs shell-completion
 
-IUSE="test"
+IUSE="v8-prebuilt test"
 RESTRICT="mirror !test? ( test )"
 
 DESCRIPTION="A modern runtime for JavaScript and TypeScript"
@@ -42,7 +42,12 @@ SRC_URI+="
 	https://github.com/denoland/deno/archive/refs/tags/v${PV}.tar.gz -> deno-${PV}.tar.gz
 	test? (
 		https://github.com/denoland/deno_std/archive/refs/tags/${DENO_STD_VER}.tar.gz -> deno_std@${DENO_STD_VER}.tar.gz
-	)"
+	)
+	v8-prebuilt? (
+		https://github.com/denoland/rusty_v8/releases/download/v${V8_VER}/librusty_v8_release_x86_64-unknown-linux-gnu.a ->
+		librusty_v8_${V8_VER}_release_amd64.a
+	)
+"
 
 # License set may be more restrictive as OR is not respected
 # use cargo-license for a more accurate license picture
@@ -54,15 +59,15 @@ LICENSE={%- block license -%}"{{ license }} openssl SSLeay"{%- endblock %}
 SLOT={%- block slot -%}"0"{%- endblock %}
 KEYWORDS={%- block keyword -%}"~amd64"{%- endblock %}
 BDEPEND="
-	dev-util/gn
+	dev-build/gn
 	dev-build/ninja
-	>=virtual/rust-1.73.0 <virtual/rust-1.74.0
+	>=virtual/rust-1.76 <virtual/rust-1.77
 	test? (
 		net-misc/curl
 	)
 "
 PATCHES=(
-	"${FILESDIR}/deno-1.34.3-fix_disable_tests.patch"
+	"${FILESDIR}/deno-1.41.0-fix_disable_tests.patch"
 )
 DOCS=(Releases.md LICENSE.md README.md)
 {% block variables -%}
@@ -78,20 +83,20 @@ function find_crate() {
 	die "Crate $1 not found"
 }
 pkg_pretend() {
-	#This used 5.1GB using 6G for safety
-	CHECKREQS_DISK_BUILD="6G"
+	#This used 7.6GB using 8G for safety
+	CHECKREQS_DISK_BUILD="8G"
 	check-reqs_pkg_pretend
 	}
 
 pkg_setup() {
-	CHECKREQS_DISK_BUILD="6G"
+	CHECKREQS_DISK_BUILD="8G"
 	check-reqs_pkg_setup
 	}
 src_unpack() {
 	cargo_src_unpack
 	if use test; then
-		rmdir "${S}/test_util/std" || die "Failed to remove ${S}/test_util/std"
-		mv "${WORKDIR}/deno_std-${DENO_STD_VER}/" "${S}/test_util/std" || die "Failed to move deno-std into position"
+		rmdir "${S}/tests/util/std" || die "Failed to remove ${S}/tests/util/std"
+		mv "${WORKDIR}/deno_std-${DENO_STD_VER}/" "${S}/tests/util/std" || die "Failed to move deno-std into position"
 	fi
 }
 src_prepare() {
@@ -101,16 +106,30 @@ src_prepare() {
 		"${FILESDIR}/v8-0.40.2-jobfix.patch"
 	popd > /dev/null
 
+	pushd "${ECARGO_VENDOR}/$(find_crate ^libffi-sys@)/libffi" > /dev/null || die
+	eapply "${FILESDIR}/libffi-sys-2.3.0-trampoline-c99.patch"
+	popd > /dev/null
+
 	default
+}
+src_configure() {
+	cd cli || die "Failed to change dir cli"
+	local myfeatures=(
+		__vendored_zlib_ng
+	)
+	cargo_src_configure --no-default-features
 }
 src_compile() {
 	#inspired by www-client/chromium
 	#GCC-12 issued warnings and caused it to fail
 	local gn_conf="treat_warnings_as_errors=false"
 	if tc-is-clang; then
-		gb_conf+=" is_clang=true"
+		einfo "Clang version: $(clang-fullversion) - $(get_llvm_prefix)"
+		gn_conf+=" is_clang=true"
 	else
 		export DISABLE_CLANG=true
+		einfo "GCC version: $(gcc-fullversion)"
+		gn_conf+=" use_custom_libcxx=false"
 	fi
 
 	if tc-ld-is-lld && tc-is-clang;then
@@ -126,7 +145,11 @@ src_compile() {
 	#https://github.com/Homebrew/homebrew-core/pull/108838
 	gn_conf+=" v8_builtins_profiling_log_file=\"\""
 
-	export V8_FROM_SOURCE=1
+	if use v8-prebuilt;then
+		export RUSTY_V8_ARCHIVE="${DISTDIR}/librusty_v8_${V8_VER}_release_amd64.a"
+	else
+		export V8_FROM_SOURCE=1
+	fi
 	#export SCCACHE=
 	#export CCACHE=
 	export GN="${EPREFIX}/usr/bin/gn"
@@ -140,12 +163,12 @@ src_compile() {
 	einfo "GN_ARGS=${GN_ARGS}"
 
 	pushd cli > /dev/null || die "Failed to change dir cli"
-	cargo_src_compile
+	cargo_src_compile -vv
 	popd > /dev/null
 
 	if use test;then
-		pushd test_util > /dev/null || die "Failed to change dir to test_util"
-		cargo_src_compile
+		pushd tests/util/server > /dev/null || die "Failed to change dir to tests/util/server"
+		cargo build $(usex debug "" --release) || die
 		popd > /dev/null
 	fi
 
@@ -154,45 +177,6 @@ src_compile() {
 	./target/release/deno completions zsh  > _deno     || die "Failed to create zsh completion file"
 }
 
-src_test() {
-	pushd test_util > /dev/null || die "Failed to change dir to test_util"
-	einfo "Starting test_server..."
-	../target/release/test_server &
-	local server_pid=$!
-	echo "Test server PID:${server_pid}"
-	popd
-
-	local count=0
-	while true;do
-		curl \
-			--key cli/tests/testdata/tls/localhost.key \
-			--cert cli/tests/testdata/tls/localhost.crt \
-			--cacert cli/tests/testdata/tls/RootCA.crt https://localhost:4557/ 2> /dev/null
-		local error=$?
-		#when the server is not running curl will give error 7 (Failed to connect)
-		#when the server is     running curl will give a different error
-		[[ $error -ne 7 ]] && break
-		[[ $count -eq 12 ]] && die "Server failed to start"
-		count=$(($count +1))
-		sleep 5;
-	done
-
-	#Next time try XDG_RUNTIME_DIR(or other XDG) instead of DENO_DIR + patch
-	export DENO_DIR="${T}/deno_dir"
-	mkdir -p "${DENO_DIR}" || die "Failed to make deno_dir"
-	#GPU test fails even under a normal user. I assume this is a hardware problem on my end
-	./target/release/deno test --allow-all --unstable --location=http://js-unit-tests/foo/bar cli/tests/unit/
-
-	einfo "Killing server..."
-	kill ${server_pid}
-	einfo "Server killed"
-
-	#WPT - test
-	#unpack wpt into test_util/wpt
-	#update /etc/hosts file with output from python3 ./test_util/wpt/wpt make-hosts-file
-	#deno run --allow-env --allow-net --allow-read --allow-run --allow-write --unstable \
-	#--lock=tools/deno.lock.json ./tools/wpt.ts run --release --binary="${S}/target/release/deno"
-}
 src_install() {
 	cargo_src_install --path cli
 	einstalldocs
