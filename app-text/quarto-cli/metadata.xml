@@ -2,7 +2,7 @@
 <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
 	<use>
-		<flag name="bundle">Bundle all external dependencies into one file.</flag>
+		<flag name="system-pandoc">Use system pandoc instead of offical version</flag>
 	</use>
 	<upstream>
 		<doc>https://quarto.org/docs/guide/</doc>
