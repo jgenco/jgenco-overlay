@@ -46,7 +46,7 @@ Also upgrades info to warning.
    if (Deno.build.os === "windows") {
 --- a/src/core/quarto.ts
 +++ b/src/core/quarto.ts
-@@ -46,6 +46,14 @@ export const quartoConfig = {
+@@ -44,6 +44,14 @@ export const quartoConfig = {
        return kLocalDevelopment;
      }
    },
@@ -58,6 +58,6 @@ Also upgrades info to warning.
 +      return "";
 +    }
 +  },
-   dotenv: async (): Promise<Record<string, string>> => {
-     if (!dotenvConfig) {
+   dotenv: async (forceReload?: boolean): Promise<Record<string, string>> => {
+     if (forceReload || !dotenvConfig) {
        const options: ConfigOptions = {

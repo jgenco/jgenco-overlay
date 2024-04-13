@@ -172,31 +172,36 @@ else
 	SRC_URI="https://github.com/quarto-dev/quarto-cli/archive/refs/tags/v${PV}.tar.gz   -> ${P}.tar.gz "
 fi
 
+PANDOC_VER="3.1.13"
 SRC_URI+="
+	!system-pandoc? (
+		https://github.com/jgm/pandoc/releases/download/${PANDOC_VER}/pandoc-${PANDOC_VER}-linux-amd64.tar.gz
+	)
 	$(deno_build_src_uri)
 	$(npm_build_src_uri ${DENO_NPM})
 "
 
-PANDOC_VERSION="3.1.11.1"
+
 
 LICENSE="MIT GPL-2+ ZLIB BSD Apache-2.0 ISC || ( MIT GPL-3 ) Unlicense 0BSD"
 SLOT="0"
 KEYWORDS=""
+IUSE="system-pandoc"
 PATCHES="
-	${FILESDIR}/quarto-cli-1.4.549-pathfixes.patch
+	${FILESDIR}/quarto-cli-9999-pathfixes.patch
 	${FILESDIR}/quarto-cli-1.3.340-configuration.patch
 	${FILESDIR}/quarto-cli-9999-check.patch
 "
 ESBUILD_DEP_SLOT="0.19"
 DEPEND="
 	app-arch/unzip
-	~app-text/typst-0.10.0
+	~app-text/typst-0.11.0[embed-fonts]
 	|| (
 		(
 			>=dev-haskell/pandoc-3.1
 			app-text/pandoc-cli
 		)
-		>=app-text/pandoc-bin-${PANDOC_VERSION}
+		>=app-text/pandoc-bin-${PANDOC_VER}
 	)
 	~dev-lang/dart-sass-1.70.0
 	>=dev-lang/R-4.1.0
@@ -213,6 +218,10 @@ BDEPEND="
 	app-misc/jq
 	=dev-util/esbuild-0.15*:0
 "
+
+QA_FLAGS_IGNORED="usr/bin/pandoc-quarto"
+QA_PRESTRIPPED="${QA_FLAGS_IGNORED}"
+
 DOCS=( COPYING.md COPYRIGHT README.md news )
 
 src_unpack() {
@@ -222,6 +231,7 @@ src_unpack() {
 		unpack ${P}.tar.gz
 	fi
 	unpack deno_std@${DENO_STD_VER}.tar.gz
+	! use system-pandoc && unpack pandoc-${PANDOC_VER}-linux-amd64.tar.gz
 
 	pushd "${S}/src/vendor/deno.land/" > /dev/null || die "Failed to push to deno.land"
 	find -H std@${DENO_STD_VER} -regextype egrep -regex ".*\.(ts|mjs)$" | \
@@ -276,7 +286,7 @@ src_prepare() {
 	sed -i "s/${ESBUILD_VER_ORIG}/$(esbuild --version)/g" esbuild/${ESBUILD_VER_ORIG}/{install.js,lib/main.js} || die
 	popd
 
-	sed -i -E  "s/2.19.2(\", \"Pandoc)/$(ver_cut 1-3 ${PANDOC_VERSION})\1/;s/1.32.8(\", \"Dart Sass)/1.70.0\1/" \
+	sed -i -E  "s/2.19.2(\", \"Pandoc)/$(ver_cut 1-3 ${PANDOC_VER})\1/;s/1.32.8(\", \"Dart Sass)/1.70.0\1/" \
 		src/command/check/check.ts || die "Failed to correct versions"
 
 	sed -i "s/\"esbuild\"/\"esbuild-${ESBUILD_DEP_SLOT}\"/" src/core/esbuild.ts || die
@@ -340,11 +350,18 @@ src_install() {
 	mv src/resources/man/quarto{-man.man,.1} || die
 	doman src/resources/man/quarto.1
 	einstalldocs
+
+	! use system-pandoc && newbin "${WORKDIR}/pandoc-${PANDOC_VER}/bin/pandoc" pandoc-quarto
 }
 pkg_postinst() {
-	elog "This ebuild differs somewhat from upstream including using system pandoc"
-	elog "instead of official pandoc-${PANDOC_VERSION}"
-	elog "This is not supported by upstream."
-	elog "If you find or think you found a bug please try the official verson at:"
-	elog "https://quarto.org/docs/download/ *before* reporting an issue to quarto-cli"
+	if use system-pandoc;then
+		elog "Building with *sytem-pandoc* will use your system pandoc version"
+		elog "instead of the official pandoc-${PANDOC_VER}"
+		elog "This is not supported by upstream."
+		elog "If you find or think you found a bug please try:"
+		elog " * building w/o *system-pandoc*"
+		elog " * using quarto-bin from app-text/quarto-bin"
+		elog " * the latest from https://quarto.org/docs/download/"
+		elog "*before* reporting an issue to quarto-cli"
+	fi
 }
