@@ -7,9 +7,9 @@ inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-uti
 
 P_PREBUILT="${PN}-2024.04.0.555"
 ELECTRON_VERSION="28.2.6"
-DAILY_COMMIT="9d695aab7a753db36455d07e1d6c5f162f077335"
+DAILY_COMMIT="58bdc18db5bb5b99849f7355e097cb10f96d2e84"
 QUARTO_COMMIT="3bd070a1ffabd0b2dc80c67f5d9fa9a2d8bee896"
-QUARTO_CLI_VER="1.4.551"
+QUARTO_CLI_VER="1.4.553"
 QUARTO_BRANCH="main"
 QUARTO_DATE="20240229"
 
