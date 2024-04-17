@@ -172,7 +172,7 @@ else
 	SRC_URI="https://github.com/quarto-dev/quarto-cli/archive/refs/tags/v${PV}.tar.gz   -> ${P}.tar.gz "
 fi
 
-PANDOC_VER="3.1.11.1"
+PANDOC_VER="3.1.13"
 SRC_URI+="
 	!system-pandoc? (
 		https://github.com/jgm/pandoc/releases/download/${PANDOC_VER}/pandoc-${PANDOC_VER}-linux-amd64.tar.gz
@@ -195,7 +195,7 @@ PATCHES="
 ESBUILD_DEP_SLOT="0.19"
 DEPEND="
 	app-arch/unzip
-	~app-text/typst-0.10.0
+	~app-text/typst-0.11.0[embed-fonts]
 	|| (
 		(
 			>=dev-haskell/pandoc-3.1
