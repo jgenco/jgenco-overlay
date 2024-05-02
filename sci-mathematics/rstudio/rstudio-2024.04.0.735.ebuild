@@ -7,7 +7,7 @@ inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-uti
 
 P_PREBUILT="${PN}-2024.04.0.555"
 ELECTRON_VERSION="28.2.6"
-DAILY_COMMIT="58bdc18db5bb5b99849f7355e097cb10f96d2e84"
+#DAILY_COMMIT="58bdc18db5bb5b99849f7355e097cb10f96d2e84"
 QUARTO_COMMIT="3bd070a1ffabd0b2dc80c67f5d9fa9a2d8bee896"
 QUARTO_CLI_VER="1.4.553"
 QUARTO_BRANCH="main"
@@ -285,10 +285,10 @@ BDEPEND="
 	>=virtual/jdk-1.8:=
 "
 PATCHES=(
-	"${FILESDIR}/${PN}-9999-cmake-bundled-dependencies.patch"
+	"${FILESDIR}/${PN}-2024.04.0.735-cmake-bundled-dependencies.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-resource-path.patch"
-	"${FILESDIR}/${PN}-9999-server-paths.patch"
-	"${FILESDIR}/${PN}-9999-package-build.patch"
+	"${FILESDIR}/${PN}-2024.04.0.735-server-paths.patch"
+	"${FILESDIR}/${PN}-2024.04.0.735-package-build.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-pandoc_path_fix.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
 	"${FILESDIR}/${PN}-2023.06.0.421-node_electron_cmake.patch"
