@@ -169,7 +169,7 @@ LICENSE="
 	electron? ( MIT Apache-2.0  BSD 0BSD BSD-2 BSD CC-BY-3.0 CC-BY-4.0 CC0-1.0 ISC PSF-2.4 || ( AFL-2.1 BSD ) || ( BSD GPL-2 ) || ( Unlicense Apache-2.0 ) )
 "
 SLOT="0"
-KEYWORDS=""
+KEYWORDS="~amd64"
 
 RDEPEND="
 	server? (
