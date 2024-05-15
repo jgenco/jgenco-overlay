@@ -172,7 +172,7 @@ else
 	SRC_URI="https://github.com/quarto-dev/quarto-cli/archive/refs/tags/v${PV}.tar.gz   -> ${P}.tar.gz "
 fi
 
-PANDOC_VER="3.1.13"
+PANDOC_VER="3.2"
 SRC_URI+="
 	!system-pandoc? (
 		https://github.com/jgm/pandoc/releases/download/${PANDOC_VER}/pandoc-${PANDOC_VER}-linux-amd64.tar.gz
@@ -181,9 +181,7 @@ SRC_URI+="
 	$(npm_build_src_uri ${DENO_NPM})
 "
 
-
-
-LICENSE="MIT GPL-2+ ZLIB BSD Apache-2.0 ISC || ( MIT GPL-3 ) Unlicense 0BSD"
+LICENSE="MIT GPL-2+ ZLIB BSD BSD-2 Apache-2.0 ISC || ( MIT GPL-3 ) Unlicense 0BSD"
 SLOT="0"
 KEYWORDS="~amd64"
 IUSE="system-pandoc"
@@ -259,6 +257,7 @@ src_prepare() {
 	deno_build_src
 	deno_build_cache
 	#build lock the first time to get list of files to import
+	sed -i "/juice/d" package/scripts/deno_std/deno_std.ts||die
 	deno cache --unstable --lock src/resources/deno_std/deno_std.lock \
 		--lock-write package/scripts/deno_std/deno_std.ts || die "Failed to create lockfile"
 	grep https src/resources/deno_std/deno_std.lock|sed "s/.*\(https.*\)\":.*/\1/" >\

@@ -88,13 +88,15 @@ fi
 QUARTO_DENO_OPTIONS+=" ${RELOAD_DENO_CACHE}"
 export DENO_TLS_CA_STORE=system,mozilla
 export DENO_NO_UPDATE_CHECK=1
+
+QUARTO_DENO_V8_OPTIONS_DEFAULT="--enable-experimental-regexp-engine,--max-old-space-size=8192,--max-heap-size=8192"
+QUARTO_DENO_V8_OPTIONS="${QUARTO_DENO_V8_OPTIONS_DEFAULT},${QUARTO_DENO_V8_OPTIONS}"
+
+QUARTO_DENO_EXTRA_OPTIONS="--v8-flags=${QUARTO_DENO_V8_OPTIONS%,} ${QUARTO_DENO_EXTRA_OPTIONS}"
+
 #echo ${PWD}
 #echo ${QUARTO_ACTION} ${QUARTO_DENO_OPTIONS} ${QUARTO_DENO_EXTRA_OPTIONS} "${QUARTO_IMPORT_MAP_ARG}" "${QUARTO_TARGET}" "$@"
 #echo ${@}
-
-if [ "$QUARTO_DENO_EXTRA_OPTIONS" == "" ]; then
-  QUARTO_DENO_EXTRA_OPTIONS="--v8-flags=--max-old-space-size=8192,--max-heap-size=8192"
-fi
 
 if [ "$QUARTO_TS_PROFILE" != "" ]; then
   QUARTO_DENO_EXTRA_OPTIONS="--inspect-brk ${QUARTO_DENO_EXTRA_OPTIONS}"
