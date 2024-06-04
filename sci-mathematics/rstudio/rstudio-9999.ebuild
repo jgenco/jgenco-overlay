@@ -5,13 +5,13 @@ EAPI=8
 
 inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm prefix
 
-P_PREBUILT="${PN}-2024.07.0.108"
-ELECTRON_VERSION="30.0.2"
-DAILY_COMMIT="eef4efa0b4a9a6c6d984912a09cd6504decfb8c6"
-QUARTO_COMMIT="0feb78c3f94f1aff5ef3962a1cfecd8042edad86"
-QUARTO_CLI_VER="1.4.553"
+P_PREBUILT="${PN}-2024.07.0.229"
+ELECTRON_VERSION="30.1.0"
+DAILY_COMMIT="7013daee2029b0f7bcbab754661c9604da1fee45"
+QUARTO_COMMIT="06678d55143a7d6de6c7f0232db0c5dcf8392ca6"
+QUARTO_CLI_VER="1.4.555"
 QUARTO_BRANCH="main"
-QUARTO_DATE="20240507"
+QUARTO_DATE="20240530"
 
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
@@ -163,10 +163,10 @@ REQUIRED_USE="!server? ( ^^ ( electron qt5 qt6 ) )"
 RESTRICT="mirror !test? ( test )"
 
 LICENSE="
-	AGPL-3 BSD MIT Apache-2.0 Boost-1.0 CC-BY-4.0 MIT GPL-3 ISC
+	AGPL-3 BSD MIT Apache-2.0 Boost-1.0 CC-BY-4.0 MIT OFL-1.1 GPL-3 ISC
 	test? ( EPL-1.0 )
-	panmirror? ( || ( AFL-2.1 BSD ) || ( MIT Apache-2.0 ) 0BSD Apache-2.0 BSD BSD-2 ISC LGPL-3 MIT PYTHON Unlicense )
-	electron? ( MIT Apache-2.0  BSD 0BSD BSD-2 BSD CC-BY-3.0 CC-BY-4.0 CC0-1.0 ISC PSF-2.4 || ( AFL-2.1 BSD ) || ( BSD GPL-2 ) || ( Unlicense Apache-2.0 ) )
+	panmirror? ( 0BSD Apache-2.0 BSD BSD-2 CC0-1.0 EPL-2.0 ISC || ( LGPL-2.0 MIT ) LGPL-3 MIT MPL-2.0 PYTHON Unlicense )
+	electron?  ( 0BSD Apache-2.0 BlueOak-1.0.0 BSD-2 BSD || ( BSD GPL-2.0 ) CC0-1.0 CC-BY-3.0 CC-BY-4.0 ISC MIT PYTHON Unlicense )
 "
 SLOT="0"
 KEYWORDS=""
@@ -286,10 +286,10 @@ BDEPEND="
 "
 PATCHES=(
 	"${FILESDIR}/${PN}-2024.04.0.735-cmake-bundled-dependencies.patch"
-	"${FILESDIR}/${PN}-2022.07.0.548-resource-path.patch"
+	"${FILESDIR}/${PN}-9999-resource-path.patch"
 	"${FILESDIR}/${PN}-2024.04.0.735-server-paths.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-package-build.patch"
-	"${FILESDIR}/${PN}-2022.07.0.548-pandoc_path_fix.patch"
+	"${FILESDIR}/${PN}-9999-pandoc_path_fix.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
 	"${FILESDIR}/${PN}-2023.06.0.421-node_electron_cmake.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-reenable-sandbox.patch"
@@ -432,7 +432,7 @@ src_prepare() {
 	else
 		#qtsingleapplication I belive needs updated for QT6 not tested.
 		sed -i "s/QT5/QT6/g;s/Qt5/Qt6/g" "${S}/src/cpp/desktop/CMakeLists.txt" || die "Failed to sed to QT6"
-		eapply "${FILESDIR}/rstudio-2022.12.0.353-qt6-cmake.patch" "${FILESDIR}/rstudio-2022.12.0.353-qt6-desktop.patch"
+		eapply "${FILESDIR}/rstudio-9999-qt6-cmake.patch" "${FILESDIR}/rstudio-2022.12.0.353-qt6-desktop.patch"
 	fi
 
 	for entry in ${debundles[@]};do
@@ -468,7 +468,7 @@ src_prepare() {
 
 	# make sure icons and mime stuff are with prefix
 	sed -i -e "s:/usr:${EPREFIX}/usr:g" \
-		CMakeGlobals.txt src/{cpp,node}/desktop/CMakeLists.txt || die "Failed to change to eprefix"
+		cmake/globals.cmake src/{cpp,node}/desktop/CMakeLists.txt || die "Failed to change to eprefix"
 
 	#fix path rstudio bin path from "${EPREFIX}/usr/rstudio" to "${EPREFIX}/usr/bin/rstudio"
 	#NOTE: the actual bin is "${EPREFIX}/usr/share/rstudio/rstudio" but we symlink in src_install

@@ -1,7 +1,7 @@
 This restores QT option. note QT will fully be removed someday.
 https://github.com/rstudio/rstudio/commit/c5082c2b9081bd23757aa99458d04d1eb8e2dbb4
---- a/CMakeGlobals.txt
-+++ b/CMakeGlobals.txt
+--- a/cmake/globals.cmake
++++ b/cmake/globals.cmake
 @@ -120,10 +120,10 @@ endif()
  # platform specific default for targets
  if(NOT RSTUDIO_TARGET)
