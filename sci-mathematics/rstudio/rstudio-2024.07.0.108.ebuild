@@ -300,6 +300,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2023.03.0.386-panmirror_disable.patch"
 	"${FILESDIR}/${PN}-2023.12.1.402-node_path_fix.patch"
 	"${FILESDIR}/${PN}-9999-restore-qt.patch"
+	"${FILESDIR}/${PN}-2024.07.0.108-boost-1.85.0.patch"
 )
 
 DOCS=(CONTRIBUTING.md COPYING INSTALL NOTICE README.md version/news )

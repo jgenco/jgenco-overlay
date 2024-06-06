@@ -1,0 +1,11 @@
+--- a/src/cpp/core/json/JsonRpc.cpp
++++ b/src/cpp/core/json/JsonRpc.cpp
+@@ -193,7 +193,7 @@ void JsonRpcResponse::setAfterResponse(
+    
+ bool JsonRpcResponse::hasAfterResponse() const
+ {
+-   return afterResponse_;
++   return afterResponse_ != nullptr;
+ }
+    
+    
