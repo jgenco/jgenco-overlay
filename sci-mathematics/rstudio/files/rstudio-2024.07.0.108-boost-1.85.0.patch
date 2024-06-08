@@ -1,3 +1,5 @@
+https://build.opensuse.org/projects/openSUSE:Factory/packages/rstudio/files/fix-boost-1.85-build.patch
+Adapt to https://github.com/boostorg/function/commit/af8e66d03b4366c7039a138306470567c2243130.
 --- a/src/cpp/core/json/JsonRpc.cpp
 +++ b/src/cpp/core/json/JsonRpc.cpp
 @@ -193,7 +193,7 @@ void JsonRpcResponse::setAfterResponse(
@@ -5,7 +7,7 @@
  bool JsonRpcResponse::hasAfterResponse() const
  {
 -   return afterResponse_;
-+   return afterResponse_ != nullptr;
++   return bool(afterResponse_);
  }
     
     
