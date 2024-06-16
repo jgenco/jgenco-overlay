@@ -230,3 +230,15 @@ build_deno_npm() {
 			popd > /dev/null
 	done
 }
+edit_deno_pkg_reg() {
+	[[ ${1} =~ (.+)@(.+) ]]
+		local pkg=${BASH_REMATCH[1]}
+		local ver=${BASH_REMATCH[2]}
+		local jq_command="${2}"
+		local pkg_folder="${DENO_CACHE}/npm/registry.npmjs.org/${pkg}"
+		shift 2
+
+		jq --arg pkg "${pkg}" --arg ver "${ver}" ${@} "${jq_command}"\
+			"${pkg_folder}/registry.json" > "${pkg_folder}/tmp.json" || die
+		mv "${pkg_folder}/tmp.json" "${pkg_folder}/registry.json" || die
+}
