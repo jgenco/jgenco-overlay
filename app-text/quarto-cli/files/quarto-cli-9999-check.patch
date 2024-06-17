@@ -27,28 +27,30 @@ Also upgrades info to warning.
      } else {
        info(`      ${name} version ${version}: OK`);
      }
-@@ -143,15 +145,7 @@ async function checkInstall(services: RenderServices) {
-   completeMessage("Checking Quarto installation......OK");
-   info(`      Version: ${quartoConfig.version()}`);
-   if (quartoConfig.version() === "99.9.9") {
--    // if they're running a dev version, we assume git is installed
--    // print the output of git rev-parse HEAD
--    const gitHead = await execProcess({
--      cmd: ["git", "rev-parse", "HEAD"],
--      stdout: "piped",
--    });
--    if (gitHead.stdout) {
--      info(`      commit: ${gitHead.stdout.trim()}`);
+@@ -146,17 +148,7 @@ async function checkInstall(services: RenderServices) {
+     // if they're running a dev version, we assume git is installed
+     // and QUARTO_ROOT is set to the root of the quarto-cli repo
+     // print the output of git rev-parse HEAD
+-    const quartoRoot = Deno.env.get("QUARTO_ROOT");
+-    if (quartoRoot) {
+-      const gitHead = await execProcess({
+-        cmd: ["git", "-C", quartoRoot, "rev-parse", "HEAD"],
+-        stdout: "piped",
+-        stderr: "piped", // to not show error if not in a git repo
+-      });
+-      if (gitHead.success && gitHead.stdout) {
+-        info(`${kIndent}commit: ${gitHead.stdout.trim()}`);
+-      }
 -    }
-+      info(`      commit:  ${quartoConfig.commit()}`);
++    info(`${kIndent}commit:  ${quartoConfig.commit()}`);
    }
-   info(`      Path: ${quartoConfig.binPath()}`);
+   info(`${kIndent}Path: ${quartoConfig.binPath()}`);
    if (Deno.build.os === "windows") {
 --- a/src/core/quarto.ts
 +++ b/src/core/quarto.ts
-@@ -44,6 +44,14 @@ export const quartoConfig = {
-       return kLocalDevelopment;
-     }
+@@ -57,6 +57,14 @@ export const quartoConfig = {
+     // we are in dev mode were only quarto.cmd is available
+     return join(binPath, "quarto.cmd");
    },
 +  commit: () => {
 +    const commitPath = join(getenv("QUARTO_SHARE_PATH"), "commit");
