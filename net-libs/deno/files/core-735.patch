@@ -1,0 +1,34 @@
+https://github.com/denoland/deno_core/pull/735
+--- a/async_cancel.rs
++++ b/async_cancel.rs
+@@ -529,7 +529,7 @@ mod internal {
+           ..
+         } => {
+           if !waker.will_wake(new_waker) {
+-            *waker = new_waker.clone();
++            waker.clone_from(new_waker);
+           }
+           Ok(())
+         }
+--- a/web_timeout.rs
++++ b/web_timeout.rs
+@@ -167,7 +167,7 @@ impl MutableSleep {
+         // Already have this waker
+         let waker = cx.waker();
+         if !external.will_wake(waker) {
+-          *external = waker.clone();
++          external.clone_from(waker);
+         }
+         Poll::Pending
+       } else {
+--- a/gotham_state.rs
++++ b/gotham_state.rs
+@@ -25,7 +25,7 @@ impl GothamState {
+   /// Determines if the current value exists in `GothamState` storage.
+   pub fn has<T: 'static>(&self) -> bool {
+     let type_id = TypeId::of::<T>();
+-    self.data.get(&type_id).is_some()
++    self.data.contains_key(&type_id)
+   }
+ 
+   /// Tries to borrow a value from the `GothamState` storage.

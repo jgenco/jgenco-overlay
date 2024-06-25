@@ -710,7 +710,7 @@ KEYWORDS="~amd64"
 BDEPEND="
 	dev-build/gn
 	dev-build/ninja
-	>=virtual/rust-1.76 <virtual/rust-1.78
+	>=virtual/rust-1.76 <virtual/rust-1.79
 	test? (
 		net-misc/curl
 	)
@@ -725,6 +725,13 @@ function find_crate() {
 		[[ ${crate} =~ ${1} ]] && echo "${crate/@/-}" && return
 	done
 	die "Crate $1 not found"
+}
+
+function patch_crate() {
+	pushd "${ECARGO_VENDOR}/$(find_crate ${1})" > /dev/null || die "${1} crate folder not found"
+	shift
+	eapply ${@}
+	popd > /dev/null
 }
 pkg_pretend() {
 	#This used 7.6GB using 8G for safety
@@ -744,15 +751,11 @@ src_unpack() {
 	fi
 }
 src_prepare() {
-	pushd "${ECARGO_VENDOR}/$(find_crate ^v8@)" > /dev/null || die "V8 crate folder not found"
-	eapply "${FILESDIR}/v8-0.43.1-lockfile.patch" \
-		"${FILESDIR}/v8-0.42.0-disable-auto-ccache.patch" \
+	patch_crate ^v8@ "${FILESDIR}/v8-0.43.1-lockfile.patch"\
+		"${FILESDIR}/v8-0.42.0-disable-auto-ccache.patch"\
 		"${FILESDIR}/v8-0.40.2-jobfix.patch"
-	popd > /dev/null
-
-	pushd "${ECARGO_VENDOR}/$(find_crate ^libffi-sys@)/libffi" > /dev/null || die
-	eapply "${FILESDIR}/libffi-sys-2.3.0-trampoline-c99.patch"
-	popd > /dev/null
+	patch_crate deno_core "${FILESDIR}/core-735.patch"
+	patch_crate serde_v8 "${FILESDIR}/serde_v8-735.patch"
 
 	default
 }
