@@ -5,11 +5,11 @@ EAPI=8
 
 inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm prefix
 
-P_PREBUILT="${PN}-2024.07.0.229"
-ELECTRON_VERSION="30.1.0"
-DAILY_COMMIT="7013daee2029b0f7bcbab754661c9604da1fee45"
+P_PREBUILT="${PN}-2024.07.0.270"
+ELECTRON_VERSION="30.1.2"
+DAILY_COMMIT="0e0d6151bbf772940540cd5535f4a4ac3ea1566e"
 QUARTO_COMMIT="06678d55143a7d6de6c7f0232db0c5dcf8392ca6"
-QUARTO_CLI_VER="1.4.555"
+QUARTO_CLI_VER="1.5.49"
 QUARTO_BRANCH="main"
 QUARTO_DATE="20240530"
 
@@ -158,18 +158,18 @@ SRC_URI+="
 	test? ( $(build_r_src_uri ${R_TESTTHAT_PKGS}) )
 "
 
-IUSE="server electron +qt5 qt6 test debug quarto panmirror doc clang"
-REQUIRED_USE="!server? ( ^^ ( electron qt5 qt6 ) )"
-RESTRICT="mirror !test? ( test )"
-
 LICENSE="
 	AGPL-3 BSD MIT Apache-2.0 Boost-1.0 CC-BY-4.0 MIT OFL-1.1 GPL-3 ISC
 	test? ( EPL-1.0 )
-	panmirror? ( 0BSD Apache-2.0 BSD BSD-2 CC0-1.0 EPL-2.0 ISC || ( LGPL-2.0 MIT ) LGPL-3 MIT MPL-2.0 PYTHON Unlicense )
-	electron?  ( 0BSD Apache-2.0 BlueOak-1.0.0 BSD-2 BSD || ( BSD GPL-2.0 ) CC0-1.0 CC-BY-3.0 CC-BY-4.0 ISC MIT PYTHON Unlicense )
+	panmirror? ( 0BSD Apache-2.0 BSD BSD-2 CC0-1.0 EPL-2.0 ISC || ( LGPL-2 MIT ) LGPL-3 MIT MPL-2.0 PYTHON Unlicense )
+	electron?  ( 0BSD Apache-2.0 BlueOak-1.0.0 BSD-2 BSD || ( BSD GPL-2 ) CC0-1.0 CC-BY-3.0 CC-BY-4.0 ISC MIT PYTHON Unlicense )
 "
 SLOT="0"
 KEYWORDS="~amd64"
+IUSE="server electron +qt5 qt6 test debug quarto panmirror doc clang"
+
+REQUIRED_USE="!server? ( ^^ ( electron qt5 qt6 ) )"
+RESTRICT="mirror !test? ( test )"
 
 RDEPEND="
 	server? (
@@ -285,7 +285,7 @@ BDEPEND="
 	>=virtual/jdk-1.8:=
 "
 PATCHES=(
-	"${FILESDIR}/${PN}-2024.04.0.735-cmake-bundled-dependencies.patch"
+	"${FILESDIR}/${PN}-9999-cmake-bundled-dependencies.patch"
 	"${FILESDIR}/${PN}-9999-resource-path.patch"
 	"${FILESDIR}/${PN}-2024.04.0.735-server-paths.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-package-build.patch"
