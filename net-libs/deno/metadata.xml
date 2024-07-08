@@ -3,6 +3,7 @@
 <pkgmetadata>
 	<use>
 		<flag name="v8-prebuilt">Uses prebuilt v8 from upstream instead of compiling v8</flag>
+		<flag name="llvm">Use Clang/llvm to compile V8</flag>
 	</use>
 	<upstream>
 		<changelog>https://github.com/denoland/deno/blob/main/Releases.md</changelog>

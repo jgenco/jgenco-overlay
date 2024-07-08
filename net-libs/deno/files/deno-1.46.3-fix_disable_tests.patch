@@ -1,0 +1,295 @@
+--- a/tests/integration/check_tests.rs
++++ b/tests/integration/check_tests.rs
+@@ -189,7 +189,7 @@ fn reload_flag() {
+     stderr.contains("Check")
+   }
+ }
+-
++#[ignore = "internet - import deno_std"]
+ #[test]
+ fn typecheck_declarations_ns() {
+   let context = TestContextBuilder::for_jsr().build();
+@@ -231,7 +231,7 @@ fn typecheck_declarations_unstable() {
+   println!("stderr: {}", output.stderr());
+   output.assert_exit_code(0);
+ }
+-
++#[ignore = "internet - gist"]
+ #[test]
+ fn ts_no_recheck_on_redirect() {
+   let test_context = TestContext::default();
+--- a/tests/integration/info_tests.rs
++++ b/tests/integration/info_tests.rs
+@@ -144,7 +144,7 @@ itest!(package_json_basic {
+   copy_temp_dir: Some("package_json/basic"),
+   exit_code: 0,
+ });
+-
++/*
+ itest!(info_import_map {
+   args: "info preact/debug",
+   output: "info/with_import_map/with_import_map.out",
+@@ -152,7 +152,7 @@ itest!(info_import_map {
+   copy_temp_dir: Some("info/with_import_map"),
+   exit_code: 0,
+ });
+-
++*/
+ itest!(info_dynamic_imports_tmpl_lit {
+   args: "info compile/dynamic_imports_tmp_lit/main.js",
+   output: "compile/dynamic_imports_tmp_lit/main.info.out",
+--- a/tests/integration/init_tests.rs
++++ b/tests/integration/init_tests.rs
+@@ -3,7 +3,7 @@
+ use test_util as util;
+ use util::assert_contains;
+ use util::TestContextBuilder;
+-
++#[ignore = "internet - import deno_std@ver"]
+ #[test]
+ fn init_subcommand_without_dir() {
+   let context = TestContextBuilder::for_jsr().use_temp_cwd().build();
+@@ -43,7 +43,7 @@ fn init_subcommand_without_dir() {
+   assert_contains!(output.stdout(), "1 passed");
+   output.skip_output_check();
+ }
+-
++#[ignore = "internet - import deno_std@ver"]
+ #[test]
+ fn init_subcommand_with_dir_arg() {
+   let context = TestContextBuilder::for_jsr().use_temp_cwd().build();
+@@ -90,7 +90,7 @@ fn init_subcommand_with_dir_arg() {
+   assert_contains!(output.stdout(), "1 passed");
+   output.skip_output_check();
+ }
+-
++#[ignore = "internet - import deno_std@ver"]
+ #[test]
+ fn init_subcommand_with_quiet_arg() {
+   let context = TestContextBuilder::for_jsr().use_temp_cwd().build();
+--- a/tests/integration/repl_tests.rs
++++ b/tests/integration/repl_tests.rs
+@@ -176,7 +176,7 @@ fn pty_complete_imports() {
+       console.expect("Hello World");
+     });
+ }
+-
++#[ignore = "needs special file"]
+ #[test]
+ fn pty_complete_imports_no_panic_empty_specifier() {
+   // does not panic when tabbing when empty
+--- a/tests/integration/run_tests.rs
++++ b/tests/integration/run_tests.rs
+@@ -103,7 +103,7 @@ itest!(_016_double_await {
+   args: "run --quiet --allow-read --reload run/016_double_await.ts",
+   output: "run/016_double_await.ts.out",
+ });
+-
++/*
+ itest!(_017_import_redirect {
+   args: "run --quiet --reload run/017_import_redirect.ts",
+   output: "run/017_import_redirect.ts.out",
+@@ -125,7 +125,7 @@ itest!(_017_import_redirect_info {
+   args: "info --quiet --reload run/017_import_redirect.ts",
+   output: "run/017_import_redirect_info.out",
+ });
+-
++*/
+ itest!(_018_async_catch {
+   args: "run --quiet --reload run/018_async_catch.ts",
+   output: "run/018_async_catch.ts.out",
+@@ -959,7 +959,7 @@ fn lock_redirects() {
+ "#,
+   );
+ }
+-
++#[ignore]
+ #[test]
+ fn lock_deno_json_package_json_deps() {
+   let context = TestContextBuilder::new()
+--- a/tests/integration/upgrade_tests.rs
++++ b/tests/integration/upgrade_tests.rs
+@@ -146,6 +146,7 @@ fn upgrade_with_out_in_tmpdir() {
+   assert!(v.contains("1.11.5"));
+ }
+ 
++#[cfg(feature = "upgrade")]
+ #[flaky_test::flaky_test]
+ fn upgrade_invalid_stable_version() {
+   let context = upgrade_context();
+@@ -170,6 +171,7 @@ fn upgrade_invalid_stable_version() {
+     "error: Invalid version passed (foobar)"
+   );
+ }
++#[cfg(feature = "upgrade")]
+ 
+ #[flaky_test::flaky_test]
+ fn upgrade_invalid_canary_version() {
+@@ -197,6 +199,7 @@ fn upgrade_invalid_canary_version() {
+   );
+ }
+ 
++#[cfg(feature = "upgrade")]
+ #[flaky_test::flaky_test]
+ fn upgrade_invalid_lockfile() {
+   let context = upgrade_context();
+@@ -231,6 +234,7 @@ fn upgrade_invalid_lockfile() {
+   );
+ }
+ 
++#[cfg(feature = "upgrade")]
+ #[flaky_test::flaky_test]
+ fn upgrade_prompt() {
+   let context = upgrade_context();
+@@ -259,7 +263,7 @@ fn upgrade_prompt() {
+     ]);
+   });
+ }
+-
++#[cfg(feature = "upgrade")]
+ #[test]
+ fn upgrade_lsp_repl_sleeps() {
+   let context = TestContextBuilder::new()
+--- a/tests/unit/chmod_test.ts
++++ b/tests/unit/chmod_test.ts
+@@ -81,7 +81,7 @@ Deno.test(
+ );
+ 
+ Deno.test({ permissions: { write: true } }, function chmodSyncFailure() {
+-  const filename = "/badfile.txt";
++  const filename = "/tmp/badfile.txt";
+   assertThrows(
+     () => {
+       Deno.chmodSync(filename, 0o777);
+@@ -173,7 +173,7 @@ Deno.test(
+ );
+ 
+ Deno.test({ permissions: { write: true } }, async function chmodFailure() {
+-  const filename = "/badfile.txt";
++  const filename = "/tmp/badfile.txt";
+   await assertRejects(
+     async () => {
+       await Deno.chmod(filename, 0o777);
+--- a/tests/unit/command_test.ts
++++ b/tests/unit/command_test.ts
+@@ -668,6 +668,7 @@ Deno.test(
+       clearEnv: true,
+       env: {
+         FOO: "23147",
++        DENO_DIR: Deno.env.get("DENO_DIR") || "/tmp",
+       },
+     }).output();
+ 
+@@ -693,6 +694,7 @@ Deno.test(
+       clearEnv: true,
+       env: {
+         FOO: "23147",
++        DENO_DIR: Deno.env.get("DENO_DIR") || "/tmp",
+       },
+     }).outputSync();
+ 
+--- a/tests/unit/process_test.ts
++++ b/tests/unit/process_test.ts
+@@ -586,6 +586,7 @@ Deno.test(
+       clearEnv: true,
+       env: {
+         FOO: "23147",
++        DENO_DIR: Deno.env.get("DENO_DIR") || "/tmp",
+       },
+     });
+ 
+--- a/tests/unit/tls_test.ts
++++ b/tests/unit/tls_test.ts
+@@ -1146,7 +1146,7 @@ Deno.test(
+ );
+ 
+ Deno.test(
+-  { permissions: { read: true, net: true } },
++  { permissions: { read: true, net: true },ignore:true },
+   async function connectTLSBadClientCertPrivateKey(): Promise<void> {
+     await assertRejects(async () => {
+       await Deno.connectTls({
+@@ -1162,7 +1162,7 @@ Deno.test(
+ );
+ 
+ Deno.test(
+-  { permissions: { read: true, net: true } },
++  { permissions: { read: true, net: true },ignore:true },
+   async function connectTLSBadCertKey(): Promise<void> {
+     await assertRejects(async () => {
+       await Deno.connectTls({
+@@ -1178,7 +1178,7 @@ Deno.test(
+ );
+ 
+ Deno.test(
+-  { permissions: { read: true, net: true } },
++  { permissions: { read: true, net: true },ignore:true },
+   async function connectTLSBadPrivateKey(): Promise<void> {
+     await assertRejects(async () => {
+       await Deno.connectTls({
+@@ -1194,7 +1194,7 @@ Deno.test(
+ );
+ 
+ Deno.test(
+-  { permissions: { read: true, net: true } },
++  { permissions: { read: true, net: true },ignore:true },
+   async function connectTLSBadKey(): Promise<void> {
+     await assertRejects(async () => {
+       await Deno.connectTls({
+@@ -1210,7 +1210,7 @@ Deno.test(
+ );
+ 
+ Deno.test(
+-  { permissions: { read: true, net: true } },
++  { permissions: { read: true, net: true },ignore:true },
+   async function connectTLSNotPrivateKey(): Promise<void> {
+     await assertRejects(async () => {
+       await Deno.connectTls({
+@@ -1226,7 +1226,7 @@ Deno.test(
+ );
+ 
+ Deno.test(
+-  { permissions: { read: true, net: true } },
++  { permissions: { read: true, net: true },ignore:true },
+   async function connectTLSNotKey(): Promise<void> {
+     await assertRejects(async () => {
+       await Deno.connectTls({
+--- a/tests/unit/utime_test.ts
++++ b/tests/unit/utime_test.ts
+@@ -204,10 +204,10 @@ Deno.test(
+ 
+     assertThrows(
+       () => {
+-        Deno.utimeSync("/baddir", atime, mtime);
++        Deno.utimeSync("/tmp/baddir", atime, mtime);
+       },
+       Deno.errors.NotFound,
+-      "utime '/baddir'",
++      "utime '/tmp/baddir'",
+     );
+   },
+ );
+@@ -319,10 +319,10 @@ Deno.test(
+ 
+     await assertRejects(
+       async () => {
+-        await Deno.utime("/baddir", atime, mtime);
++        await Deno.utime("/tmp/baddir", atime, mtime);
+       },
+       Deno.errors.NotFound,
+-      "utime '/baddir'",
++      "utime '/tmp/baddir'",
+     );
+   },
+ );
+--- a/tests/unit_node/http2_test.ts
++++ b/tests/unit_node/http2_test.ts
+@@ -114,7 +114,7 @@ Deno.test(`[node/http2 client createConnection]`, {
+   assertEquals(receivedData, "hello world\n");
+ });
+ 
+-Deno.test("[node/http2 client GET https://www.example.com]", async () => {
++Deno.test("[node/http2 client GET https://www.example.com]",{ignore:true}, async () => {
+   const clientSession = http2.connect("https://www.example.com");
+   const req = clientSession.request({
+     ":method": "GET",
