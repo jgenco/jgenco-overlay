@@ -275,12 +275,12 @@ BDEPEND="
 	=dev-java/validation-api-1.0*:1.0[source]
 	panmirror? (
 		<dev-util/esbuild-0.17
-		>=net-libs/nodejs-18.14.2[npm]
+		net-libs/nodejs[npm]
 		sys-apps/yarn
 	)
 	electron? (
 		app-arch/unzip
-		>=net-libs/nodejs-18.14.2[npm]
+		<net-libs/nodejs-21[npm]
 	)
 	>=virtual/jdk-1.8:=
 "
