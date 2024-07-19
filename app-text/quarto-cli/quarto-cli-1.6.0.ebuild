@@ -176,7 +176,7 @@ ESBUILD_PLATFORMS="
 ESBUILD_PLATFORMS_EXT="@esbuild/android-arm @esbuild/linux-loong64"
 DENO_STD_VER="0.217.0"
 DENO_LIBS=(
-"std@${DENO_STD_VER} https://github.com/denoland/deno_std/archive/refs/tags/_VER_.tar.gz deno_std-_VER_ NA NA"
+"std@${DENO_STD_VER} https://github.com/denoland/deno_std/archive/refs/tags/_VER_.tar.gz std-_VER_ NA NA"
 )
 DENO_IMPORT_LIST="${WORKDIR}/full-import.list"
 
