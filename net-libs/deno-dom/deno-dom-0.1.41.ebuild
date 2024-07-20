@@ -72,28 +72,25 @@ CRATES="
 inherit cargo deno
 
 DENO_LIBS=(
-	"std@0.97.0 https://github.com/denoland/deno_std/archive/refs/tags/_VER_.tar.gz deno_std-_VER_ NA NA"
-	"std@0.157.0 https://github.com/denoland/deno_std/archive/refs/tags/_VER_.tar.gz deno_std-_VER_ NA NA"
+	"std@0.97.0 https://github.com/denoland/deno_std/archive/refs/tags/_VER_.tar.gz std-_VER_ NA NA"
+	"std@0.157.0 https://github.com/denoland/deno_std/archive/refs/tags/_VER_.tar.gz std-_VER_ NA NA"
 	"plug@1.0.0-rc.3 https://github.com/denosaurs/plug/archive/refs/tags/_VER_.tar.gz plug-_VER_ NA NA"
 )
+MY_PV="$(ver_cut 1-4)-alpha-artifacts"
 
-IUSE="test"
-RESTRICT="!test? ( test )"
 DESCRIPTION="Deno-DOM Plugin"
 HOMEPAGE="https://deno.land/x/deno_dom"
-
-MY_PV="$(ver_cut 1-4)-alpha-artifacts"
-S=${WORKDIR}/${PN}-${MY_PV}
 
 SRC_URI="${CARGO_CRATE_URIS}
 	https://github.com/b-fuze/deno-dom/archive/refs/tags/v${MY_PV}.tar.gz -> deno-dom-${MY_PV}.tgz
 	test? ( $(deno_build_src_uri) )"
-
-# License set may be more restrictive as OR is not respected
-# use cargo-license for a more accurate license picture
+S=${WORKDIR}/${PN}-${MY_PV}
 LICENSE="MIT Apache-2.0 Apache-2.0-with-LLVM-exceptions Boost-1.0 MIT Unicode-DFS-2016 ZLIB"
+
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
+IUSE="test"
+RESTRICT="!test? ( test )"
 
 DEPEND=""
 RDEPEND="${DEPEND}"
