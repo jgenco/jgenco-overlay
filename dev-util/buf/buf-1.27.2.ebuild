@@ -5,9 +5,6 @@ EAPI=8
 
 inherit go-module shell-completion
 
-IUSE="test"
-RESTRICT="!test? ( test )"
-
 DESCRIPTION="A new way of working with Protocol Buffers."
 HOMEPAGE="https://buf.build/"
 
@@ -148,11 +145,12 @@ SRC_URI="https://github.com/bufbuild/buf/archive/refs/tags/v${PV}.tar.gz -> ${P}
 "
 
 LICENSE="Apache-2.0 MIT BSD BSD-2 CC-BY-SA-4.0"
-SLOT="0"
-KEYWORDS="~amd64"
 
-DEPEND=""
-RDEPEND="${DEPEND}"
+SLOT="0"
+KEYWORDS="amd64"
+IUSE="test"
+RESTRICT="!test? ( test )"
+
 BDEPEND="
 	test? (
 		dev-vcs/git
