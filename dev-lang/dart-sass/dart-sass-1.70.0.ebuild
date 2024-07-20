@@ -146,15 +146,13 @@ build_dart_uri() {
 	done
 }
 SRC_URI="${SRC_URI} $(build_dart_uri ${DART_BOARD})"
-
 LICENSE="MIT Apache-2.0 BSD"
+
 SLOT="0"
+KEYWORDS="amd64"
 IUSE="test"
-KEYWORDS="~amd64"
 RESTRICT="strip mirror !test? ( test )"
 
-DEPEND=""
-RDEPEND="${DEPEND}"
 BDEPEND="
 	|| (
 		=dev-lang/dart-3*
@@ -208,6 +206,12 @@ src_unpack() {
 		npm_build_cache ${TESTING_NPMS} || die
 	fi
 }
+src_prepare() {
+	sed -i "s#cloneOrCheckout(\"https://github.com/sass/sass\", \"main\", name: 'language')#\"build/language\"#" \
+		tool/grind.dart || die
+	default
+}
+
 src_compile(){
 	export HOME="${WORKDIR}"
 	dart_envs=(
