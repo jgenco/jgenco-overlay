@@ -674,18 +674,13 @@ CRATES="
 	zstd-safe@6.0.6
 	zstd-sys@2.0.9+zstd.1.5.5
 "
-#NOTE: update deno.tera for long term changes
 
 DENO_STD_VER="0.208.0"
 V8_VER="0.83.2"
 inherit cargo llvm multiprocessing toolchain-funcs check-reqs shell-completion
 
-IUSE="v8-prebuilt test"
-RESTRICT="mirror !test? ( test )"
-
 DESCRIPTION="A modern runtime for JavaScript and TypeScript"
 HOMEPAGE="https://deno.land/"
-
 SRC_URI="${CARGO_CRATE_URIS}"
 SRC_URI+="
 	https://github.com/denoland/deno/archive/refs/tags/v${PV}.tar.gz -> deno-${PV}.tar.gz
@@ -697,16 +692,13 @@ SRC_URI+="
 		librusty_v8_${V8_VER}_release_amd64.a
 	)
 "
-
-# License set may be more restrictive as OR is not respected
-# use cargo-license for a more accurate license picture
-
-#Note webkit = 0BSD and a Chromium License
-#     ring   = openssl SSLeay ISC MIT
-#     webpki = ISC
 LICENSE="0BSD Apache-2.0 Apache-2.0-with-LLVM-exceptions Artistic-2 BSD BSD-1 BSD-2 Boost-1.0 CC0-1.0 ISC MIT MPL-2.0 Unicode-DFS-2016 Unlicense ZLIB openssl SSLeay"
+
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
+IUSE="v8-prebuilt test"
+RESTRICT="mirror !test? ( test )"
+
 BDEPEND="
 	dev-build/gn
 	dev-build/ninja
@@ -747,7 +739,7 @@ src_unpack() {
 	cargo_src_unpack
 	if use test; then
 		rmdir "${S}/tests/util/std" || die "Failed to remove ${S}/tests/util/std"
-		mv "${WORKDIR}/deno_std-${DENO_STD_VER}/" "${S}/tests/util/std" || die "Failed to move deno-std into position"
+		mv "${WORKDIR}/std-${DENO_STD_VER}/" "${S}/tests/util/std" || die "Failed to move deno-std into position"
 	fi
 }
 src_prepare() {
