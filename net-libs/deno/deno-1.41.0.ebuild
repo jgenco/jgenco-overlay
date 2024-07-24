@@ -702,7 +702,7 @@ RESTRICT="mirror !test? ( test )"
 BDEPEND="
 	dev-build/gn
 	dev-build/ninja
-	>=virtual/rust-1.76 <virtual/rust-1.79
+	>=virtual/rust-1.76 <virtual/rust-1.80
 	test? (
 		net-misc/curl
 	)
