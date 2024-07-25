@@ -1,0 +1,16 @@
+--- a/src/cpp/CMakeLists.txt
++++ b/src/cpp/CMakeLists.txt
+@@ -224,13 +224,6 @@ endif()
+ 
+ include_directories(SYSTEM "${YAML_CPP_INCLUDE_DIR}")
+ 
+-# determine whether we should statically link boost. we always do this
+-# unless we are building a non-packaged build on linux (in which case
+-# boost dynamic libraries are presumed to be installed on the system ldpath)
+-if(APPLE OR WIN32 OR RSTUDIO_PACKAGE_BUILD)
+-   set(Boost_USE_STATIC_LIBS ON)
+-endif()
+-
+ # default Boost versions
+ if(NOT RSTUDIO_BOOST_REQUESTED_VERSION)
+    set(RSTUDIO_BOOST_REQUESTED_VERSION 1.78.0)
