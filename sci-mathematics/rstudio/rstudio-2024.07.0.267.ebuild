@@ -190,7 +190,7 @@ RDEPEND="
 		)
 	)
 	>=dev-cpp/yaml-cpp-0.8.0:=
-	>=dev-lang/R-3.3.0
+	>=dev-lang/R-3.3.0[png]
 	>=dev-libs/boost-1.78:=
 	>=dev-libs/libfmt-8.1.1:=
 	dev-libs/openssl:=
@@ -285,11 +285,11 @@ BDEPEND="
 	>=virtual/jdk-1.8:=
 "
 PATCHES=(
-	"${FILESDIR}/${PN}-9999-cmake-bundled-dependencies.patch"
-	"${FILESDIR}/${PN}-9999-resource-path.patch"
+	"${FILESDIR}/${PN}-2024.07.0.267-cmake-bundled-dependencies.patch"
+	"${FILESDIR}/${PN}-2024.07.0.267-resource-path.patch"
 	"${FILESDIR}/${PN}-2024.04.0.735-server-paths.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-package-build.patch"
-	"${FILESDIR}/${PN}-9999-pandoc_path_fix.patch"
+	"${FILESDIR}/${PN}-2024.07.0.267-pandoc_path_fix.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
 	"${FILESDIR}/${PN}-2023.06.0.421-node_electron_cmake.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-reenable-sandbox.patch"
@@ -299,7 +299,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2022.12.0.353-system-clang.patch"
 	"${FILESDIR}/${PN}-2023.03.0.386-panmirror_disable.patch"
 	"${FILESDIR}/${PN}-2023.12.1.402-node_path_fix.patch"
-	"${FILESDIR}/${PN}-9999-restore-qt.patch"
+	"${FILESDIR}/${PN}-2024.07.0.267-restore-qt.patch"
 	"${FILESDIR}/${PN}-2024.07.0.108-boost-1.85.0.patch"
 )
 
@@ -432,7 +432,7 @@ src_prepare() {
 	else
 		#qtsingleapplication I belive needs updated for QT6 not tested.
 		sed -i "s/QT5/QT6/g;s/Qt5/Qt6/g" "${S}/src/cpp/desktop/CMakeLists.txt" || die "Failed to sed to QT6"
-		eapply "${FILESDIR}/rstudio-9999-qt6-cmake.patch" "${FILESDIR}/rstudio-2022.12.0.353-qt6-desktop.patch"
+		eapply "${FILESDIR}/rstudio-2024.07.0.267-qt6-cmake.patch" "${FILESDIR}/rstudio-2022.12.0.353-qt6-desktop.patch"
 	fi
 
 	for entry in ${debundles[@]};do
@@ -466,10 +466,6 @@ src_prepare() {
 		popd
 	fi
 
-	# make sure icons and mime stuff are with prefix
-	sed -i -e "s:/usr:${EPREFIX}/usr:g" \
-		cmake/globals.cmake src/{cpp,node}/desktop/CMakeLists.txt || die "Failed to change to eprefix"
-
 	#fix path rstudio bin path from "${EPREFIX}/usr/rstudio" to "${EPREFIX}/usr/bin/rstudio"
 	#NOTE: the actual bin is "${EPREFIX}/usr/share/rstudio/rstudio" but we symlink in src_install
 	sed -i "s#/rstudio#/bin/rstudio#" src/node/desktop/resources/freedesktop/rstudio.desktop.in || \
@@ -477,6 +473,10 @@ src_prepare() {
 
 	cmake_src_prepare
 	java-pkg-2_src_prepare
+
+	# make sure icons and mime stuff are with prefix
+	sed -i -e "s:/usr:${EPREFIX}/usr:g" \
+		cmake/globals.cmake src/{cpp,node}/desktop/CMakeLists.txt || die "Failed to change to eprefix"
 
 	eprefixify src/cpp/core/libclang/LibClang.cpp
 }
