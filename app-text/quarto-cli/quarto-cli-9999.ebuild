@@ -6,7 +6,6 @@ EAPI=8
 DESCRIPTION="Open-source scientific and technical publishing system built on Pandoc."
 HOMEPAGE="https://quarto.org/"
 
-RESTRICT="mirror test"
 ESBUILD_VER_ORIG="0.15.18"
 DENO_NPM="
 	ansi-output@0.0.1
@@ -203,6 +202,7 @@ LICENSE="MIT GPL-2+ ZLIB BSD BSD-2 Apache-2.0 ISC || ( MIT GPL-3 ) Unlicense 0BS
 SLOT="0"
 KEYWORDS=""
 IUSE="system-pandoc"
+RESTRICT="mirror test"
 PATCHES="
 	${FILESDIR}/quarto-cli-9999-pathfixes.patch
 	${FILESDIR}/quarto-cli-1.3.340-configuration.patch
@@ -263,7 +263,7 @@ src_unpack() {
 	build_deno_npm dummy less ${DENO_NPM_DUMMIES}
 	build_deno_npm true ${DENO_NPM}
 	build_deno_npm false ${ESBUILD_PLATFORMS_VER}
-	for esbuild_platform in ${ESBUILD_PLATFORMS};do 
+	for esbuild_platform in ${ESBUILD_PLATFORMS};do
 		local os=${esbuild_platform/*esbuild[-\/]/}
 		os=${os%-*}
 		local cpu=${esbuild_platform/*-/}
@@ -284,27 +284,34 @@ src_prepare() {
 
 	deno_build_src
 	deno_build_cache
-	#build lock the first time to get list of files to import
-	sed -i "/juice/d" package/scripts/deno_std/deno_std.ts||die
-	deno cache --unstable --lock src/resources/deno_std/deno_std.lock \
-		--lock-write package/scripts/deno_std/deno_std.ts || die "Failed to create lockfile"
-	grep https src/resources/deno_std/deno_std.lock|sed "s/.*\(https.*\)\":.*/\1/" >\
-		src/resources/deno_std/deno_std.ts.list || die "Failed to make deno_std.ts.list"
 
-	#build cache that comes with quarto-cli
-	local deno_cache_old="${DENO_CACHE}"
-	DENO_CACHE="${S}/src/resources/deno_std/cache"
-	local deno_dir_old="${DENO_DIR}"
-	export DENO_DIR="${DENO_CACHE}"
-	DENO_IMPORT_LIST="${S}/src/resources/deno_std/deno_std.ts.list"
-
-	deno_build_cache
-	deno cache --unstable --lock src/resources/deno_std/deno_std.lock \
-		--lock-write package/scripts/deno_std/deno_std.ts || die "Failed to build cache"
-	rm "${S}/src/resources/deno_std/deno_std.ts.list" || die
-
-	DENO_CACHE="${deno_cache_old}"
-	export DENO_DIR="${deno_dir_old}"
+	#this is silly just pack all these files - someday
+	local quarto_cache="src/resources/deno_std/cache"
+	local time=`date +%s`
+	mkdir -p "${quarto_cache}/deps/https"||die
+	jq -r '.remote|keys[]' "${S}/src/resources/deno_std/deno_std.lock" > "${WORKDIR}/quarto_cache" || die
+	while read -r line; do
+		[[ $line =~ (https)://([^/]+)(.*) ]]
+		local host=${BASH_REMATCH[2]}
+		local addr=${BASH_REMATCH[3]}
+		local file=${addr}
+		[[ ${host} == "cdn.skypack.dev" && ! ${addr} =~ /-/ ]] && file=${file}.js
+		local sha256=$(echo -n "${addr}"| sha256sum)
+		sha256=${sha256:0:64}
+		local cachefile="${quarto_cache}/deps/https/${host}/${sha256}"
+		local cachefile_meta="${cachefile}.metadata.json"
+		mkdir  -p "${quarto_cache}/deps/https/${host}"
+		cp "src/vendor/${host}${file}" "${cachefile}" || die
+		if [[ ${host} == "deno.land" ]];then
+			echo -n "{\"headers\": {},\"url\": \"${line}\",\"now\": {\"secs_since_epoch\": ${time},\"nanos_since_epoch\": 0}}" > ${cachefile_meta}||die
+		else
+			echo -n "{\"headers\": {\"content-type\":\"application/javascript; charset=utf-8\"},
+			\"url\": \"${line}\",\"now\": {\"secs_since_epoch\": ${time},\"nanos_since_epoch\": 0}}" > ${cachefile_meta}||die
+		fi
+	done < <(cat "${WORKDIR}/quarto_cache")
+	DENO_DIR="${quarto_cache}" deno cache --unstable-ffi \
+		--lock src/resources/deno_std/deno_std.lock \
+		--lock-write package/scripts/deno_std/deno_std.ts || die
 
 	sed -i "s/sha512.*==//" src/webui/quarto-preview/deno.lock || die
 	pushd "${DENO_CACHE}/npm/registry.npmjs.org" > /dev/null || die
