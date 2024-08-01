@@ -7,6 +7,8 @@ DESCRIPTION="Open-source scientific and technical publishing system built on Pan
 HOMEPAGE="https://quarto.org/"
 SRC_URI="https://github.com/quarto-dev/quarto-cli/releases/download/v${PV}/quarto-${PV}-linux-amd64.tar.gz -> ${P}-linux-amd64.tar.gz"
 
+S="${WORKDIR}/quarto-${PV}"
+
 LICENSE="MIT GPL-2+ ZLIB BSD Apache-2.0 ISC || ( MIT GPL-3 ) Unlicense 0BSD"
 LICENSE+=" GPL-2+" #pandoc
 LICENSE+=" 0BSD Apache-2.0 Apache-2.0-with-LLVM-exceptions Artistic-2 BSD BSD-1 BSD-2 Boost-1.0 CC0-1.0 ISC MIT MPL-2.0 Unicode-DFS-2016 Unlicense ZLIB openssl SSLeay" #deno 1.37.2
@@ -27,9 +29,7 @@ DEPEND="
 	x11-misc/xdg-utils
 "
 RDEPEND="${DEPEND}"
-BDEPEND=""
 
-S="${WORKDIR}/quarto-${PV}"
 ARCH_FOLDER="x86_64"
 
 QA_PREBUILT="
