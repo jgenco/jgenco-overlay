@@ -811,9 +811,9 @@ src_compile() {
 		popd > /dev/null
 	fi
 
-	./target/release/deno completions bash > deno.sh   || die "Failed to create bash completion file"
-	./target/release/deno completions fish > deno.fish || die "Failed to create fish completion file"
-	./target/release/deno completions zsh  > _deno     || die "Failed to create zsh completion file"
+	"$(cargo_target_dir)"/deno completions bash > deno.sh   || die "Failed to create bash completion file"
+	"$(cargo_target_dir)"/deno completions fish > deno.fish || die "Failed to create fish completion file"
+	"$(cargo_target_dir)"/deno completions zsh  > _deno     || die "Failed to create zsh completion file"
 }
 
 src_install() {
