@@ -71,7 +71,7 @@ CRATES="
 inherit cargo deno
 
 DENO_LIBS=(
-"std@0.97.0 https://github.com/denoland/deno_std/archive/refs/tags/_VER_.tar.gz deno_std-_VER_ NA NA"
+"std@0.97.0 https://github.com/denoland/deno_std/archive/refs/tags/_VER_.tar.gz std-_VER_ NA NA"
 "plug@0.4.0 https://github.com/denosaurs/plug/archive/refs/tags/_VER_.tar.gz plug-_VER_ NA NA"
 "cache@0.2.13 https://github.com/denosaurs/cache/archive/refs/tags/_VER_.tar.gz cache-_VER_ NA NA"
 )
@@ -121,7 +121,7 @@ src_test() {
 		deno-dom-native.ts || die "Failed to modify plug version"
 	#standardize deno_std to version 0.97.0
 	sed -i -E "s#std@0.[0-9]{2}.0#std@0.97.0#" \
-		test/wpt.ts test/wpt-runner.ts test/units.ts test/units/* \
+		test/wpt.ts test/wpt-runner.ts test/units.ts test/units/* ||\
 		die "Failed to modify std version"
 	sed -i "s#https://deno.land/std/testing/asserts.ts#https://deno.land/std@0.97.0/testing/asserts.ts#" \
 		test/units/comments-outside-html-test.ts || die "failed to modify std version 2"
