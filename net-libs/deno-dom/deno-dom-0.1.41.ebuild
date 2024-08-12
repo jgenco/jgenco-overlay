@@ -111,7 +111,7 @@ src_compile() {
 	pushd html-parser/plugin > /dev/null || die
 	cargo_src_compile
 	popd > /dev/null || die
-	cp target/release/libplugin.so ${PN}.so || die "Failed to copy file"
+	cp "$(cargo_target_dir)/libplugin.so" ${PN}.so || die "Failed to copy file"
 
 	DENO_IMPORT_LIST="${FILESDIR}/deno-dom-${PV}.imports"
 	use test && deno_build_src && deno_build_cache
@@ -120,7 +120,7 @@ src_install() {
 	dolib.so ${PN}.so
 }
 src_test() {
-	export DENO_DOM_PLUGIN=${S}/target/release/libplugin.so
+	export DENO_DOM_PLUGIN="${S}/$(cargo_target_dir)/libplugin.so"
 
 	#standerdize to older std to 0.97.0
 	sed -i -E "s#std@0.[0-9]{2}.0#std@0.97.0#" \
