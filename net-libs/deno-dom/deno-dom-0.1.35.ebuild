@@ -106,7 +106,7 @@ src_compile() {
 	pushd html-parser/plugin > /dev/null || die "Failed to change dir"
 	cargo_src_compile
 	popd > /dev/null
-	cp target/release/libplugin.so ${PN}.so || die "Failed to copy file"
+	cp "$(cargo_target_dir)/libplugin.so" ${PN}.so || die "Failed to copy file"
 
 	DENO_IMPORT_LIST="${FILESDIR}/deno-dom-0.1.23.imports"
 	use test && deno_build_src && deno_build_cache
@@ -115,7 +115,7 @@ src_install() {
 	dolib.so ${PN}.so
 }
 src_test() {
-	export DENO_DOM_PLUGIN=${S}/target/release/libplugin.so
+	export DENO_DOM_PLUGIN="${S}/$(cargo_target_dir)/libplugin.so"
 	#set plug version to 0.4.0 - newer ones seem not to work
 	sed -i "s#https://deno.land/x/plug/mod.ts#https://deno.land/x/plug@0.4.0/mod.ts#" \
 		deno-dom-native.ts || die "Failed to modify plug version"
