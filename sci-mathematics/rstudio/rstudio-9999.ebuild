@@ -5,13 +5,13 @@ EAPI=8
 
 inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm prefix
 
-P_PREBUILT="${PN}-2024.07.0.229"
-ELECTRON_VERSION="30.1.0"
-DAILY_COMMIT="7013daee2029b0f7bcbab754661c9604da1fee45"
-QUARTO_COMMIT="06678d55143a7d6de6c7f0232db0c5dcf8392ca6"
-QUARTO_CLI_VER="1.4.555"
+P_PREBUILT="${PN}-2024.10.0.94"
+ELECTRON_VERSION="31.4.0"
+DAILY_COMMIT="2dbb4d489a25fbd698ace35286f6de677c413de6"
+QUARTO_COMMIT="843625f46ae3efe77598d50266791b63f7c1867f"
+QUARTO_CLI_VER="1.5.54"
 QUARTO_BRANCH="main"
-QUARTO_DATE="20240530"
+QUARTO_DATE="20240806"
 
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
@@ -108,12 +108,6 @@ xml2@1.3.6
 "
 #####End   of TESTHAT   package list#####
 
-#RSudio requires 5.12.8 but when QT 5.12.x and glibc 2.34(clone3) is used it will cause a
-#sandbox violation in chromium. QT fixed this around 5.15.x(5?). Gentoo is at 5.15.3 and
-#it works. I assume it was back ported or I'm wrong about the timeline.
-QT_VER=5.15.3
-QT_SLOT=5
-
 DESCRIPTION="IDE for the R language"
 HOMEPAGE="
 	https://posit.co/products/open-source/rstudio/
@@ -158,18 +152,18 @@ SRC_URI+="
 	test? ( $(build_r_src_uri ${R_TESTTHAT_PKGS}) )
 "
 
-IUSE="server electron +qt5 qt6 test debug quarto panmirror doc clang"
-REQUIRED_USE="!server? ( ^^ ( electron qt5 qt6 ) )"
-RESTRICT="mirror !test? ( test )"
-
 LICENSE="
 	AGPL-3 BSD MIT Apache-2.0 Boost-1.0 CC-BY-4.0 MIT OFL-1.1 GPL-3 ISC
 	test? ( EPL-1.0 )
-	panmirror? ( 0BSD Apache-2.0 BSD BSD-2 CC0-1.0 EPL-2.0 ISC || ( LGPL-2.0 MIT ) LGPL-3 MIT MPL-2.0 PYTHON Unlicense )
-	electron?  ( 0BSD Apache-2.0 BlueOak-1.0.0 BSD-2 BSD || ( BSD GPL-2.0 ) CC0-1.0 CC-BY-3.0 CC-BY-4.0 ISC MIT PYTHON Unlicense )
+	panmirror? ( 0BSD Apache-2.0 BSD BSD-2 CC0-1.0 EPL-2.0 ISC || ( LGPL-2 MIT ) LGPL-3 MIT MPL-2.0 PYTHON Unlicense )
+	electron?  ( 0BSD Apache-2.0 BlueOak-1.0.0 BSD-2 BSD || ( BSD GPL-2 ) CC0-1.0 CC-BY-3.0 CC-BY-4.0 ISC MIT PYTHON Unlicense )
 "
 SLOT="0"
 KEYWORDS=""
+
+IUSE="server +electron test debug quarto panmirror doc clang"
+REQUIRED_USE="!server? ( electron )"
+RESTRICT="mirror !test? ( test )"
 
 RDEPEND="
 	server? (
@@ -190,7 +184,7 @@ RDEPEND="
 		)
 	)
 	>=dev-cpp/yaml-cpp-0.8.0:=
-	>=dev-lang/R-3.3.0
+	>=dev-lang/R-3.3.0[png]
 	>=dev-libs/boost-1.78:=
 	>=dev-libs/libfmt-8.1.1:=
 	dev-libs/openssl:=
@@ -218,33 +212,6 @@ RDEPEND="
 		x11-libs/libxcb
 		x11-libs/libxkbcommon
 		x11-libs/pango
-	)
-	!electron? (
-		qt5? (
-			>=dev-qt/qtcore-${QT_VER}:${QT_SLOT}
-			>=dev-qt/qtdbus-${QT_VER}:${QT_SLOT}
-			>=dev-qt/qtdeclarative-${QT_VER}:${QT_SLOT}
-			>=dev-qt/qtnetwork-${QT_VER}:${QT_SLOT}
-			>=dev-qt/qtopengl-${QT_VER}:${QT_SLOT}
-			>=dev-qt/qtpositioning-${QT_VER}:${QT_SLOT}
-			>=dev-qt/qtprintsupport-${QT_VER}:${QT_SLOT}
-			>=dev-qt/qtsensors-${QT_VER}:${QT_SLOT}
-			>=dev-qt/qtsql-${QT_VER}:${QT_SLOT}
-			>=dev-qt/qtsvg-${QT_VER}:${QT_SLOT}
-			>=dev-qt/qtwebchannel-${QT_VER}:${QT_SLOT}
-			>=dev-qt/qtwebengine-${QT_VER}:${QT_SLOT}
-			>=dev-qt/qtwidgets-${QT_VER}:${QT_SLOT}
-			>=dev-qt/qtxml-${QT_VER}:${QT_SLOT}
-			>=dev-qt/qtxmlpatterns-${QT_VER}:${QT_SLOT}
-			~dev-qt/qtsingleapplication-2.6.1_p20171024[X]
-		)
-		qt6? (
-			dev-qt/qt5compat:6
-			dev-qt/qtbase:6
-			dev-qt/qtwebchannel:6
-			dev-qt/qtwebengine:6
-			dev-qt/qtsvg:6
-		)
 	)
 	clang? (
 		sys-devel/clang
@@ -275,31 +242,29 @@ BDEPEND="
 	=dev-java/validation-api-1.0*:1.0[source]
 	panmirror? (
 		<dev-util/esbuild-0.17
-		>=net-libs/nodejs-18.14.2[npm]
+		net-libs/nodejs[npm]
 		sys-apps/yarn
 	)
 	electron? (
 		app-arch/unzip
-		>=net-libs/nodejs-18.14.2[npm]
+		net-libs/nodejs[npm]
 	)
 	>=virtual/jdk-1.8:=
 "
 PATCHES=(
-	"${FILESDIR}/${PN}-2024.04.0.735-cmake-bundled-dependencies.patch"
+	"${FILESDIR}/${PN}-2024.07.0.267-cmake-bundled-dependencies.patch"
 	"${FILESDIR}/${PN}-9999-resource-path.patch"
 	"${FILESDIR}/${PN}-2024.04.0.735-server-paths.patch"
-	"${FILESDIR}/${PN}-2022.07.0.548-package-build.patch"
-	"${FILESDIR}/${PN}-9999-pandoc_path_fix.patch"
+	"${FILESDIR}/${PN}-9999-package-build.patch"
+	"${FILESDIR}/${PN}-2024.07.0.267-pandoc_path_fix.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
 	"${FILESDIR}/${PN}-2023.06.0.421-node_electron_cmake.patch"
-	"${FILESDIR}/${PN}-2022.07.0.548-reenable-sandbox.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-libfmt.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-hunspell.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-add-support-for-RapidJSON.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-system-clang.patch"
 	"${FILESDIR}/${PN}-2023.03.0.386-panmirror_disable.patch"
 	"${FILESDIR}/${PN}-2023.12.1.402-node_path_fix.patch"
-	"${FILESDIR}/${PN}-9999-restore-qt.patch"
 	"${FILESDIR}/${PN}-2024.07.0.108-boost-1.85.0.patch"
 )
 
@@ -423,18 +388,6 @@ src_prepare() {
 		debundles+=("/src/cpp/core/include/core/libclang/clang-c/:")
 	fi
 
-	if ! use qt6;then
-		#unbundle qtsingleapplication
-		#the original ebuild had a complex grep/sed to fix library name for cmake
-		#I don't know what it did but now it didn't change anything
-		debundles+=("/src/cpp/desktop/3rdparty/:")
-		eapply "${FILESDIR}/${PN}-2022.12.0.353-qtsingleapplication.patch"
-	else
-		#qtsingleapplication I belive needs updated for QT6 not tested.
-		sed -i "s/QT5/QT6/g;s/Qt5/Qt6/g" "${S}/src/cpp/desktop/CMakeLists.txt" || die "Failed to sed to QT6"
-		eapply "${FILESDIR}/rstudio-9999-qt6-cmake.patch" "${FILESDIR}/rstudio-2022.12.0.353-qt6-desktop.patch"
-	fi
-
 	for entry in ${debundles[@]};do
 		local bundle_path="${entry%:*}"
 		local local_path="${entry#*:}"
@@ -466,9 +419,11 @@ src_prepare() {
 		popd
 	fi
 
-	# make sure icons and mime stuff are with prefix
-	sed -i -e "s:/usr:${EPREFIX}/usr:g" \
-		cmake/globals.cmake src/{cpp,node}/desktop/CMakeLists.txt || die "Failed to change to eprefix"
+	if use electron; then
+		#this allows the checking SHASUM256.txt file - easier way?
+		sed -i "s/ElectronDownloadCacheMode.Bypass/ElectronDownloadCacheMode.ReadOnly/" \
+			src/node/desktop/node_modules/@electron/get/dist/cjs/index.js || die
+	fi
 
 	#fix path rstudio bin path from "${EPREFIX}/usr/rstudio" to "${EPREFIX}/usr/bin/rstudio"
 	#NOTE: the actual bin is "${EPREFIX}/usr/share/rstudio/rstudio" but we symlink in src_install
@@ -477,6 +432,10 @@ src_prepare() {
 
 	cmake_src_prepare
 	java-pkg-2_src_prepare
+
+	# make sure icons and mime stuff are with prefix
+	sed -i -e "s:/usr:${EPREFIX}/usr:g" \
+		cmake/globals.cmake src/node/desktop/CMakeLists.txt || die "Failed to change to eprefix"
 
 	eprefixify src/cpp/core/libclang/LibClang.cpp
 }
@@ -500,24 +459,10 @@ src_configure() {
 	export RSTUDIO_VERSION_SUFFIX="-${build_type,,}+$(ver_cut 4 ${my_pv})"
 
 	sed -i "3s/RStudio/rstudio/" src/node/desktop/package.json || die
-	sed -i "4s/99.9.9/$(ver_cut 1-3)${RSTUDIO_VERSION_SUFFIX}/" src/node/desktop/package.json || die
+	sed -i "4s/9999.99.9-dev+1.test9/$(ver_cut 1-3)${RSTUDIO_VERSION_SUFFIX}/" src/node/desktop/package.json || die
 	CMAKE_BUILD_TYPE=$(usex debug Debug Release) #RelWithDebInfo Release
 	echo "cache=${WORKDIR}/node_cache" > "${S}/src/node/desktop/.npmrc"
 	echo "nodedir=${WORKDIR}/.electron-gyp/${ELECTRON_VERSION}" >> "${S}/src/node/desktop/.npmrc"
-	#Instead of using RSTUDIO_TARGET set RSTUDIO_{SERVER,DESKTOP,ELECTRON} manualy
-	#This allows ELECTRON with SERVER
-	#RSTUDIO_TARGET is set to true to bypass a test to see if undefined
-	local rstudio_server=FALSE
-	local rstudio_desktop=FALSE
-	local rstudio_electron=FALSE
-	if use server; then
-		rstudio_server=TRUE
-	fi
-	if use electron; then
-		rstudio_electron=TRUE
-	elif use qt5 || use qt6; then
-		rstudio_desktop=TRUE
-	fi
 	# FIXME: GWT_COPY is helpful because it allows us to call ant ourselves
 	# (rather than using the custom_target defined in src/gwt/CMakeLists.txt),
 	# however it also installs a test script, which we probably don't want.
@@ -528,9 +473,8 @@ src_configure() {
 	local mycmakeargs=(
 		-DRSTUDIO_INSTALL_SUPPORTING="${EPREFIX}/usr/share/${PN}"
 		-DRSTUDIO_TARGET=TRUE
-		-DRSTUDIO_SERVER=${rstudio_server}
-		-DRSTUDIO_DESKTOP=${rstudio_desktop}
-		-DRSTUDIO_ELECTRON=${rstudio_electron}
+		-DRSTUDIO_SERVER=$(usex server)
+		-DRSTUDIO_ELECTRON=$(usex electron)
 		-DRSTUDIO_UNIT_TESTS_DISABLED=$(usex test OFF ON)
 		-DRSTUDIO_USE_SYSTEM_BOOST=ON
 		-DGWT_BUILD=OFF
@@ -541,20 +485,10 @@ src_configure() {
 		-DQUARTO_ENABLED=$(usex quarto)
 		-DRSTUDIO_USE_SYSTEM_SOCI=TRUE
 		-DRSTUDIO_DISABLE_CHECK_FOR_UPDATES=1
+		-DRSTUDIO_INSTALL_FREEDESKTOP=$(usex electron)
 	)
 
 	use clang && mycmakeargs+=( -DSYSTEM_LIBCLANG_PATH=$(get_llvm_prefix))
-
-	if use electron; then
-		mycmakeargs+=( -DRSTUDIO_INSTALL_FREEDESKTOP="ON" )
-	elif use qt6 ; then
-		local qmake_path="$(qt5_get_bindir)/qmake"
-		mycmakeargs+=( -DQT_QMAKE_EXECUTABLE=${qmake_path/5/6}
-						-DRSTUDIO_INSTALL_FREEDESKTOP="ON" )
-	elif use qt5 ; then
-		mycmakeargs+=( -DQT_QMAKE_EXECUTABLE="$(qt5_get_bindir)/qmake"
-						-DRSTUDIO_INSTALL_FREEDESKTOP="ON" )
-	fi
 
 	if use doc; then
 		#if docs/news is built remove "_ga-" lines from  docs/news/_quarto.yml
@@ -607,7 +541,7 @@ src_compile() {
 	export ANT_OPTS="-Duser.home=${T} -Djava.util.prefs.userRoot=${T}"
 
 	local gwt_main_module="RStudio"
-	if use electron || use qt5 || use qt6; then
+	if use electron; then
 		if ! use server;then
 			gwt_main_module="RStudioDesktop"
 		fi
@@ -679,9 +613,6 @@ src_install() {
 		fi
 		dodoc "${ED}/usr/share/rstudio/"{LICENSE,LICENSES.chromium.html}
 		rm "${ED}/usr/share/rstudio/"{LICENSE,LICENSES.chromium.html} || die
-	elif use qt5 || use qt6 ; then
-		# This binary name is much to generic, so we'll change it
-		mv "${ED}/usr/bin/diagnostics" "${ED}/usr/bin/${PN}-diagnostics" || die "Failed to rename diagnostics"
 	fi
 	dodoc "${ED}/usr/share/${PN}/"{SOURCE,VERSION}
 	rm "${ED}/usr/share/${PN}/"{COPYING,INSTALL,NOTICE,SOURCE,VERSION,README.md} || die "Failed to remove installed docs"
@@ -699,7 +630,7 @@ pkg_preinst() {
 }
 
 pkg_postinst() {
-	if use electron || use qt5 || use qt6;then
+	if use electron ;then
 		xdg_desktop_database_update
 		xdg_mimeinfo_database_update
 		xdg_icon_cache_update
@@ -710,9 +641,5 @@ pkg_postinst() {
 		elog ""
 		elog "or set the L10N variable in /etc/portage/make.conf"
 		elog "see https://wiki.gentoo.org/wiki/Localization"
-	fi
-	if ! use electron || use server;then
-		elog "RStudio has a new downloadable feature (MIT) that integrates GitHub's Copilot"
-		elog "This feature relies on net-libs/nodejs in non-Electron and server versions."
 	fi
 }
