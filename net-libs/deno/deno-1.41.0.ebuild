@@ -702,7 +702,7 @@ RESTRICT="mirror !test? ( test )"
 BDEPEND="
 	dev-build/gn
 	dev-build/ninja
-	>=virtual/rust-1.76 <virtual/rust-1.80
+	>=virtual/rust-1.76 <virtual/rust-1.81
 	test? (
 		net-misc/curl
 	)
@@ -748,6 +748,7 @@ src_prepare() {
 		"${FILESDIR}/v8-0.40.2-jobfix.patch"
 	patch_crate deno_core "${FILESDIR}/core-735.patch"
 	patch_crate serde_v8 "${FILESDIR}/serde_v8-735.patch"
+	patch_crate ^time@ "${FILESDIR}/time_rust-1.80.patch"
 
 	default
 }
@@ -807,7 +808,8 @@ src_compile() {
 
 	if use test;then
 		pushd tests/util/server > /dev/null || die "Failed to change dir to tests/util/server"
-		cargo build $(usex debug "" --release) || die
+		#it dosn't like __vendored_zlib_ng - hope this is correct
+		cargo_env cargo build $(usex debug "" --release) || die
 		popd > /dev/null
 	fi
 
