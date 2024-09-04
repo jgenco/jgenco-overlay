@@ -395,6 +395,7 @@ DOCS=(LICENSE NOTICE README.md docs/changelog.md)
 QA_FLAGS_IGNORED="usr/bin/${PN}"
 src_prepare() {
 	sed -i "s/^strip = true$/strip = false/" Cargo.toml || die
+	eapply -d "${WORKDIR}/cargo_home/gentoo/time-0.3.34" -- "${FILESDIR}/time_rust-1.80.patch"
 	default
 }
 
