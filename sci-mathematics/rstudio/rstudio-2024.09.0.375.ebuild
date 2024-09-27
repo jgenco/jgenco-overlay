@@ -5,13 +5,13 @@ EAPI=8
 
 inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm prefix
 
-P_PREBUILT="${PN}-2024.07.0.270"
-ELECTRON_VERSION="30.1.2"
-DAILY_COMMIT="892409fe646ef817ddc91d8998b50740518a470c"
-QUARTO_COMMIT="06678d55143a7d6de6c7f0232db0c5dcf8392ca6"
+P_PREBUILT="${PN}-2024.09.0.375"
+ELECTRON_VERSION="30.4.0"
+#DAILY_COMMIT="892409fe646ef817ddc91d8998b50740518a470c"
+QUARTO_COMMIT="ae8a23e617997cf62b8b7da25fc19a13e155b215"
 QUARTO_CLI_VER="1.5.54"
-QUARTO_BRANCH="main"
-QUARTO_DATE="20240530"
+QUARTO_BRANCH="release/rstudio-cranberry-hibiscus"
+QUARTO_DATE="20240925"
 
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
@@ -417,6 +417,12 @@ src_prepare() {
 		ln -s "${EPREFIX}/usr/bin/esbuild" node_modules/vite/node_modules/esbuild-linux-64/bin/esbuild || die
 		ln -s "${EPREFIX}/usr/bin/esbuild" node_modules/esbuild-linux-64/bin/esbuild || die
 		popd
+	fi
+
+	if use electron; then
+		#this allows the checking SHASUM256.txt file - easier way?
+		sed -i "s/ElectronDownloadCacheMode.Bypass/ElectronDownloadCacheMode.ReadOnly/" \
+			src/node/desktop/node_modules/@electron/get/dist/cjs/index.js || die
 	fi
 
 	#fix path rstudio bin path from "${EPREFIX}/usr/rstudio" to "${EPREFIX}/usr/bin/rstudio"
