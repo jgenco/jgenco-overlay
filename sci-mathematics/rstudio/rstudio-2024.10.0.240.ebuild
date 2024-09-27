@@ -5,13 +5,13 @@ EAPI=8
 
 inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm prefix
 
-P_PREBUILT="${PN}-2024.10.0.94"
-ELECTRON_VERSION="31.4.0"
-DAILY_COMMIT="2dbb4d489a25fbd698ace35286f6de677c413de6"
-QUARTO_COMMIT="843625f46ae3efe77598d50266791b63f7c1867f"
+P_PREBUILT="${PN}-2024.10.0.240"
+ELECTRON_VERSION="31.5.0"
+DAILY_COMMIT="37e8dd306ee90ee0eaa29bea797aa4aecf7ca597"
+QUARTO_COMMIT="75359e36c7c9063b73841cb75f3485a86a353b74"
 QUARTO_CLI_VER="1.5.54"
 QUARTO_BRANCH="main"
-QUARTO_DATE="20240806"
+QUARTO_DATE="20240925"
 
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
