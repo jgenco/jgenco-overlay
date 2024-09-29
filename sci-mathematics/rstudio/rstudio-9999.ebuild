@@ -5,8 +5,8 @@ EAPI=8
 
 inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm prefix
 
-P_PREBUILT="${PN}-2024.10.0.94"
-ELECTRON_VERSION="31.4.0"
+P_PREBUILT="${PN}-2024.10.0.240"
+ELECTRON_VERSION="31.5.0"
 DAILY_COMMIT="2dbb4d489a25fbd698ace35286f6de677c413de6"
 QUARTO_COMMIT="843625f46ae3efe77598d50266791b63f7c1867f"
 QUARTO_CLI_VER="1.5.54"
