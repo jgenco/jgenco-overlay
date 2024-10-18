@@ -1,0 +1,27 @@
+--- a/src/cpp/session/CMakeLists.txt
++++ b/src/cpp/session/CMakeLists.txt
+@@ -464,8 +464,10 @@ if(NOT EXISTS "${RSTUDIO_PANMIRROR_SCRIPT}")
+    set(RSTUDIO_PANMIRROR_SCRIPT ${RSTUDIO_TOOLS_ROOT}/src/gwt/lib/quarto/packages/editor-server/src/resources/md-writer.lua)
+ endif()
+ file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/resources/panmirror-scripts)
+-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../gwt/lib/quarto/packages/editor-server/src/resources/md-writer.lua
+-               ${CMAKE_CURRENT_SOURCE_DIR}/resources/panmirror-scripts/ COPYONLY)
++if(EXISTS "${RSTUDIO_PANMIRROR_SCRIPT}")
++   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../gwt/lib/quarto/packages/editor-server/src/resources/md-writer.lua
++             ${CMAKE_CURRENT_SOURCE_DIR}/resources/panmirror-scripts/ COPYONLY)
++endif()
+ 
+ # set include directories
+ include_directories(
+--- a/src/gwt/build.xml
++++ b/src/gwt/build.xml
+@@ -186,9 +186,6 @@
+    </target>
+ 
+    <target name="gwtc" depends="ext,javac" description="GWT compile to JavaScript">
+-      <antcall target="panmirror">
+-         <param name="panmirror.target" value="ide-dist"/>
+-      </antcall>
+       <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler">
+          <classpath>
+             <pathelement location="${src.dir}"/>

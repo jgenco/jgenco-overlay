@@ -263,7 +263,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2022.12.0.353-hunspell.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-add-support-for-RapidJSON.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-system-clang.patch"
-	"${FILESDIR}/${PN}-2023.03.0.386-panmirror_disable.patch"
+	"${FILESDIR}/${PN}-2024.10.0.240-disable-panmirror.patch"
 	"${FILESDIR}/${PN}-2023.12.1.402-node_path_fix.patch"
 	"${FILESDIR}/${PN}-2024.07.0.108-boost-1.85.0.patch"
 )
