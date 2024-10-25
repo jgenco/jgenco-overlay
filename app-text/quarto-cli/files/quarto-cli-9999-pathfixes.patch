@@ -1,11 +1,11 @@
-* Quarto-cli bundles their binary deps near quarto.
-This patch makes quarto-cli find all of them in QUARTO_BIN_PATH
+Quarto-cli bundles their binary deps near quarto.
+* This patch makes quarto-cli find all of them in QUARTO_BIN_PATH
 * Creates QUARTO_BASE_PATH to replace paths relative to QUARTO_BIN_PATH
 * add special test for pandoc to use official version of pandoc 
   (called pandoc-quarto) instead of system pandoc
 --- a/src/core/dart-sass.ts
 +++ b/src/core/dart-sass.ts
-@@ -14,7 +14,7 @@ import { existsSync } from "fs/mod.ts";
+@@ -14,7 +14,7 @@ import { existsSync } from "../deno_ral/fs.ts";
  import { warnOnce } from "./log.ts";
  
  export function dartSassInstallDir() {
@@ -48,7 +48,7 @@ This patch makes quarto-cli find all of them in QUARTO_BIN_PATH
      },
 --- a/src/core/quarto.ts
 +++ b/src/core/quarto.ts
-@@ -29,6 +29,7 @@ export interface QuartoConfig {
+@@ -27,6 +27,7 @@ export interface QuartoConfig {
  let dotenvConfig: Record<string, string>;
  
  export const quartoConfig = {
@@ -56,7 +56,7 @@ This patch makes quarto-cli find all of them in QUARTO_BIN_PATH
    binPath: () => getenv("QUARTO_BIN_PATH"),
    toolsPath: () => join(getenv("QUARTO_BIN_PATH"), "tools"),
    sharePath: () => getenv("QUARTO_SHARE_PATH"),
-@@ -110,7 +111,7 @@ function terminatePreview(reason: string, cleanup?: VoidFunction) {
+@@ -124,7 +125,7 @@ function terminatePreview(reason: string, cleanup?: VoidFunction) {
  }
  
  function quartoSrcDir() {
@@ -67,15 +67,18 @@ This patch makes quarto-cli find all of them in QUARTO_BIN_PATH
  function buildPreviewJs(srcDir: string, cleanup?: VoidFunction) {
 --- a/src/core/resources.ts
 +++ b/src/core/resources.ts
-@@ -72,7 +72,13 @@ export function toolsPath(binary: string, defaultPath?: string): string {
+@@ -72,7 +72,16 @@ export function toolsPath(binary: string, defaultPath?: string): string {
        }
      }
    }
 -  return join(quartoConfig.toolsPath(), defaultPath || binary);
 +  if(binary === "pandoc"){
-+     const binaryPandocQuarto = join(quartoConfig.binPath(),"pandoc-quarto");
-+     if(existsSync(binaryPandocQuarto) && Deno.statSync(binaryPandocQuarto).isFile){
-+         return binaryPandocQuarto;
++     const pandocBinsList = ["pandoc-quarto", "pandoc-bin"];
++     for(const pandocBin of pandocBinsList){
++         const binaryPandocQuarto = join(quartoConfig.binPath(),pandocBin);
++         if(existsSync(binaryPandocQuarto) && Deno.statSync(binaryPandocQuarto).isFile){
++             return binaryPandocQuarto;
++         }
 +     }
 +  }
 +  return join(quartoConfig.binPath(), binary);

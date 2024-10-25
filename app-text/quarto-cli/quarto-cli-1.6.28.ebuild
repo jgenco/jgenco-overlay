@@ -6,6 +6,7 @@ EAPI=8
 DESCRIPTION="Open-source scientific and technical publishing system built on Pandoc."
 HOMEPAGE="https://quarto.org/"
 
+QUARTO_CLI_VENDOR="${PN}-1.6.28"
 ESBUILD_VER_ORIG="0.15.18"
 DENO_NPM="
 	ansi-output@0.0.1
@@ -173,10 +174,6 @@ ESBUILD_PLATFORMS="
 	windows-arm64
 "
 ESBUILD_PLATFORMS_EXT="@esbuild/android-arm @esbuild/linux-loong64"
-DENO_STD_VER="0.217.0"
-DENO_LIBS=(
-"std@${DENO_STD_VER} https://github.com/denoland/deno_std/archive/refs/tags/_VER_.tar.gz std-_VER_ NA NA"
-)
 DENO_IMPORT_LIST="${WORKDIR}/full-import.list"
 
 inherit shell-completion prefix npm deno
@@ -191,10 +188,10 @@ fi
 
 PANDOC_VER="3.4"
 SRC_URI+="
+	https://github.com/jgenco/jgenco-overlay-files/releases/download/${QUARTO_CLI_VENDOR}/${QUARTO_CLI_VENDOR}-deno_vendor.tar.xz
 	!system-pandoc? (
 		https://github.com/jgm/pandoc/releases/download/${PANDOC_VER}/pandoc-${PANDOC_VER}-linux-amd64.tar.gz
 	)
-	$(deno_build_src_uri)
 	$(npm_build_src_uri ${DENO_NPM})
 "
 
@@ -212,20 +209,20 @@ ESBUILD_DEP_SLOT="0.19"
 DEPEND="
 	app-arch/unzip
 	~app-text/typst-0.11.0[embed-fonts]
-	|| (
+	system-pandoc? ( || (
 		(
 			>=dev-haskell/pandoc-3.1
 			app-text/pandoc-cli
 		)
 		>=app-text/pandoc-bin-${PANDOC_VER}
-	)
+	) )
 	~dev-lang/dart-sass-1.70.0
 	>=dev-lang/R-4.1.0
 	dev-libs/libxml2
 	dev-util/esbuild:${ESBUILD_DEP_SLOT}
 	dev-vcs/git
-	>=net-libs/deno-1.41.0 <net-libs/deno-1.44
-	~net-libs/deno-dom-0.1.35
+	>=net-libs/deno-1.46 <net-libs/deno-1.47
+	~net-libs/deno-dom-0.1.41
 	sys-apps/which
 	x11-misc/xdg-utils
 "
@@ -246,7 +243,10 @@ src_unpack() {
 	else
 		unpack ${P}.tar.gz
 	fi
-	unpack deno_std@${DENO_STD_VER}.tar.gz
+
+	unpack ${QUARTO_CLI_VENDOR}-deno_vendor.tar.xz
+	mv cache "${S}/src/resources/deno_std/" || die
+
 	! use system-pandoc && unpack pandoc-${PANDOC_VER}-linux-amd64.tar.gz
 
 	pushd "${S}/src/vendor/deno.land/" > /dev/null || die "Failed to push to deno.land"
@@ -254,7 +254,6 @@ src_unpack() {
 	sed "s%^%https://deno.land/%" > "${WORKDIR}/full-import.list" || \
 		die "Failed to make import list"
 	popd
-	deno_src_unpack
 
 	ESBUILD_PLATFORMS=$(printf "esbuild-%s\n" ${ESBUILD_PLATFORMS})
 	ESBUILD_PLATFORMS+=" ${ESBUILD_PLATFORMS_EXT}"
@@ -278,40 +277,9 @@ src_prepare() {
 	#the quarto files are a custom bash script based on the original
 	#quarto-cli has moved to a rust based prog. that does the same thing
 	#located in package/launcher
-	cp "${FILESDIR}/quarto.combined.eprefix.1.5" quarto || die "Failed to copy quarto"
+	cp "${FILESDIR}/quarto.combined.eprefix.1.6" quarto || die "Failed to copy quarto"
 	sed "s#export QUARTO_BASE_PATH=\".*\"#export QUARTO_BASE_PATH=\"${S}/package/pkg-working/share\"#"\
 		quarto > package/scripts/common/quarto || die "Failed to build quarto sandbox file"
-
-	deno_build_src
-	deno_build_cache
-
-	#this is silly just pack all these files - someday
-	local quarto_cache="src/resources/deno_std/cache"
-	local time=`date +%s`
-	mkdir -p "${quarto_cache}/deps/https"||die
-	jq -r '.remote|keys[]' "${S}/src/resources/deno_std/deno_std.lock" > "${WORKDIR}/quarto_cache" || die
-	while read -r line; do
-		[[ $line =~ (https)://([^/]+)(.*) ]]
-		local host=${BASH_REMATCH[2]}
-		local addr=${BASH_REMATCH[3]}
-		local file=${addr}
-		[[ ${host} == "cdn.skypack.dev" && ! ${addr} =~ /-/ ]] && file=${file}.js
-		local sha256=$(echo -n "${addr}"| sha256sum)
-		sha256=${sha256:0:64}
-		local cachefile="${quarto_cache}/deps/https/${host}/${sha256}"
-		local cachefile_meta="${cachefile}.metadata.json"
-		mkdir  -p "${quarto_cache}/deps/https/${host}"
-		cp "src/vendor/${host}${file}" "${cachefile}" || die
-		if [[ ${host} == "deno.land" ]];then
-			echo -n "{\"headers\": {},\"url\": \"${line}\",\"now\": {\"secs_since_epoch\": ${time},\"nanos_since_epoch\": 0}}" > ${cachefile_meta}||die
-		else
-			echo -n "{\"headers\": {\"content-type\":\"application/javascript; charset=utf-8\"},
-			\"url\": \"${line}\",\"now\": {\"secs_since_epoch\": ${time},\"nanos_since_epoch\": 0}}" > ${cachefile_meta}||die
-		fi
-	done < <(cat "${WORKDIR}/quarto_cache")
-	DENO_DIR="${quarto_cache}" deno cache --unstable-ffi \
-		--lock src/resources/deno_std/deno_std.lock \
-		--lock-write package/scripts/deno_std/deno_std.ts || die
 
 	sed -i "s/sha512.*==//" src/webui/quarto-preview/deno.lock || die
 	pushd "${DENO_CACHE}/npm/registry.npmjs.org" > /dev/null || die
@@ -320,10 +288,18 @@ src_prepare() {
 	sed -i "s/${ESBUILD_VER_ORIG}/$(esbuild --version)/g" esbuild/${ESBUILD_VER_ORIG}/{install.js,lib/main.js} || die
 	popd
 
+	DENO_DIR="src/resources/deno_std/cache" deno cache --unstable-ffi \
+		--lock src/resources/deno_std/deno_std.lock \
+		package/scripts/deno_std/deno_std.ts || die
+
 	sed -i -E  "s/2.19.2(\", \"Pandoc)/$(ver_cut 1-3 ${PANDOC_VER})\1/;s/1.32.8(\", \"Dart Sass)/1.70.0\1/" \
 		src/command/check/check.ts || die "Failed to correct versions"
 
 	sed -i "s/\"esbuild\"/\"esbuild-${ESBUILD_DEP_SLOT}\"/" src/core/esbuild.ts || die
+
+	#Setup links
+	ln -s "${DENO_CACHE}" package/src/x86_64 || die
+	ln -s "${DENO_CACHE}" src/webui/quarto-preview/x86_64 || die
 
 	default
 	eprefixify src/command/render/render-shared.ts quarto package/scripts/common/quarto
@@ -336,7 +312,12 @@ src_compile() {
 	export QUARTO_DENO="${EPREFIX}/usr/bin/deno"
 	export QUARTO_DENO_DOM="${EPREFIX}/usr/lib64/deno-dom.so"
 	export DENO_DOM_PLUGIN="${EPREFIX}/usr/lib64/deno-dom.so"
-	export QUARTO_PANDOC="${EPREFIX}/usr/bin/pandoc"
+	if ! use system-pandoc; then
+		export QUARTO_PANDOC="${WORKDIR}/pandoc-${PANDOC_VER}/bin/pandoc"
+	else
+		export QUARTO_PANDOC="${EPREFIX}/usr/bin/pandoc"
+		[[ -f "${QUARTO_PANDOC}-bin" ]] && export QUARTO_PANDOC+="-bin"
+	fi
 	export QUARTO_ESBUILD="${EPREFIX}/usr/bin/esbuild-${ESBUILD_DEP_SLOT}"
 	export QUARTO_DART_SASS="${EPREFIX}/usr/bin/sass"
 
