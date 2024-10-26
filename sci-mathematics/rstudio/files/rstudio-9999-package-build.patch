@@ -1,0 +1,32 @@
+Silences cmake/boost policy CMP0167
+https://cmake.org/cmake/help/latest/policy/CMP0167.html
+--- a/src/cpp/CMakeLists.txt
++++ b/src/cpp/CMakeLists.txt
+@@ -240,13 +240,6 @@ if(YAML_CPP_INCLUDE_DIR)
+    include_directories(SYSTEM "${YAML_CPP_INCLUDE_DIR}")
+ endif()
+ 
+-# determine whether we should statically link boost. we always do this
+-# unless we are building a non-packaged build on linux (in which case
+-# boost dynamic libraries are presumed to be installed on the system ldpath)
+-if(APPLE OR WIN32 OR RSTUDIO_PACKAGE_BUILD)
+-   set(Boost_USE_STATIC_LIBS ON)
+-endif()
+-
+ # default Boost versions
+ if(NOT RSTUDIO_BOOST_REQUESTED_VERSION)
+    set(RSTUDIO_BOOST_REQUESTED_VERSION 1.83.0)
+@@ -296,11 +289,11 @@ if(UNIX)
+       message(STATUS "Using RStudio-provided Boost ${RSTUDIO_BOOST_REQUESTED_VERSION}")
+    else()
+       add_definitions(-DRSTUDIO_BOOST_NAMESPACE=boost)
+-      find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} REQUIRED)
++      find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} CONFIG REQUIRED)
+       if(NOT Boost_VERSION LESS 106900)
+          list(REMOVE_ITEM BOOST_LIBS signals)
+       endif()
+-      find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} REQUIRED COMPONENTS ${BOOST_LIBS})
++      find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} CONFIG REQUIRED COMPONENTS ${BOOST_LIBS})
+    endif()
+ 
+ # WIN32 BOOST

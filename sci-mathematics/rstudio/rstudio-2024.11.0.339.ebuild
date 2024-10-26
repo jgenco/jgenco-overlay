@@ -5,13 +5,13 @@ EAPI=8
 
 inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm prefix
 
-P_PREBUILT="${PN}-2024.10.0.240"
-ELECTRON_VERSION="31.5.0"
-DAILY_COMMIT="37e8dd306ee90ee0eaa29bea797aa4aecf7ca597"
-QUARTO_COMMIT="75359e36c7c9063b73841cb75f3485a86a353b74"
-QUARTO_CLI_VER="1.5.54"
-QUARTO_BRANCH="main"
-QUARTO_DATE="20240925"
+P_PREBUILT="${PN}-2024.11.0.339"
+ELECTRON_VERSION="31.7.2"
+DAILY_COMMIT="800a4927356d79df4fa0b8f9dbf6fd7911e3b4e5"
+QUARTO_COMMIT="7d1582d06250216d18696145879415e473a2ae4d"
+QUARTO_CLI_VER="1.5.57"
+QUARTO_BRANCH="release/rstudio-kousa-dogwood"
+QUARTO_DATE="20241028"
 
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
@@ -255,7 +255,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2024.07.0.267-cmake-bundled-dependencies.patch"
 	"${FILESDIR}/${PN}-2024.09.0.375-resource-path.patch"
 	"${FILESDIR}/${PN}-2024.04.0.735-server-paths.patch"
-	"${FILESDIR}/${PN}-2024.09.0.375-package-build.patch"
+	"${FILESDIR}/${PN}-9999-package-build.patch"
 	"${FILESDIR}/${PN}-2024.07.0.267-pandoc_path_fix.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
 	"${FILESDIR}/${PN}-2023.06.0.421-node_electron_cmake.patch"
@@ -263,7 +263,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2022.12.0.353-hunspell.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-add-support-for-RapidJSON.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-system-clang.patch"
-	"${FILESDIR}/${PN}-2024.10.0.240-disable-panmirror.patch"
+	"${FILESDIR}/${PN}-9999-disable-panmirror.patch"
 	"${FILESDIR}/${PN}-2023.12.1.402-node_path_fix.patch"
 	"${FILESDIR}/${PN}-2024.07.0.108-boost-1.85.0.patch"
 )
