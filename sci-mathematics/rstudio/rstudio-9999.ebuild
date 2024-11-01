@@ -5,13 +5,13 @@ EAPI=8
 
 inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm prefix
 
-P_PREBUILT="${PN}-2024.10.0.240"
-ELECTRON_VERSION="31.5.0"
-DAILY_COMMIT="2dbb4d489a25fbd698ace35286f6de677c413de6"
-QUARTO_COMMIT="843625f46ae3efe77598d50266791b63f7c1867f"
-QUARTO_CLI_VER="1.5.54"
+P_PREBUILT="${PN}-2024.11.0.339"
+ELECTRON_VERSION="31.7.2"
+DAILY_COMMIT="800a4927356d79df4fa0b8f9dbf6fd7911e3b4e5"
+QUARTO_COMMIT="7d1582d06250216d18696145879415e473a2ae4d"
+QUARTO_CLI_VER="1.5.57"
 QUARTO_BRANCH="main"
-QUARTO_DATE="20240806"
+QUARTO_DATE="20241028"
 
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
@@ -253,7 +253,7 @@ BDEPEND="
 "
 PATCHES=(
 	"${FILESDIR}/${PN}-2024.07.0.267-cmake-bundled-dependencies.patch"
-	"${FILESDIR}/${PN}-9999-resource-path.patch"
+	"${FILESDIR}/${PN}-2024.09.0.375-resource-path.patch"
 	"${FILESDIR}/${PN}-2024.04.0.735-server-paths.patch"
 	"${FILESDIR}/${PN}-9999-package-build.patch"
 	"${FILESDIR}/${PN}-2024.07.0.267-pandoc_path_fix.patch"
@@ -263,7 +263,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2022.12.0.353-hunspell.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-add-support-for-RapidJSON.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-system-clang.patch"
-	"${FILESDIR}/${PN}-2023.03.0.386-panmirror_disable.patch"
+	"${FILESDIR}/${PN}-9999-disable-panmirror.patch"
 	"${FILESDIR}/${PN}-2023.12.1.402-node_path_fix.patch"
 	"${FILESDIR}/${PN}-2024.07.0.108-boost-1.85.0.patch"
 )
