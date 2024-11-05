@@ -14,7 +14,7 @@ SRC_URI="https://github.com/gwtplus/google-gin/archive/${PV}.tar.gz -> ${P}.tar.
 RESTRICT="mirror"
 SLOT="2.1"
 LICENSE="Apache-2.0"
-KEYWORDS="~amd64 ~x86 ~amd64-linux ~x86-linux"
+KEYWORDS="amd64 ~x86 ~amd64-linux ~x86-linux"
 IUSE=""
 
 CDEPEND="
@@ -49,6 +49,7 @@ JAVA_RM_FILES=(
 )
 
 src_compile() {
+	java-ant-2_src_configure
 	local EANT_BUILD_TARGET="compile"
 	GWT_HOME="${ESYSROOT}/usr/share/gwt-2.8/lib" \
 		java-pkg-2_src_compile
