@@ -570,9 +570,6 @@ src_configure() {
 		EANT_DOC_TARGET=""
 	fi
 
-	# It looks like eant takes care of this for us during src_compile
-	# TODO: verify with someone who knows better
-	# java-ant-2_src_configure
 	cmake_src_configure
 
 }
@@ -628,6 +625,7 @@ src_compile() {
 	)
 
 	local EANT_EXTRA_ARGS="${eant_extra_args[@]}"
+	java-ant-2_src_configure
 	java-pkg-2_src_compile
 	cmake_src_compile
 
