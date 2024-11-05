@@ -21,7 +21,7 @@ SRC_URI="https://github.com/gwtproject/${PN}/archive/${PV}.tar.gz -> ${P}.tar.gz
 RESTRICT="mirror test"
 SLOT="2.8"
 LICENSE="Apache-2.0"
-KEYWORDS="~amd64 ~x86 ~amd64-linux ~x86-linux"
+KEYWORDS="amd64 ~x86 ~amd64-linux ~x86-linux"
 
 CDEPEND="
 	dev-java/guava:0
@@ -65,7 +65,7 @@ src_compile() {
 	# it in ${WORKDIR} though
 	export GWT_TOOLS="${WORKDIR}/${GWT_TOOLS_PN}-${GWT_TOOLS_COMMIT}"
 	export GWT_VERSION="${PV}"
-
+	java-ant-2_src_configure
 	java-pkg-2_src_compile
 }
 
