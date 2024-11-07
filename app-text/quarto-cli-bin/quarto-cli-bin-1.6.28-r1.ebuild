@@ -61,4 +61,5 @@ src_install() {
 
 	mkdir "${ED}/opt/bin"
 	dosym -r /opt/quarto-cli/bin/quarto /opt/bin/quarto-bin
+	dosym -r /opt/quarto-cli/bin/quarto /opt/bin/quarto
 }
