@@ -775,6 +775,9 @@ LLVM_OPTIONAL=1
 
 PYTHON_COMPAT=( python3_{11..13} )
 
+RUST_MIN_VER="1.80.0"
+RUST_MAX_VER="1.82.0"
+
 inherit cargo check-reqs llvm-r1 multiprocessing python-any-r1 shell-completion toolchain-funcs
 
 DESCRIPTION="A modern runtime for JavaScript and TypeScript"
@@ -804,7 +807,6 @@ DEPEND="${PYTHON_DEPS}"
 BDEPEND="
 	dev-build/gn
 	dev-build/ninja
-	>=virtual/rust-1.80 <virtual/rust-1.83
 
 	llvm? ( $(llvm_gen_dep '
 		sys-devel/clang:${LLVM_SLOT}
@@ -837,6 +839,7 @@ pkg_setup() {
 	CHECKREQS_DISK_BUILD="$(usex llvm 18 9)G"
 	check-reqs_pkg_setup
 	use llvm && llvm-r1_pkg_setup
+	rust_pkg_setup
 	python_setup
 }
 
@@ -940,7 +943,7 @@ src_compile() {
 		einfo "Building test server..."
 		pushd tests/util/server > /dev/null || die "Failed to change dir to tests/util/server"
 		#it dosn't like __vendored_zlib_ng - hope this is correct
-		cargo_env cargo build $(usex debug "" --release)
+		cargo_env ${CARGO} build $(usex debug "" --release)
 		popd > /dev/null
 	fi
 

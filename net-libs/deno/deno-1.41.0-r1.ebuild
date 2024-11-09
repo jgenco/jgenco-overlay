@@ -677,6 +677,10 @@ CRATES="
 
 DENO_STD_VER="0.208.0"
 V8_VER="0.83.2"
+
+RUST_MIN_VER="1.76.0"
+RUST_MAX_VER="1.82.0"
+
 inherit cargo llvm multiprocessing toolchain-funcs check-reqs shell-completion
 
 DESCRIPTION="A modern runtime for JavaScript and TypeScript"
@@ -702,7 +706,6 @@ RESTRICT="mirror !test? ( test )"
 BDEPEND="
 	dev-build/gn
 	dev-build/ninja
-	>=virtual/rust-1.76 <virtual/rust-1.83
 	test? (
 		net-misc/curl
 	)
@@ -734,6 +737,7 @@ pkg_pretend() {
 pkg_setup() {
 	CHECKREQS_DISK_BUILD="8G"
 	check-reqs_pkg_setup
+	rust_pkg_setup
 	}
 src_unpack() {
 	cargo_src_unpack
@@ -809,7 +813,7 @@ src_compile() {
 	if use test;then
 		pushd tests/util/server > /dev/null || die "Failed to change dir to tests/util/server"
 		#it dosn't like __vendored_zlib_ng - hope this is correct
-		cargo_env cargo build $(usex debug "" --release) || die
+		cargo_env ${CARGO} build $(usex debug "" --release) || die
 		popd > /dev/null
 	fi
 

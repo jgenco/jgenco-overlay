@@ -363,7 +363,9 @@ CRATES="
 declare -A GIT_CRATES=(
 	[typst-dev-assets]="https://github.com/typst/typst-dev-assets;e0ef7ad46f28a440c41bc8e78563ace86cc02678;typst-dev-assets-%commit%"
 )
-#NOTE: update typst.tera for long term changes
+
+RUST_MIN_VER="1.74.0"
+RUST_MAX_VER="1.81.0" #1.82.0 failes 4 test
 
 inherit cargo shell-completion
 
@@ -383,10 +385,6 @@ SLOT="0"
 KEYWORDS="amd64"
 IUSE="doc embed-fonts test"
 RESTRICT="mirror !test? ( test )"
-
-BDEPEND="
-	>=virtual/rust-1.74.0
-"
 
 DOCS=(LICENSE NOTICE README.md docs/changelog.md)
 
