@@ -63,4 +63,5 @@ src_install() {
 
 	mkdir "${ED}/opt/bin"
 	dosym -r ${install_dir}/bin/quarto /opt/bin/quarto-bin
+	dosym -r ${install_dir}/bin/quarto /opt/bin/quarto
 }
