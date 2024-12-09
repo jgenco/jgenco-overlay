@@ -1,0 +1,142 @@
+* add custom flags at the end -  maybe change from += -> = ?
+* remove sse2 to allow user to set
+* add false is a carry over. not testes w/o
+* use system llvm
+* when using gcc don't set Werror
+* use cp instead of strip and echo to silence it
+
+--- a/build/config/compiler/BUILD.gn
++++ b/build/config/compiler/BUILD.gn
+@@ -11,6 +11,9 @@ declare_args() {
+   } else {
+     debug_optimization_level = "2"
+   }
++  custom_cflags_c  = []
++  custom_cflags_cc = []
++  custom_ldflags   = []
+ }
+ 
+ import("//build/config/sysroot.gni")
+@@ -101,7 +104,7 @@ config("compiler") {
+     cflags_objcc += common_flags
+ 
+     # Linker warnings.
+-    if (current_cpu != "arm" && !is_mac) {
++    if (is_clang && current_cpu != "arm" && !is_mac) {
+       # TODO(jochen): Enable this on ChromeOS on arm. http://crbug.com/356580
+       ldflags += [ "-Wl,--fatal-warnings" ]
+     }
+@@ -204,14 +207,11 @@ config("compiler") {
+       cflags += [
+         "-m64",
+         "-march=x86-64",
+-        "-msse2",
+       ]
+       ldflags += [ "-m64" ]
+     } else if (current_cpu == "x86") {
+       cflags += [
+         "-m32",
+-        "-msse2",
+-        "-mfpmath=sse",
+       ]
+       ldflags += [ "-m32" ]
+       if (is_clang) {
+@@ -245,6 +245,10 @@ config("compiler") {
+         ]
+       }
+     }
++    cflags    += custom_cflags_c
++    cflags_cc += custom_cflags_cc
++    ldflags   += custom_ldflags
++
+   }
+ 
+   # Linux/Android common flags setup.
+@@ -411,7 +415,7 @@ config("compiler") {
+   # changes since artifacts from an older version of the toolchain may or may
+   # not be compatible with newer ones. To achieve this, we insert a synthetic
+   # define into the compile line.
+-  if (is_clang && (is_linux || is_mac) && dart_sysroot != "alpine") {
++  if (false && is_clang && (is_linux || is_mac) && dart_sysroot != "alpine") {
+     if (is_linux && host_cpu == "arm64") {
+       toolchain_stamp_file =
+           "//buildtools/linux-arm64/clang/.versions/clang.cipd_version"
+@@ -732,7 +736,7 @@ config("chromium_code") {
+       "-Wextra",
+     ]
+ 
+-    if (dart_sysroot != "alpine") {
++    if (is_clang && dart_sysroot != "alpine") {
+       cflags += [ "-Werror" ]
+     }
+ 
+@@ -864,7 +868,7 @@ if (is_win) {
+       "-Wl,--gc-sections",
+     ]
+ 
+-    if (is_clang && !using_sanitizer) {
++    if (false && is_clang && !using_sanitizer) {
+       # Identical code folding to reduce size.
+       # Warning: This changes C/C++ semantics of function pointer comparison.
+       common_optimize_on_ldflags += [ "-Wl,--icf=all" ]
+--- a/build/toolchain/gcc_toolchain.gni
++++ b/build/toolchain/gcc_toolchain.gni
+@@ -204,15 +204,14 @@ template("gcc_toolchain") {
+       symbolize_command =
+           "$symbolizer_script --nm $nm --output $symfile --binary $outfile"
+       command += " && $symbolize_command"
+-
+       if (defined(invoker.strip)) {
+         strip = invoker.strip
+         strip_command =
+-            "${strip} --strip-unneeded -o $stripped_outfile $outfile"
++            "cp $outfile $stripped_outfile && echo ${strip}"
+         command += " && " + strip_command
+       } else if (defined(invoker.llvm_objcopy)) {
+         strip = invoker.llvm_objcopy
+-        strip_command = "${strip} --strip-all $outfile $stripped_outfile"
++        strip_command = "cp $outfile $stripped_outfile && echo ${strip}"
+         command += " && " + strip_command
+       }
+       if (defined(invoker.postlink)) {
+--- a/build/toolchain/linux/BUILD.gn
++++ b/build/toolchain/linux/BUILD.gn
+@@ -14,6 +14,7 @@ declare_args() {
+   arm64_toolchain_prefix = ""
+   riscv32_toolchain_prefix = ""
+   riscv64_toolchain_prefix = ""
++  llvm_prefix = ""
+ }
+ 
+ if (use_goma) {
+@@ -33,7 +34,7 @@ if (dart_sysroot == "alpine") {
+       rebase_path("//buildtools/linux-arm64/clang/bin", root_build_dir)
+ } else {
+   rebased_clang_dir =
+-      rebase_path("//buildtools/linux-x64/clang/bin", root_build_dir)
++      "${llvm_prefix}/bin/"
+ }
+ 
+ gcc_toolchain("arm") {
+@@ -168,8 +169,8 @@ gcc_toolchain("x64") {
+   cxx = "${compiler_prefix}${prefix}g++"
+ 
+   readelf = "${prefix}readelf"
+-  nm = "${prefix}nm"
+-  ar = "${prefix}ar"
++  nm = "${prefix}gcc-nm"
++  ar = "${prefix}gcc-ar"
+   ld = cxx
+   strip = "${prefix}strip"
+ 
+--- a/tools/utils.py
++++ b/tools/utils.py
+@@ -11,7 +11,7 @@ import contextlib
+ import datetime
+ from functools import total_ordering
+ import glob
+-import imp
++import importlib
+ import json
+ import os
+ import platform
