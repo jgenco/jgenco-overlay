@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<use>
+		<flag name="llvm">Use llvm to compile Dart</flag>
+	</use>
+	<upstream>
+		<changelog>https://dart.dev/guides/whats-new</changelog>
+		<doc>https://dart.dev/guides</doc>
+		<remote-id type="github">dart-lang/sdk</remote-id>
+	</upstream>
+</pkgmetadata>
