@@ -214,7 +214,7 @@ RDEPEND="
 		x11-libs/pango
 	)
 	clang? (
-		sys-devel/clang
+		llvm-core/clang
 	)
 	sys-apps/util-linux
 	sys-apps/which

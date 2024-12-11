@@ -247,7 +247,7 @@ RDEPEND="
 		)
 	)
 	clang? (
-		sys-devel/clang
+		llvm-core/clang
 	)
 	sys-apps/util-linux
 	sys-apps/which
