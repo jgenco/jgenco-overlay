@@ -1,0 +1,404 @@
+run find first
+find src/cpp -name "*.[ch]pp"  -print0 | xargs -0 sed "
+	s#boost/asio/io_service.hpp#boost/asio/io_context.hpp#;
+	s/boost::asio::io_service/boost::asio::io_context/g;
+	s/boost::asio::mutable_buffers_1/boost::asio::mutable_buffer/g;
+	s/boost::asio::const_buffers_1/boost::asio::const_buffer/g" -i
+--- a/src/cpp/core/http/Util.cpp
++++ b/src/cpp/core/http/Util.cpp
+@@ -541,7 +541,7 @@ std::string formatMessageAsHttpChunk(const std::string& message)
+ bool isIpAddress(const std::string& str)
+ {
+    boost::system::error_code err;
+-   boost::asio::ip::address::from_string(str, err);
++   boost::asio::ip::make_address(str, err);
+    return !err;
+ }
+ 
+@@ -551,11 +551,10 @@ bool isNetworkAddress(const std::string& str)
+ 
+    // query DNS for this address
+    boost::asio::ip::tcp::resolver resolver(io_service);
+-   boost::asio::ip::tcp::resolver::query query(str, "");
+ 
+    boost::system::error_code ec;
+-   boost::asio::ip::tcp::resolver::iterator iter = resolver.resolve(query, ec);
+-   return (!ec && iter != boost::asio::ip::tcp::resolver::iterator());
++   boost::asio::ip::tcp::resolver::results_type iter = resolver.resolve(str, "", ec);
++   return (!ec && iter != boost::asio::ip::tcp::resolver::results_type());
+ }
+ 
+ namespace {
+--- a/src/cpp/core/include/core/http/AsyncClient.hpp
++++ b/src/cpp/core/include/core/http/AsyncClient.hpp
+@@ -29,6 +29,7 @@
+ #include <boost/asio/read.hpp>
+ #include <boost/asio/read_until.hpp>
+ #include <boost/asio/deadline_timer.hpp>
++#include <boost/asio/post.hpp>
+ 
+ #include <boost/algorithm/string/predicate.hpp>
+ 
+@@ -221,7 +222,7 @@ public:
+       boost::shared_ptr<AsyncClient<SocketService> > sharedThis =
+             AsyncClient<SocketService>::shared_from_this();
+ 
+-      ioService_.post([=]()
++      boost::asio::post(ioService_,[=]()
+       {
+          bool complete = chunkState_->complete;
+ 
+@@ -679,7 +680,7 @@ private:
+       }
+ 
+       // get the underlying bytes from the response buffer
+-      const char* bufferPtr = boost::asio::buffer_cast<const char*>(responseBuffer_.data());
++      const char* bufferPtr = static_cast<const char*>(responseBuffer_.data().data());
+ 
+       // parse the bytes into chunks
+       std::deque<boost::shared_ptr<std::string> > chunks;
+--- a/src/cpp/core/include/core/http/AsyncConnectionImpl.hpp
++++ b/src/cpp/core/include/core/http/AsyncConnectionImpl.hpp
+@@ -380,7 +380,7 @@ public:
+       // with the amount of bytes that were read last time it was called
+       // this is posted to the io_service to be invoked asynchronously
+       // so callers are not reentrantly locked
+-      ioService_.post(boost::bind(&AsyncConnectionImpl<SocketType>::handleRead,
++      boost::asio::post(ioService_,boost::bind(&AsyncConnectionImpl<SocketType>::handleRead,
+                                   AsyncConnectionImpl<SocketType>::shared_from_this(),
+                                   boost::system::error_code(), bytesTransferred_));
+    }
+--- a/src/cpp/core/include/core/http/AsyncServerImpl.hpp
++++ b/src/cpp/core/include/core/http/AsyncServerImpl.hpp
+@@ -457,10 +457,8 @@ private:
+    {
+       try
+       {
+-         boost::system::error_code ec;
+-         acceptorService_.ioService().run(ec);
+-         if (ec)
+-            LOG_ERROR(Error(ec, ERROR_LOCATION));
++         //NOTE: no error return ?
++         acceptorService_.ioService().run();
+       }
+       CATCH_UNEXPECTED_EXCEPTION
+    }
+--- a/src/cpp/core/include/core/http/BlockingClient.hpp
++++ b/src/cpp/core/include/core/http/BlockingClient.hpp
+@@ -59,11 +59,14 @@ Error sendRequest(boost::asio::io_context& ioService,
+                     boost::bind(errorHandler, _1, &error));
+ 
+    // run the io service
+-   boost::system::error_code ec;
+-   ioService.run(ec);
+-   if (ec)
++   try
++   {
++      ioService.run();
++   }
++   catch (boost::system::error_code &ec)
++   {
+       return Error(ec, ERROR_LOCATION);
+-
++   }
+    // return error status
+    return error;
+ }
+--- a/src/cpp/core/include/core/http/BoostAsioSsl.hpp
++++ b/src/cpp/core/include/core/http/BoostAsioSsl.hpp
+@@ -23,7 +23,6 @@
+ 
+ #include <boost/asio/ssl/context.hpp>
+ #include <boost/asio/ssl/stream.hpp>
+-#include <boost/asio/ssl/rfc2818_verification.hpp>
+ 
+ #ifdef __clang__
+ #pragma clang diagnostic pop
+--- a/src/cpp/core/include/core/http/LocalStreamSocketUtils.hpp
++++ b/src/cpp/core/include/core/http/LocalStreamSocketUtils.hpp
+@@ -81,7 +81,7 @@ inline Error initLocalStreamAcceptor(
+       return error;
+    
+    // listen
+-   acceptor.listen(boost::asio::socket_base::max_connections, ec);
++   acceptor.listen(boost::asio::socket_base::max_listen_connections, ec);
+    if (ec)
+       return Error(ec, ERROR_LOCATION);
+    
+--- a/src/cpp/core/include/core/http/TcpIpAsyncClientSsl.hpp
++++ b/src/cpp/core/include/core/http/TcpIpAsyncClientSsl.hpp
+@@ -19,6 +19,7 @@
+ #include <boost/scoped_ptr.hpp>
+ 
+ #include <boost/asio/ip/tcp.hpp>
++#include <boost/asio/ssl/host_name_verification.hpp>
+ 
+ #include "BoostAsioSsl.hpp"
+ 
+@@ -204,7 +205,7 @@ private:
+      if (verify_)
+      {
+         ptrSslStream_->set_verify_callback(
+-            boost::asio::ssl::rfc2818_verification(
++            boost::asio::ssl::host_name_verification(
+                 verifyAddress_.empty() ? address_ : verifyAddress_));
+      }
+ 
+--- a/src/cpp/core/include/core/http/TcpIpAsyncConnector.hpp
++++ b/src/cpp/core/include/core/http/TcpIpAsyncConnector.hpp
+@@ -89,13 +89,12 @@ public:
+       }
+ 
+       // start an async resolve
+-      boost::asio::ip::tcp::resolver::query query(address, port);
+       resolver_.async_resolve(
+-            query,
++            address, port,
+             boost::bind(&TcpIpAsyncConnector::handleResolve,
+                         TcpIpAsyncConnector::shared_from_this(),
+                         boost::asio::placeholders::error,
+-                        boost::asio::placeholders::iterator));
++                        boost::asio::placeholders::results));
+    }
+ 
+ private:
+@@ -133,8 +132,9 @@ private:
+ 
+    void handleResolve(
+          const boost::system::error_code& ec,
+-         boost::asio::ip::tcp::resolver::iterator endpoint_iterator)
++	 boost::asio::ip::tcp::resolver::results_type endpoints)
+    {
++      boost::asio::ip::basic_resolver_iterator<boost::asio::ip::tcp> endpoint_iterator = endpoints.begin();
+       if (ec == boost::asio::error::operation_aborted)
+          return;
+ 
+@@ -150,22 +150,22 @@ private:
+                // work-around - in some rare instances, we've seen that Boost will still
+                // return us an empty endpoint_iterator, even when successful, which is
+                // contrary to the documentation
+-               if (endpoint_iterator == boost::asio::ip::tcp::resolver::iterator())
++               if (endpoint_iterator == boost::asio::ip::basic_resolver_iterator<boost::asio::ip::tcp>())
+                {
+                   handleErrorCode(boost::system::error_code(boost::system::errc::io_error,
+                                                             boost::system::system_category()),
+                                   ERROR_LOCATION);
+                   return;
+                }
+-
+                // try endpoints until we successfully connect with one
+-               boost::asio::ip::tcp::endpoint endpoint = *endpoint_iterator;
++	       const boost::asio::ip::basic_resolver_entry< boost::asio::ip::tcp > & endpoint = *endpoint_iterator;
++	       ++endpoint_iterator;
+                pSocket_->async_connect(
+                   endpoint,
+                   boost::bind(&TcpIpAsyncConnector::handleConnect,
+                               TcpIpAsyncConnector::shared_from_this(),
+                               boost::asio::placeholders::error,
+-                              ++endpoint_iterator));
++                              endpoint_iterator));
+             }
+             else
+             {
+@@ -179,7 +179,8 @@ private:
+ 
+    void handleConnect(
+          const boost::system::error_code& ec,
+-         boost::asio::ip::tcp::resolver::iterator endpoint_iterator)
++	 boost::asio::ip::basic_resolver_iterator<boost::asio::ip::tcp> endpoint_iterator)
++
+    {
+       if (ec == boost::asio::error::operation_aborted)
+          return;
+@@ -202,17 +203,19 @@ private:
+                   connectedHandler_();
+             }
+             else if (endpoint_iterator !=
+-                     boost::asio::ip::tcp::resolver::iterator())
++                     boost::asio::ip::basic_resolver_iterator<boost::asio::ip::tcp>())
+             {
+                // try next endpoint
+                pSocket_->close();
+-               boost::asio::ip::tcp::endpoint endpoint = *endpoint_iterator;
++	       const boost::asio::ip::basic_resolver_entry< boost::asio::ip::tcp > & endpoint = *endpoint_iterator;
++	       ++endpoint_iterator;
+                pSocket_->async_connect(
+                   endpoint,
+                   boost::bind(&TcpIpAsyncConnector::handleConnect,
+                               TcpIpAsyncConnector::shared_from_this(),
+                               boost::asio::placeholders::error,
+-                              ++endpoint_iterator));
++                              endpoint_iterator));
++
+             }
+             else
+             {
+--- a/src/cpp/core/include/core/http/TcpIpSocketUtils.hpp
++++ b/src/cpp/core/include/core/http/TcpIpSocketUtils.hpp
+@@ -39,27 +39,27 @@ Error connect(boost::asio::io_context& ioService,
+    
+    // resolve the address
+    tcp::resolver resolver(ioService);
+-   tcp::resolver::query query(address, port);
+-   
++
+    boost::system::error_code ec;
+-   tcp::resolver::iterator endpointIterator = resolver.resolve(query, ec);
++   tcp::resolver::results_type endpointIterator = resolver.resolve(address, port, ec);
+    if (ec)
+       return Error(ec, ERROR_LOCATION);
+-   
+-   tcp::resolver::iterator end;
++
+    ec = boost::asio::error::host_not_found;
+-   while (ec && endpointIterator != end)
++   for (const auto& entry : endpointIterator)
+    {
++      if(!ec) break;
+       // cleanup existing socket connection (if any). don't allow
+       // an error shutting down to prevent us from trying a
+       // subsequent connection
+       Error closeError = closeSocket(*pSocket);
+       if (closeError)
+          LOG_ERROR(closeError);
+-      
++
+       // attempt to connect
+-      pSocket->connect(*endpointIterator++, ec);
++      pSocket->connect(entry, ec);
+    }
++
+    if (ec)
+       return Error(ec, ERROR_LOCATION);
+    
+@@ -80,15 +80,14 @@ inline Error initTcpIpAcceptor(
+    using boost::asio::ip::tcp;
+    
+    tcp::resolver resolver(acceptorService.ioService());
+-   tcp::resolver::query query(address, port);
+    
+    boost::system::error_code ec;
+-   tcp::resolver::iterator entries = resolver.resolve(query, ec);
++   tcp::resolver::results_type entries = resolver.resolve(address, port, ec);
+    if (ec)
+       return Error(ec, ERROR_LOCATION);
+    
+    tcp::acceptor& acceptor = acceptorService.acceptor();
+-   const tcp::endpoint& endpoint = *entries;
++   const boost::asio::ip::tcp::endpoint endpoint = *entries.begin();
+    acceptor.open(endpoint.protocol(), ec);
+    if (ec)
+       return Error(ec, ERROR_LOCATION);
+@@ -145,7 +144,7 @@ inline Error initTcpIpAcceptor(
+    if (ec)
+       return Error(ec, ERROR_LOCATION);
+    
+-   acceptor.listen(boost::asio::socket_base::max_connections, ec);
++   acceptor.listen(boost::asio::socket_base::max_listen_connections, ec);
+    if (ec)
+       return Error(ec, ERROR_LOCATION);
+    
+--- a/src/cpp/core/system/PosixChildProcess.cpp
++++ b/src/cpp/core/system/PosixChildProcess.cpp
+@@ -1571,7 +1571,7 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
+          // io_service queue, and so we want to copy these variables
+          // to ensure we don't try to access any members
+          boost::function<void(void)> handler = boost::bind(callbacks_.onExit, exitCode_);
+-         ioService_.post(handler);
++	 boost::asio::post(ioService_,handler);
+       }
+       else if (errorCode)
+       {
+@@ -1586,7 +1586,7 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
+             boost::function<void(void)> handler = boost::bind(&Impl::invokeErrorHandler,
+                                                               boost::weak_ptr<Impl>(shared_from_this()),
+                                                               error);
+-            ioService_.post(handler);
++            boost::asio::post(ioService_, handler);
+          }
+          else
+             LOG_ERROR(error);
+--- a/src/cpp/core/system/ProcessTests.cpp
++++ b/src/cpp/core/system/ProcessTests.cpp
+@@ -60,7 +60,7 @@ void appendOutput(const std::string& output, std::string* pOutput)
+ struct IoServiceFixture
+ {
+    boost::asio::io_context ioService;
+-   boost::asio::io_context::work work;
++   boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work;
+    std::vector<boost::shared_ptr<boost::thread> > threads;
+ 
+    void runServiceThread()
+@@ -69,7 +69,7 @@ struct IoServiceFixture
+    }
+ 
+    IoServiceFixture() :
+-      ioService(), work(ioService)
++      ioService(), work(ioService.get_executor())
+    {
+       for (int i = 0; i < 4; ++i)
+       {
+--- a/src/cpp/server/session/ServerSessionProxy.cpp
++++ b/src/cpp/server/session/ServerSessionProxy.cpp
+@@ -823,7 +823,7 @@ void proxyRequest(
+    {
+       // invoke the client handler on the threadpool - we cannot do this
+       // from this thread because that will cause ordering issues for the caller
+-      ptrConnection->ioService().post(boost::bind(clientHandler, pClient));
++      boost::asio::post(ptrConnection->ioService(),boost::bind(clientHandler, pClient));
+    }
+ }
+ 
+--- a/src/cpp/session/SessionMain.cpp
++++ b/src/cpp/session/SessionMain.cpp
+@@ -1882,7 +1882,7 @@ boost::asio::io_context s_monitorIoService;
+ 
+ void monitorWorkerThreadFunc()
+ {
+-   boost::asio::io_context::work work(s_monitorIoService);
++   auto work = boost::asio::make_work_guard(s_monitorIoService.get_executor());// boost::asio::executor_work_guard ?
+    s_monitorIoService.run();
+ }
+ 
+--- a/src/cpp/session/SessionServerRpc.cpp
++++ b/src/cpp/session/SessionServerRpc.cpp
+@@ -17,6 +17,8 @@
+ 
+ #include <string>
+ 
++#include <boost/asio/executor_work_guard.hpp>
++
+ #include <core/Thread.hpp>
+ 
+ #include <r/RExec.hpp>
+@@ -101,7 +103,7 @@ boost::asio::io_context s_ioService;
+ 
+ void rpcWorkerThreadFunc()
+ {
+-   boost::asio::io_context::work work(s_ioService);
++   auto work = boost::asio::make_work_guard(s_ioService.get_executor());
+    s_ioService.run();
+ }
+ 
+--- a/src/cpp/session/http/SessionNamedPipeHttpConnectionListener.hpp
++++ b/src/cpp/session/http/SessionNamedPipeHttpConnectionListener.hpp
+@@ -194,7 +194,7 @@ public:
+          DWORD bytesToWrite = boost::asio::buffer_size(buffers[i]);
+          BOOL success = ::WriteFile(
+                   hPipe_,
+-                  boost::asio::buffer_cast<const unsigned char*>(buffers[i]),
++                  static_cast<const unsigned char*>(buffers[i].data()),
+                   bytesToWrite,
+                   &bytesWritten,
+                   nullptr);
+--- a/src/cpp/session/http/SessionPosixHttpConnectionListener.cpp
++++ b/src/cpp/session/http/SessionPosixHttpConnectionListener.cpp
+@@ -134,7 +134,7 @@ void initializeHttpConnectionListener()
+ 
+                for (const core::system::posix::IpAddress& ip : addrs)
+                {
+-                  boost::asio::ip::address addr = boost::asio::ip::address::from_string(ip.Address);
++                  boost::asio::ip::address addr = boost::asio::ip::make_address(ip.Address);
+ 
+                   if (addr.is_v4())
+                   {
