@@ -5,9 +5,9 @@ EAPI=8
 
 inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm prefix
 
-P_PREBUILT="${PN}-2024.12.0.456"
-ELECTRON_VERSION="31.7.5"
-DAILY_COMMIT="1e9027db377479390fa92806dc4e7a658bdf245b"
+P_PREBUILT="${PN}-2024.12.0.467"
+ELECTRON_VERSION="31.7.6"
+#DAILY_COMMIT="1e9027db377479390fa92806dc4e7a658bdf245b"
 QUARTO_COMMIT="7d1582d06250216d18696145879415e473a2ae4d"
 QUARTO_CLI_VER="1.5.57"
 QUARTO_BRANCH="release/rstudio-kousa-dogwood"
@@ -185,7 +185,7 @@ RDEPEND="
 	)
 	>=dev-cpp/yaml-cpp-0.8.0:=
 	>=dev-lang/R-3.3.0[png]
-	>=dev-libs/boost-1.78:=
+	<dev-libs/boost-1.87.0:=
 	>=dev-libs/libfmt-8.1.1:=
 	dev-libs/openssl:=
 	>=dev-libs/mathjax-2.7
@@ -231,7 +231,7 @@ BDEPEND="
 			>=app-text/quarto-cli-bin-${QUARTO_CLI_VER}
 		)
 	)
-	dev-cpp/websocketpp
+	=dev-cpp/websocketpp-0.8.2
 	dev-libs/rapidjson
 	dev-java/aopalliance:1
 	dev-java/injection-api
