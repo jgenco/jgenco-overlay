@@ -204,9 +204,9 @@ SLOT="0"
 KEYWORDS="amd64"
 IUSE="system-pandoc"
 PATCHES="
-	${FILESDIR}/quarto-cli-9999-pathfixes.patch
+	${FILESDIR}/quarto-cli-1.5.75-pathfixes.patch
 	${FILESDIR}/quarto-cli-1.3.340-configuration.patch
-	${FILESDIR}/quarto-cli-9999-check.patch
+	${FILESDIR}/quarto-cli-1.5.75-check.patch
 "
 ESBUILD_DEP_SLOT="0.19"
 DEPEND="
