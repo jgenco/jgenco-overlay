@@ -6,7 +6,7 @@ EAPI=8
 DESCRIPTION="Open-source scientific and technical publishing system built on Pandoc."
 HOMEPAGE="https://quarto.org/"
 
-QUARTO_CLI_VENDOR="${PN}-1.6.28"
+QUARTO_CLI_VENDOR="${PN}-1.7.5"
 ESBUILD_VER_ORIG="0.15.18"
 DENO_NPM="
 	ansi-output@0.0.1
