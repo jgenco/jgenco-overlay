@@ -770,7 +770,7 @@ CRATES="
 DENO_STD_VER="2024.07.19"
 V8_VER="0.105.0"
 
-LLVM_COMPAT=( {18..20} )
+LLVM_COMPAT=( {18..19} )
 LLVM_OPTIONAL=1
 
 PYTHON_COMPAT=( python3_{11..13} )
@@ -808,10 +808,13 @@ BDEPEND="
 	dev-build/gn
 	dev-build/ninja
 
-	llvm? ( $(llvm_gen_dep '
+	!v8-prebuilt? ( $(llvm_gen_dep '
 		llvm-core/clang:${LLVM_SLOT}
-		llvm-core/llvm:${LLVM_SLOT}
-	') )
+		')
+		llvm? ( $(llvm_gen_dep '
+			llvm-core/llvm:${LLVM_SLOT}
+		') )
+	)
 
 	test? (
 		net-misc/curl
@@ -838,7 +841,7 @@ pkg_pretend() {
 pkg_setup() {
 	CHECKREQS_DISK_BUILD="$(usex llvm 18 9)G"
 	check-reqs_pkg_setup
-	use llvm && llvm-r1_pkg_setup
+	use v8-prebuilt || llvm-r1_pkg_setup
 	rust_pkg_setup
 	python_setup
 }
@@ -852,6 +855,9 @@ src_unpack() {
 }
 
 src_prepare() {
+	#add support for clang 19.1 to bindgen
+	eapply -d "${ECARGO_VENDOR}/$(find_crate ^bindgen@)" -- \
+		"${FILESDIR}/bindgen-0.69.5_clang_19.1.patch"
 	#v8 crate begin
 	eapply -d "${ECARGO_VENDOR}/$(find_crate ^v8@)" -- \
 		"${FILESDIR}/v8-0.42.0-disable-auto-ccache.patch" \
