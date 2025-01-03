@@ -159,7 +159,7 @@ LICENSE="
 	electron?  ( 0BSD Apache-2.0 BlueOak-1.0.0 BSD-2 BSD || ( BSD GPL-2 ) CC0-1.0 CC-BY-3.0 CC-BY-4.0 ISC MIT PYTHON Unlicense )
 "
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 
 IUSE="server +electron test debug quarto panmirror doc clang"
 REQUIRED_USE="!server? ( electron )"
@@ -255,7 +255,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2024.07.0.267-cmake-bundled-dependencies.patch"
 	"${FILESDIR}/${PN}-2024.09.0.375-resource-path.patch"
 	"${FILESDIR}/${PN}-2024.04.0.735-server-paths.patch"
-	"${FILESDIR}/${PN}-9999-package-build.patch"
+	"${FILESDIR}/${PN}-2024.12.0.467-package-build.patch"
 	"${FILESDIR}/${PN}-2024.07.0.267-pandoc_path_fix.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
 	"${FILESDIR}/${PN}-2023.06.0.421-node_electron_cmake.patch"
@@ -263,7 +263,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2022.12.0.353-hunspell.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-add-support-for-RapidJSON.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-system-clang.patch"
-	"${FILESDIR}/${PN}-9999-disable-panmirror.patch"
+	"${FILESDIR}/${PN}-2024.12.0.467-disable-panmirror.patch"
 	"${FILESDIR}/${PN}-2023.12.1.402-node_path_fix.patch"
 	"${FILESDIR}/${PN}-2024.07.0.108-boost-1.85.0.patch"
 )

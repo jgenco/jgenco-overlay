@@ -185,11 +185,11 @@ RDEPEND="
 	)
 	>=dev-cpp/yaml-cpp-0.8.0:=
 	>=dev-lang/R-3.3.0[png]
-	>=dev-libs/boost-1.78:=
+	<dev-libs/boost-1.87.0:=
 	>=dev-libs/libfmt-8.1.1:=
 	dev-libs/openssl:=
 	>=dev-libs/mathjax-2.7
-	>=dev-libs/soci-4.0.3[postgres,sqlite]
+	>=dev-libs/soci-4.0.3[sqlite]
 	electron? (
 		dev-libs/expat
 		dev-libs/glib:2
@@ -231,7 +231,7 @@ BDEPEND="
 			>=app-text/quarto-cli-bin-${QUARTO_CLI_VER}
 		)
 	)
-	dev-cpp/websocketpp
+	=dev-cpp/websocketpp-0.8.2
 	dev-libs/rapidjson
 	dev-java/aopalliance:1
 	dev-java/injection-api
@@ -255,7 +255,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2024.07.0.267-cmake-bundled-dependencies.patch"
 	"${FILESDIR}/${PN}-2024.09.0.375-resource-path.patch"
 	"${FILESDIR}/${PN}-2024.04.0.735-server-paths.patch"
-	"${FILESDIR}/${PN}-9999-package-build.patch"
+	"${FILESDIR}/${PN}-2024.12.0.467-package-build.patch"
 	"${FILESDIR}/${PN}-2024.07.0.267-pandoc_path_fix.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
 	"${FILESDIR}/${PN}-2023.06.0.421-node_electron_cmake.patch"
@@ -263,7 +263,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2022.12.0.353-hunspell.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-add-support-for-RapidJSON.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-system-clang.patch"
-	"${FILESDIR}/${PN}-9999-disable-panmirror.patch"
+	"${FILESDIR}/${PN}-2024.12.0.467-disable-panmirror.patch"
 	"${FILESDIR}/${PN}-2023.12.1.402-node_path_fix.patch"
 	"${FILESDIR}/${PN}-2024.07.0.108-boost-1.85.0.patch"
 )
