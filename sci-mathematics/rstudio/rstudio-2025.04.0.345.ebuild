@@ -1,17 +1,17 @@
-# Copyright 2024 Gentoo Authors
+# Copyright 2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
 inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam xdg-utils npm prefix
 
-P_PREBUILT="${PN}-2024.12.0.467"
-ELECTRON_VERSION="31.7.6"
-DAILY_COMMIT="6c33a47611895f57d879441cf78004ca0eea999d"
-QUARTO_COMMIT="57ed6fb2ab6066a6a4f0333c0c968586701e006a"
-QUARTO_CLI_VER="1.5.57"
+P_PREBUILT="${PN}-2025.04.0.345"
+ELECTRON_VERSION="34.2.0"
+DAILY_COMMIT="f1c310c48c366ee46e7905da666fa0d3e262a9f7"
+QUARTO_COMMIT="1375251f147d7f9417be8f41181c8b4e3b9f7e3a"
+QUARTO_CLI_VER="1.6.42"
 QUARTO_BRANCH="main"
-QUARTO_DATE="20241126"
+QUARTO_DATE="20250218"
 
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
@@ -124,7 +124,6 @@ else
 		SRC_URI="https://github.com/rstudio/rstudio/archive/${DAILY_COMMIT}.tar.gz -> ${P}.tar.gz "
 		S="${WORKDIR}/${PN}-${DAILY_COMMIT}"
 	fi
-	SRC_URI+="https://github.com/jcelerier/websocketpp/archive/3b86173af2b936df997f1a32609ea09336447eb1.tar.gz -> websocketpp-3b86173.tar.gz "
 	SRC_URI+="panmirror? ( https://github.com/quarto-dev/quarto/archive/${QUARTO_COMMIT}.tar.gz -> quarto-${QUARTO_BRANCH/release\/}-${QUARTO_DATE}.tar.gz ) "
 
 fi
@@ -256,7 +255,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2024.09.0.375-resource-path.patch"
 	"${FILESDIR}/${PN}-2024.04.0.735-server-paths.patch"
 	"${FILESDIR}/${PN}-2024.12.0.467-package-build.patch"
-	"${FILESDIR}/${PN}-2024.07.0.267-pandoc_path_fix.patch"
+	"${FILESDIR}/${PN}-9999-pandoc_path_fix.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
 	"${FILESDIR}/${PN}-2023.06.0.421-node_electron_cmake.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-libfmt.patch"
@@ -265,8 +264,6 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2022.12.0.353-system-clang.patch"
 	"${FILESDIR}/${PN}-2024.12.0.467-disable-panmirror.patch"
 	"${FILESDIR}/${PN}-2023.12.1.402-node_path_fix.patch"
-	"${FILESDIR}/${PN}-2024.07.0.108-boost-1.85.0.patch"
-	"${FILESDIR}/${PN}-9999-boost-1.87.0.patch"
 )
 
 DOCS=(CONTRIBUTING.md COPYING INSTALL NOTICE README.md version/news )
@@ -302,8 +299,6 @@ src_unpack() {
 	else
 		unpack ${P}.tar.gz
 	fi
-
-	unpack websocketpp-3b86173.tar.gz
 
 	if use panmirror;then
 		pushd "${S}/src/gwt/lib" > /dev/null|| die
@@ -380,7 +375,7 @@ src_prepare() {
 		#"/src/gwt/lib/gin/2.1.2/failureaccess-1.0.2.jar:/usr/share/failureaccess/lib/failureaccess.jar"
 		"/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA.jar:/usr/share/validation-api-1.0/lib/validation-api.jar"
 		"/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA-sources.jar:/usr/share/validation-api-1.0/sources/validation-api-src.zip"
-		"/src/cpp/ext/websocketpp/:"
+		#"/src/cpp/ext/websocketpp/:"
 		"/src/cpp/shared_core/include/shared_core/json/rapidjson/:/usr/include/rapidjson"
 		"/src/cpp/core/spelling/hunspell/:"
 		"/src/cpp/ext/fmt/:"
@@ -432,17 +427,6 @@ src_prepare() {
 	#NOTE: the actual bin is "${EPREFIX}/usr/share/rstudio/rstudio" but we symlink in src_install
 	sed -i "s#/rstudio#/bin/rstudio#" src/node/desktop/resources/freedesktop/rstudio.desktop.in || \
 		die "Failed to set proper path for rstudio"
-
-	#Global fix for boost-1.87.0
-	find src/cpp -name "*.[ch]pp"  -print0 | xargs -0 sed "
-		s#boost/asio/io_service.hpp#boost/asio/io_context.hpp#;
-		s/boost::asio::io_service/boost::asio::io_context/g;
-		s/boost::asio::mutable_buffers_1/boost::asio::mutable_buffer/g;
-		s/boost::asio::const_buffers_1/boost::asio::const_buffer/g" -i
-
-	#replace websocket with patched version
-	ln -s "${WORKDIR}/websocketpp-3b86173af2b936df997f1a32609ea09336447eb1/websocketpp" \
-		src/cpp/ext/websocketpp || die
 
 	# make sure icons and mime stuff are with prefix
 	sed -i -e "s:/usr:${EPREFIX}/usr:g" \
@@ -500,6 +484,7 @@ src_configure() {
 		-DRSTUDIO_USE_SYSTEM_SOCI=TRUE
 		-DRSTUDIO_DISABLE_CHECK_FOR_UPDATES=1
 		-DRSTUDIO_INSTALL_FREEDESKTOP=$(usex electron)
+		-DRSTUDIO_BOOST_REQUESTED_VERSION=1.85.0
 	)
 
 	use clang && mycmakeargs+=( -DSYSTEM_LIBCLANG_PATH=$(get_llvm_prefix))

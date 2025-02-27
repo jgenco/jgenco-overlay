@@ -1,0 +1,29 @@
+diff --git a/cmake/globals.cmake b/cmake/globals.cmake
+index 36f1ee5..2c9f453 100644
+--- a/cmake/globals.cmake
++++ b/cmake/globals.cmake
+@@ -226,6 +226,7 @@ endif()
+ 
+ # pandoc version
+ set(PANDOC_VERSION "3.2" CACHE INTERNAL "Pandoc version")
++add_compile_definitions(RSTUDIO_BIN_PATH="${RSTUDIO_BIN_PATH}")
+ 
+ # node version used for building product components
+ set(RSTUDIO_NODE_VERSION "22.13.1" CACHE INTERNAL "Node version for building")
+diff --git a/src/cpp/session/include/session/SessionConstants.hpp b/src/cpp/session/include/session/SessionConstants.hpp
+index a886ec5..98cd2c9 100644
+--- a/src/cpp/session/include/session/SessionConstants.hpp
++++ b/src/cpp/session/include/session/SessionConstants.hpp
+@@ -150,11 +150,7 @@
+ #define kSessionTmpDirEnvVar       "RS_SESSION_TMP_DIR"
+ #define kSessionTmpDir             "rstudio-rsession"
+ 
+-#ifdef QUARTO_ENABLED
+-# define kDefaultPandocPath        "bin/quarto/bin/tools"
+-#else
+-# define kDefaultPandocPath        "bin/pandoc"
+-#endif
++#define kDefaultPandocPath         RSTUDIO_BIN_PATH
+ 
+ #define kDefaultNodePath           "bin/node"
+ #define kDefaultQuartoPath         "bin/quarto"
