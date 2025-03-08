@@ -1,17 +1,17 @@
-# Copyright 2024 Gentoo Authors
+# Copyright 2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm prefix
+inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam xdg-utils npm prefix
 
-P_PREBUILT="${PN}-2024.11.0.339"
-ELECTRON_VERSION="31.7.2"
-DAILY_COMMIT="800a4927356d79df4fa0b8f9dbf6fd7911e3b4e5"
-QUARTO_COMMIT="7d1582d06250216d18696145879415e473a2ae4d"
-QUARTO_CLI_VER="1.5.57"
+P_PREBUILT="${PN}-2025.04.0.345"
+ELECTRON_VERSION="34.2.0"
+DAILY_COMMIT="f1c310c48c366ee46e7905da666fa0d3e262a9f7"
+QUARTO_COMMIT="1375251f147d7f9417be8f41181c8b4e3b9f7e3a"
+QUARTO_CLI_VER="1.6.42"
 QUARTO_BRANCH="main"
-QUARTO_DATE="20241028"
+QUARTO_DATE="20250218"
 
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
@@ -185,7 +185,7 @@ RDEPEND="
 	)
 	>=dev-cpp/yaml-cpp-0.8.0:=
 	>=dev-lang/R-3.3.0[png]
-	<dev-libs/boost-1.87.0:=
+	dev-libs/boost:=
 	>=dev-libs/libfmt-8.1.1:=
 	dev-libs/openssl:=
 	>=dev-libs/mathjax-2.7
@@ -231,7 +231,6 @@ BDEPEND="
 			>=app-text/quarto-cli-bin-${QUARTO_CLI_VER}
 		)
 	)
-	=dev-cpp/websocketpp-0.8.2
 	dev-libs/rapidjson
 	dev-java/aopalliance:1
 	dev-java/injection-api
@@ -256,7 +255,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2024.09.0.375-resource-path.patch"
 	"${FILESDIR}/${PN}-2024.04.0.735-server-paths.patch"
 	"${FILESDIR}/${PN}-2024.12.0.467-package-build.patch"
-	"${FILESDIR}/${PN}-2024.07.0.267-pandoc_path_fix.patch"
+	"${FILESDIR}/${PN}-9999-pandoc_path_fix.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
 	"${FILESDIR}/${PN}-2023.06.0.421-node_electron_cmake.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-libfmt.patch"
@@ -265,7 +264,6 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2022.12.0.353-system-clang.patch"
 	"${FILESDIR}/${PN}-2024.12.0.467-disable-panmirror.patch"
 	"${FILESDIR}/${PN}-2023.12.1.402-node_path_fix.patch"
-	"${FILESDIR}/${PN}-2024.07.0.108-boost-1.85.0.patch"
 )
 
 DOCS=(CONTRIBUTING.md COPYING INSTALL NOTICE README.md version/news )
@@ -377,7 +375,7 @@ src_prepare() {
 		#"/src/gwt/lib/gin/2.1.2/failureaccess-1.0.2.jar:/usr/share/failureaccess/lib/failureaccess.jar"
 		"/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA.jar:/usr/share/validation-api-1.0/lib/validation-api.jar"
 		"/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA-sources.jar:/usr/share/validation-api-1.0/sources/validation-api-src.zip"
-		"/src/cpp/ext/websocketpp/:/usr/include/websocketpp"
+		#"/src/cpp/ext/websocketpp/:"
 		"/src/cpp/shared_core/include/shared_core/json/rapidjson/:/usr/include/rapidjson"
 		"/src/cpp/core/spelling/hunspell/:"
 		"/src/cpp/ext/fmt/:"
@@ -430,14 +428,14 @@ src_prepare() {
 	sed -i "s#/rstudio#/bin/rstudio#" src/node/desktop/resources/freedesktop/rstudio.desktop.in || \
 		die "Failed to set proper path for rstudio"
 
-	cmake_src_prepare
-	java-pkg-2_src_prepare
-
 	# make sure icons and mime stuff are with prefix
 	sed -i -e "s:/usr:${EPREFIX}/usr:g" \
 		cmake/globals.cmake src/node/desktop/CMakeLists.txt || die "Failed to change to eprefix"
 
 	eprefixify src/cpp/core/libclang/LibClang.cpp
+
+	cmake_src_prepare
+	java-pkg-2_src_prepare
 }
 src_configure() {
 	export PACKAGE_OS="Gentoo"
@@ -486,6 +484,7 @@ src_configure() {
 		-DRSTUDIO_USE_SYSTEM_SOCI=TRUE
 		-DRSTUDIO_DISABLE_CHECK_FOR_UPDATES=1
 		-DRSTUDIO_INSTALL_FREEDESKTOP=$(usex electron)
+		-DRSTUDIO_BOOST_REQUESTED_VERSION=1.85.0
 	)
 
 	use clang && mycmakeargs+=( -DSYSTEM_LIBCLANG_PATH=$(get_llvm_prefix))
