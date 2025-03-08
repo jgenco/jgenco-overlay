@@ -1,12 +1,12 @@
-# Copyright 2024 Gentoo Authors
+# Copyright 2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
 inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam qmake-utils xdg-utils npm prefix
 
-P_PREBUILT="${PN}-2024.12.0.467"
-ELECTRON_VERSION="31.7.6"
+P_PREBUILT="${PN}-2024.12.0.563"
+ELECTRON_VERSION="31.7.7"
 #DAILY_COMMIT="1e9027db377479390fa92806dc4e7a658bdf245b"
 QUARTO_COMMIT="7d1582d06250216d18696145879415e473a2ae4d"
 QUARTO_CLI_VER="1.5.57"
@@ -256,7 +256,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2024.09.0.375-resource-path.patch"
 	"${FILESDIR}/${PN}-2024.04.0.735-server-paths.patch"
 	"${FILESDIR}/${PN}-2024.12.0.467-package-build.patch"
-	"${FILESDIR}/${PN}-2024.07.0.267-pandoc_path_fix.patch"
+	"${FILESDIR}/${PN}-9999-pandoc_path_fix.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
 	"${FILESDIR}/${PN}-2023.06.0.421-node_electron_cmake.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-libfmt.patch"
@@ -429,6 +429,7 @@ src_prepare() {
 	#NOTE: the actual bin is "${EPREFIX}/usr/share/rstudio/rstudio" but we symlink in src_install
 	sed -i "s#/rstudio#/bin/rstudio#" src/node/desktop/resources/freedesktop/rstudio.desktop.in || \
 		die "Failed to set proper path for rstudio"
+	sed -i "s#make_unique#boost::make_unique#" src/cpp/session/modules/rmarkdown/NotebookExec.cpp
 
 	cmake_src_prepare
 	java-pkg-2_src_prepare
