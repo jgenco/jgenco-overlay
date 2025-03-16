@@ -155,8 +155,8 @@ RESTRICT="strip mirror !test? ( test )"
 
 BDEPEND="
 	|| (
-		=dev-lang/dart-3*
-		=dev-lang/dart-bin-3*
+		<dev-lang/dart-3.5
+		<dev-lang/dart-bin-3.5
 	)
 	dev-util/buf
 	test? ( net-libs/nodejs )
