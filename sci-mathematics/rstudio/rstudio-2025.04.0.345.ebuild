@@ -159,7 +159,7 @@ LICENSE="
 	electron?  ( 0BSD Apache-2.0 BlueOak-1.0.0 BSD-2 BSD || ( BSD GPL-2 ) CC0-1.0 CC-BY-3.0 CC-BY-4.0 ISC MIT PYTHON Unlicense )
 "
 SLOT="0"
-KEYWORDS="amd64"
+KEYWORDS="~amd64"
 
 IUSE="server +electron test debug quarto panmirror doc clang"
 REQUIRED_USE="!server? ( electron )"
