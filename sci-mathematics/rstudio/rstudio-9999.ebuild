@@ -558,6 +558,7 @@ src_compile() {
 	)
 
 	local EANT_EXTRA_ARGS="${eant_extra_args[@]}"
+	local JAVA_PKG_BSFIX=OFF
 	java-ant-2_src_configure
 	java-pkg-2_src_compile
 	cmake_src_compile
