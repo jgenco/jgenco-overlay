@@ -1,0 +1,24 @@
+--- a/src/cpp/session/CMakeLists.txt
++++ b/src/cpp/session/CMakeLists.txt
+@@ -748,10 +748,6 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
+          install(DIRECTORY "${RSTUDIO_DEPENDENCIES_COPILOT_DIR}" 
+                DESTINATION "${RSTUDIO_INSTALL_RESOURCES}/app"
+                USE_SOURCE_PERMISSIONS)
+-      else()
+-         install(DIRECTORY "${RSTUDIO_DEPENDENCIES_COPILOT_DIR}"
+-               DESTINATION "${RSTUDIO_INSTALL_BIN}"
+-               USE_SOURCE_PERMISSIONS)
+       endif()
+    endif()
+ 
+--- a/src/cpp/session/include/session/SessionConstants.hpp
++++ b/src/cpp/session/include/session/SessionConstants.hpp
+@@ -154,7 +154,7 @@
+ 
+ #define kDefaultNodePath           RSTUDIO_BIN_PATH
+ #define kDefaultQuartoPath         "bin/quarto"
+-#define kDefaultCopilotPath        "bin/copilot-language-server"
++#define kDefaultCopilotPath        RSTUDIO_BIN_PATH
+ #define kDefaultRsclangPath        "bin/rsclang"
+ 
+ #ifdef _WIN32

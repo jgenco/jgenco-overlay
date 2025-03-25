@@ -1,0 +1,53 @@
+--- a/src/node/CMakeNodeTools.txt
++++ b/src/node/CMakeNodeTools.txt
+@@ -42,7 +42,7 @@ else()
+    # Detect node.js, npm, and npx; use versions supplied by the dependency scripts
+    find_program(NODEJS
+       NAMES node
+-      NO_DEFAULT_PATH PATH_SUFFIXES "bin"
++      PATH_SUFFIXES "bin"
+       PATHS "${RSTUDIO_TOOLS_ROOT}/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
+       "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
+       "c:/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
+@@ -51,7 +51,6 @@ else()
+    find_program(NPM
+       NAMES npm
+       PATH_SUFFIXES "bin"
+-      NO_DEFAULT_PATH 
+       PATHS "${RSTUDIO_TOOLS_ROOT}/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
+       "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
+       "c:/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
+@@ -60,7 +59,6 @@ else()
+    find_program(NPX
+       NAMES npx
+       PATH_SUFFIXES "bin"
+-      NO_DEFAULT_PATH 
+       PATHS "${RSTUDIO_TOOLS_ROOT}/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
+       "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
+       "c:/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
+@@ -93,14 +91,12 @@ if(UNIX)
+ 
+    find_program(YARN
+       NAMES yarn
+-      NO_DEFAULT_PATH
+       PATHS "$ENV{HOME}/.yarn/bin")
+ 
+ elseif(WIN32)
+ 
+    find_program(YARN
+       NAMES yarn
+-      NO_DEFAULT_PATH
+       PATHS "${NODEJS_PATH}")
+ 
+ endif()
+--- a/src/node/desktop/CMakeLists.txt
++++ b/src/node/desktop/CMakeLists.txt
+@@ -169,6 +169,8 @@ else()
+          ${CMAKE_COMMAND} -E env
+          "PATH=${MODIFIED_PATH}"
+          "MAKEFLAGS="
++	 "HOME=$ENV{WORKDIR}"
++	 "XDG_CACHE_HOME=$ENV{WORKDIR}/.cache"
+          ${NPM} run package
+    )
+ 

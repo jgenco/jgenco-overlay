@@ -1,0 +1,11 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -288,8 +288,4 @@ write_basic_package_version_file("${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/
+   COMPATIBILITY ExactVersion)
+ 
+ # Install the websocketpp-config.cmake and websocketpp-configVersion.cmake
+-install (FILES
+-  "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/websocketpp-config.cmake"
+-  "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/websocketpp-configVersion.cmake"
+-  DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)
+ 

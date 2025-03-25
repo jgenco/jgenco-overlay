@@ -3,15 +3,16 @@
 
 EAPI=8
 
-inherit cmake llvm java-pkg-2 java-ant-2 multiprocessing pam xdg-utils npm prefix
+inherit cmake java-pkg-2 java-ant-2 llvm multiprocessing npm optfeature pam prefix xdg-utils
 
-P_PREBUILT="${PN}-2025.04.0.345"
-ELECTRON_VERSION="34.2.0"
-DAILY_COMMIT="f1c310c48c366ee46e7905da666fa0d3e262a9f7"
-QUARTO_COMMIT="1375251f147d7f9417be8f41181c8b4e3b9f7e3a"
+P_PREBUILT="${PN}-2025.04.0.463"
+ELECTRON_VERSION="34.5.1"
+DAILY_COMMIT="413726b91f5154053e1717d7f5da3615a9570826"
+QUARTO_COMMIT="8ee12b5d6bd49c7b212eae894bd011ffbeea1c48"
 QUARTO_CLI_VER="1.6.42"
-QUARTO_BRANCH="main"
-QUARTO_DATE="20250218"
+QUARTO_BRANCH="release/rstudio-mariposa-orchid"
+QUARTO_DATE="20250321"
+WEBSOCKETPP_COMMIT="ee8cf4257e001d939839cff5b1766a835b749cd6"
 
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
@@ -139,6 +140,7 @@ build_r_src_uri() {
 	done
 }
 SRC_URI+="
+	https://github.com/amini-allight/websocketpp/archive/${WEBSOCKETPP_COMMIT}.tar.gz -> websocketpp-${WEBSOCKETPP_COMMIT:0:8}.tar.gz
 	panmirror? (
 		https://github.com/jgenco/jgenco-overlay-files/releases/download/${P_PREBUILT}/${P_PREBUILT}-panmirror-node_modules.tar.xz
 	)
@@ -161,7 +163,7 @@ LICENSE="
 SLOT="0"
 KEYWORDS="~amd64"
 
-IUSE="server +electron test debug quarto panmirror doc clang"
+IUSE="clang debug doc +electron panmirror quarto server test"
 REQUIRED_USE="!server? ( electron )"
 RESTRICT="mirror !test? ( test )"
 
@@ -183,6 +185,8 @@ RDEPEND="
 			>=app-text/quarto-cli-bin-${QUARTO_CLI_VER}
 		)
 	)
+	dev-cpp/expected
+	dev-cpp/gsl-lite
 	>=dev-cpp/yaml-cpp-0.8.0:=
 	>=dev-lang/R-3.3.0[png]
 	dev-libs/boost:=
@@ -251,19 +255,18 @@ BDEPEND="
 	>=virtual/jdk-1.8:=
 "
 PATCHES=(
-	"${FILESDIR}/${PN}-2024.07.0.267-cmake-bundled-dependencies.patch"
+	"${FILESDIR}/${PN}-9999-cmake-bundled-dependencies.patch"
 	"${FILESDIR}/${PN}-2024.09.0.375-resource-path.patch"
 	"${FILESDIR}/${PN}-2024.04.0.735-server-paths.patch"
 	"${FILESDIR}/${PN}-2024.12.0.467-package-build.patch"
 	"${FILESDIR}/${PN}-9999-pandoc_path_fix.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
-	"${FILESDIR}/${PN}-2023.06.0.421-node_electron_cmake.patch"
-	"${FILESDIR}/${PN}-2022.07.0.548-libfmt.patch"
-	"${FILESDIR}/${PN}-2022.12.0.353-hunspell.patch"
+	"${FILESDIR}/${PN}-9999-node_electron_cmake.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-add-support-for-RapidJSON.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-system-clang.patch"
 	"${FILESDIR}/${PN}-2024.12.0.467-disable-panmirror.patch"
 	"${FILESDIR}/${PN}-2023.12.1.402-node_path_fix.patch"
+	"${FILESDIR}/${PN}-9999-copilot.patch"
 )
 
 DOCS=(CONTRIBUTING.md COPYING INSTALL NOTICE README.md version/news )
@@ -299,6 +302,9 @@ src_unpack() {
 	else
 		unpack ${P}.tar.gz
 	fi
+
+	unpack websocketpp-${WEBSOCKETPP_COMMIT:0:8}.tar.gz
+	eapply -d websocketpp-${WEBSOCKETPP_COMMIT} -- "${FILESDIR}/websocketpp-disable_cmake_inst.patch"
 
 	if use panmirror;then
 		pushd "${S}/src/gwt/lib" > /dev/null|| die
@@ -375,13 +381,9 @@ src_prepare() {
 		#"/src/gwt/lib/gin/2.1.2/failureaccess-1.0.2.jar:/usr/share/failureaccess/lib/failureaccess.jar"
 		"/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA.jar:/usr/share/validation-api-1.0/lib/validation-api.jar"
 		"/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA-sources.jar:/usr/share/validation-api-1.0/sources/validation-api-src.zip"
-		#"/src/cpp/ext/websocketpp/:"
-		"/src/cpp/shared_core/include/shared_core/json/rapidjson/:/usr/include/rapidjson"
-		"/src/cpp/core/spelling/hunspell/:"
-		"/src/cpp/ext/fmt/:"
 	)
 
-	#clang-c/websocketpp/rapidjson - inspired by SUSE
+	#clang-c - inspired by SUSE
 	if use clang; then
 		debundles+=("/src/cpp/core/include/core/libclang/clang-c/:")
 	fi
@@ -436,6 +438,8 @@ src_prepare() {
 
 	cmake_src_prepare
 	java-pkg-2_src_prepare
+	mkdir "${BUILD_DIR}/_deps" || die
+	ln -s  "${WORKDIR}/websocketpp-${WEBSOCKETPP_COMMIT}" "${BUILD_DIR}/_deps/websocketpp-src" || die
 }
 src_configure() {
 	export PACKAGE_OS="Gentoo"
@@ -474,7 +478,16 @@ src_configure() {
 		-DRSTUDIO_SERVER=$(usex server)
 		-DRSTUDIO_ELECTRON=$(usex electron)
 		-DRSTUDIO_UNIT_TESTS_DISABLED=$(usex test OFF ON)
+		#note RSTUDIO_USE_SYSTEM_DEPENDENCIES exist
+		-DRSTUDIO_USE_SYSTEM_EXPECTED=ON
+		-DRSTUDIO_USE_SYSTEM_FMT=ON
+		-DRSTUDIO_USE_SYSTEM_GSL_LITE=ON
+		-DRSTUDIO_USE_SYSTEM_HUNSPELL=ON
+		-DRSTUDIO_USE_SYSTEM_RAPIDJSON=ON
+		-DRSTUDIO_USE_SYSTEM_WEBSOCKETPP=OFF
+		-DRSTUDIO_USE_SYSTEM_YAML_CPP=ON
 		-DRSTUDIO_USE_SYSTEM_BOOST=ON
+
 		-DGWT_BUILD=OFF
 		-DGWT_COPY=ON
 		-DRSTUDIO_USE_SYSTEM_YAML_CPP=ON
@@ -633,7 +646,9 @@ pkg_postinst() {
 		xdg_mimeinfo_database_update
 		xdg_icon_cache_update
 	fi
+	optfeature "GitHub's Copilot language server" dev-util/copilot-language-server
 	if [[ ! -d "${EPREFIX}/usr/share/hunspell" ]];then
+		elog ""
 		elog "RStudio's spell check needs at least one"
 		elog "app-dicts/myspell-* dictionary to be installed."
 		elog ""
