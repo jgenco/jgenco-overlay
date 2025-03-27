@@ -9,7 +9,7 @@ HOMEPAGE="https://quarto.org/"
 QUARTO_CLI_VENDOR="${PN}-1.7.5"
 ESBUILD_VER_ORIG="0.15.18"
 DENO_NPM="
-	ansi-output@0.0.1
+	ansi-output@0.0.9
 	anymatch@3.1.3
 	@babel/runtime@7.24.7
 	binary-extensions@2.3.0
@@ -186,7 +186,7 @@ else
 	SRC_URI="https://github.com/quarto-dev/quarto-cli/archive/refs/tags/v${PV}.tar.gz   -> ${P}.tar.gz "
 fi
 
-PANDOC_VER="3.4"
+PANDOC_VER="3.6.3"
 SRC_URI+="
 	https://github.com/jgenco/jgenco-overlay-files/releases/download/${QUARTO_CLI_VENDOR}/${QUARTO_CLI_VENDOR}-deno_vendor.tar.xz
 	!system-pandoc? (
@@ -203,12 +203,12 @@ RESTRICT="mirror test"
 PATCHES="
 	${FILESDIR}/quarto-cli-1.5.75-pathfixes.patch
 	${FILESDIR}/quarto-cli-1.3.340-configuration.patch
-	${FILESDIR}/quarto-cli-1.5.75-check.patch
+	${FILESDIR}/quarto-cli-1.7.23-check.patch
 "
 ESBUILD_DEP_SLOT="0.19"
 DEPEND="
 	app-arch/unzip
-	~app-text/typst-0.11.0[embed-fonts]
+	~app-text/typst-0.13.0[embed-fonts]
 	system-pandoc? ( || (
 		(
 			>=dev-haskell/pandoc-3.1
@@ -216,7 +216,7 @@ DEPEND="
 		)
 		>=app-text/pandoc-bin-${PANDOC_VER}
 	) )
-	~dev-lang/dart-sass-1.70.0
+	~dev-lang/dart-sass-1.85.1
 	>=dev-lang/R-4.1.0
 	dev-libs/libxml2
 	dev-util/esbuild:${ESBUILD_DEP_SLOT}
@@ -292,9 +292,6 @@ src_prepare() {
 		--lock src/resources/deno_std/deno_std.lock \
 		package/scripts/deno_std/deno_std.ts || die
 
-	sed -i -E  "s/2.19.2(\", \"Pandoc)/$(ver_cut 1-3 ${PANDOC_VER})\1/;s/1.32.8(\", \"Dart Sass)/1.70.0\1/" \
-		src/command/check/check.ts || die "Failed to correct versions"
-
 	sed -i "s/\"esbuild\"/\"esbuild-${ESBUILD_DEP_SLOT}\"/" src/core/esbuild.ts || die
 
 	#Setup links
@@ -325,7 +322,7 @@ src_compile() {
 
 	[[ "${PV}" == "9999" ]] && MY_PV="99.9.9" || MY_PV=${PV}
 
-	einfo "Building ${MY_PV}..."
+	einfo "Building quarto-preview..."
 	pushd src/webui/quarto-preview > /dev/null || die
 	#run deno task build manually
 	DENO_DIR="${DENO_CACHE}" deno task build || die "Failed to build prepare-dist"

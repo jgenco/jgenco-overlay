@@ -8,6 +8,9 @@ if [[ -f "${QUARTO_BASE_PATH}/configuration" ]];then
 	QUARTO_IMPORT_MAP_ARG="--importmap=${QUARTO_BASE_PATH}/src/import_map.json"
 	QUARTO_TARGET="${QUARTO_BASE_PATH}/src/quarto.ts"
 	#QUARTO_CACHE_OPTIONS="--cached-only"
+	if [[ ! -n "${QUARTO_NO_TYPECHECK}" ]]; then
+		QUARTO_DENO_OPTIONS="--check"
+	fi
 else
 	BUNDLED="TRUE"
 	export QUARTO_SHARE_PATH="${QUARTO_BASE_PATH}"
