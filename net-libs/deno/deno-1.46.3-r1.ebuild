@@ -870,7 +870,9 @@ src_prepare() {
 		"$(cargo_target_dir)" \
 		"${S}/target/"$(usex debug debug release) || die
 	ln -s "${V8_OUT_DIR}"/gn_out "$(cargo_target_dir)" || die
-	ln -s "${V8_OUT_DIR}"/gn_out "${S}/target/"$(usex debug debug release) || die
+	if [[ ! -h "${S}/target/"$(usex debug debug release)/gn_out ]]; then
+		ln -s "${V8_OUT_DIR}"/gn_out "${S}/target/"$(usex debug debug release) || die
+	fi
 
 	#This comes from www-client/chromium - liable to change
 	sed -i -e '/if (is_clang && !is_nacl && !is_cronet_build) {/,+2d' \
