@@ -266,6 +266,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2024.12.0.467-disable-panmirror.patch"
 	"${FILESDIR}/${PN}-2023.12.1.402-node_path_fix.patch"
 	"${FILESDIR}/${PN}-2024.07.0.108-boost-1.85.0.patch"
+	"${FILESDIR}/${PN}-2024.12.1.563-gcc_15.patch"
 )
 
 DOCS=(CONTRIBUTING.md COPYING INSTALL NOTICE README.md version/news )

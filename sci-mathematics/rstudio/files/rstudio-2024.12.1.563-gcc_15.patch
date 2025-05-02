@@ -1,0 +1,12 @@
+https://github.com/rstudio/rstudio/pull/15713
+--- a/src/cpp/core/include/core/http/Message.hpp
++++ b/src/cpp/core/include/core/http/Message.hpp
+@@ -19,6 +19,7 @@
+ #include <string>
+ #include <vector>
+ #include <algorithm>
++#include <stdint.h>
+ 
+ #include <boost/bind/bind.hpp>
+ #include <boost/utility.hpp>
+
