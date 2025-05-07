@@ -7,7 +7,7 @@ inherit cmake java-pkg-2 java-ant-2 llvm multiprocessing npm optfeature pam pref
 
 P_PREBUILT="${PN}-2025.04.0.463"
 ELECTRON_VERSION="34.5.1"
-DAILY_COMMIT="413726b91f5154053e1717d7f5da3615a9570826"
+#DAILY_COMMIT="413726b91f5154053e1717d7f5da3615a9570826"
 QUARTO_COMMIT="8ee12b5d6bd49c7b212eae894bd011ffbeea1c48"
 QUARTO_CLI_VER="1.6.42"
 QUARTO_BRANCH="release/rstudio-mariposa-orchid"
@@ -255,18 +255,18 @@ BDEPEND="
 	>=virtual/jdk-1.8:=
 "
 PATCHES=(
-	"${FILESDIR}/${PN}-9999-cmake-bundled-dependencies.patch"
+	"${FILESDIR}/${PN}-2025.05.0.496-cmake-bundled-dependencies.patch"
 	"${FILESDIR}/${PN}-2024.09.0.375-resource-path.patch"
 	"${FILESDIR}/${PN}-2024.04.0.735-server-paths.patch"
 	"${FILESDIR}/${PN}-2024.12.0.467-package-build.patch"
-	"${FILESDIR}/${PN}-9999-pandoc_path_fix.patch"
+	"${FILESDIR}/${PN}-2025.05.0.496-pandoc_path_fix.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
-	"${FILESDIR}/${PN}-9999-node_electron_cmake.patch"
+	"${FILESDIR}/${PN}-2025.05.0.496-node_electron_cmake.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-add-support-for-RapidJSON.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-system-clang.patch"
 	"${FILESDIR}/${PN}-2024.12.0.467-disable-panmirror.patch"
 	"${FILESDIR}/${PN}-2023.12.1.402-node_path_fix.patch"
-	"${FILESDIR}/${PN}-9999-copilot.patch"
+	"${FILESDIR}/${PN}-2025.05.0.496-copilot.patch"
 )
 
 DOCS=(CONTRIBUTING.md COPYING INSTALL NOTICE README.md version/news )
@@ -304,7 +304,6 @@ src_unpack() {
 	fi
 
 	unpack websocketpp-${WEBSOCKETPP_COMMIT:0:8}.tar.gz
-	eapply -d websocketpp-${WEBSOCKETPP_COMMIT} -- "${FILESDIR}/websocketpp-disable_cmake_inst.patch"
 
 	if use panmirror;then
 		pushd "${S}/src/gwt/lib" > /dev/null|| die

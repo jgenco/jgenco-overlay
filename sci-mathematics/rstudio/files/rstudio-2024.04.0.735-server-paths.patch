@@ -39,15 +39,6 @@
  
  if (UNIX AND NOT APPLE)
     # install configured admin script
-@@ -192,7 +192,7 @@ if (UNIX AND NOT APPLE)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${RSERVER_ADMIN_SCRIPT}.in
-                   ${CMAKE_CURRENT_BINARY_DIR}/${RSERVER_ADMIN_SCRIPT})
-    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${RSERVER_ADMIN_SCRIPT}
--                    DESTINATION ${RSTUDIO_INSTALL_BIN})
-+       DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/${RSTUDIO_INSTALL_BIN}")
- 
-    # install configured debian init.d script
-    set(RSERVER_INITD_DEBIAN_DIR "extras/init.d/debian")
 @@ -200,7 +200,7 @@ if (UNIX AND NOT APPLE)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${RSERVER_INITD_DEBIAN_SCRIPT}.in
                    ${CMAKE_CURRENT_BINARY_DIR}/${RSERVER_INITD_DEBIAN_SCRIPT})

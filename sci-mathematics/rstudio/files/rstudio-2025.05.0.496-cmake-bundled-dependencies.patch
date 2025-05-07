@@ -73,7 +73,7 @@
     REPOSITORY "https://github.com/fmtlib/fmt"
     REVISION   "123913715afeb8a437e6388b4473fcc4753e1c9a" # pragma: allowlist secret
  )
-@@ -182,15 +182,17 @@ function(fetch)
+@@ -182,13 +182,16 @@ function(fetch)
  
        if(${_PREFIX}_ENABLED)
           if(RSTUDIO_USE_SYSTEM_DEPENDENCIES OR RSTUDIO_USE_SYSTEM_${_PREFIX})
@@ -87,18 +87,14 @@
 +            endif()
           else()
              set(${_PREFIX}_FETCHED TRUE)
--            FetchContent_Declare("${_NAME}"
+             FetchContent_Declare("${_NAME}"
 -               GIT_REPOSITORY "${${_PREFIX}_REPOSITORY}"
 -               GIT_TAG        "${${_PREFIX}_REVISION}"
 -               GIT_SHALLOW    ON
--               SOURCE_SUBDIR  "${_SOURCE_SUBDIR}"
--               EXCLUDE_FROM_ALL)
-+            message(STATUS "Would d/l ${_NAME} ${${_PREFIX}_REPOSITORY} - ${${_PREFIX}_REVISION}")
-+            FetchContent_Declare("${_NAME}" SOURCE_DIR "${CMAKE_BINARY_DIR}/_deps/${_NAME}-src")
+                SOURCE_SUBDIR  "${_SOURCE_SUBDIR}"
+                EXCLUDE_FROM_ALL)
           endif()
-       endif()
- 
-@@ -220,11 +222,11 @@ endfunction()
+@@ -220,11 +223,11 @@ endfunction()
  
  
  fetch(
@@ -112,7 +108,7 @@
     websocketpp  WEBSOCKETPP
     yaml-cpp     YAML_CPP
     zlib         ZLIB)
-@@ -232,26 +234,15 @@ fetch(
+@@ -232,26 +235,15 @@ fetch(
  # Create rapidjson target.
  add_library(rstudio-rapidjson INTERFACE EXCLUDE_FROM_ALL)
  target_compile_definitions(rstudio-rapidjson INTERFACE "-DRAPIDJSON_NO_SIZETYPEDEFINE")
@@ -154,7 +150,7 @@
  
   
     # skip quarto if not enabled
-@@ -730,16 +727,8 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
+@@ -735,16 +732,8 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
                 PATTERN ".gitignore"
                 EXCLUDE)
        else()
