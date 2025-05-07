@@ -256,7 +256,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2024.09.0.375-resource-path.patch"
 	"${FILESDIR}/${PN}-2024.04.0.735-server-paths.patch"
 	"${FILESDIR}/${PN}-2024.12.0.467-package-build.patch"
-	"${FILESDIR}/${PN}-9999-pandoc_path_fix.patch"
+	"${FILESDIR}/${PN}-2025.05.0.496-pandoc_path_fix.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
 	"${FILESDIR}/${PN}-2023.06.0.421-node_electron_cmake.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-libfmt.patch"
