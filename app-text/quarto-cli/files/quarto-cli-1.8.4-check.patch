@@ -1,0 +1,46 @@
+--- a/src/command/check/check.ts
++++ b/src/command/check/check.ts
+@@ -4,7 +4,7 @@
+  * Copyright (C) 2021-2022 Posit Software, PBC
+  */
+ 
+-import { info } from "../../deno_ral/log.ts";
++import { info, warning } from "../../deno_ral/log.ts";
+ 
+ import { render } from "../render/render-shared.ts";
+ import { renderServices } from "../render/render-services.ts";
+@@ -298,6 +298,7 @@ async function checkInstall(conf: CheckConfiguration) {
+     // and QUARTO_ROOT is set to the root of the quarto-cli repo
+     // print the output of git rev-parse HEAD
+     const quartoRoot = Deno.env.get("QUARTO_ROOT");
++    /*
+     if (quartoRoot) {
+       const gitHead = await execProcess({
+         cmd: "git",
+@@ -311,7 +312,8 @@ async function checkInstall(conf: CheckConfiguration) {
+           conf.jsonResult["quarto-dev-version"] = gitHead.stdout.trim();
+         }
+       }
+-    }
++    }*/
++    info(`${kIndent}commit:  ${quartoConfig.commit()}`);
+   }
+   checkInfoMsg(conf, `${kIndent}Path: ${quartoConfig.binPath()}`);
+   if (conf.jsonResult) {
+--- a/src/core/quarto.ts
++++ b/src/core/quarto.ts
+@@ -58,6 +58,14 @@ export const quartoConfig = {
+     // we are in dev mode were only quarto.cmd is available
+     return join(binPath, "quarto.cmd");
+   },
++  commit: () => {
++    const commitPath = join(getenv("QUARTO_SHARE_PATH"), "commit");
++    if (existsSync(commitPath)) {
++      return Deno.readTextFileSync(commitPath);
++    } else {
++      return "";
++    }
++  },
+   dotenv: async (forceReload?: boolean): Promise<Record<string, string>> => {
+     if (forceReload || !dotenvConfig) {
+       const defaultOptions: ConfigOptions = {

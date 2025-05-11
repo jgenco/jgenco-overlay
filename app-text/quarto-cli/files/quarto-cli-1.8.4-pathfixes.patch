@@ -1,0 +1,80 @@
+--- a/src/core/dart-sass.ts
++++ b/src/core/dart-sass.ts
+@@ -15,7 +15,7 @@ import { warnOnce } from "./log.ts";
+ import { isWindows } from "../deno_ral/platform.ts";
+ 
+ export function dartSassInstallDir() {
+-  return architectureToolsPath("dart-sass");
++  return architectureToolsPath("");
+ }
+ 
+ export async function dartSassVersion() {
+@@ -67,7 +67,7 @@ export async function dartCommand(args: string[]) {
+     }
+ 
+     const command = isWindows ? "sass.bat" : "sass";
+-    return architectureToolsPath(join("dart-sass", command));
++    return architectureToolsPath(command);
+   };
+   const sass = resolvePath();
+ 
+--- a/src/core/devconfig.ts
++++ b/src/core/devconfig.ts
+@@ -65,8 +65,7 @@ export function writeDevConfig(config: DevConfig, binPath: string) {
+ }
+ 
+ export function readInstalledDevConfig(): DevConfig | null {
+-  const binPath = quartoConfig.binPath();
+-  const configPath = join(binPath, "..", "config", kDevConfig);
++  const configPath = join(quartoConfig.basePath(), "package","dist", "config", kDevConfig);
+   if (existsSync(configPath)) {
+     return JSON.parse(Deno.readTextFileSync(configPath)) as DevConfig;
+   } else {
+--- a/src/core/previewurl.ts
++++ b/src/core/previewurl.ts
+@@ -106,7 +106,7 @@ export async function rswURL(port: number, path: string) {
+ async function rswPortToken(port: number) {
+   const result = await execProcess(
+     {
+-      cmd: "/usr/lib/rstudio-server/bin/rserver-url",
++      cmd: "@GENTOO_PORTAGE_EPREFIX@/usr/bin/rserver-url",
+       args: [String(port)],
+       stdout: "piped",
+       stderr: "piped",
+--- a/src/core/quarto.ts
++++ b/src/core/quarto.ts
+@@ -27,6 +27,7 @@ export interface QuartoConfig {
+ let dotenvConfig: Record<string, string>;
+ 
+ export const quartoConfig = {
++  basePath: () => getenv("QUARTO_BASE_PATH"),
+   binPath: () => getenv("QUARTO_BIN_PATH"),
+   toolsPath: () => join(getenv("QUARTO_BIN_PATH"), "tools"),
+   sharePath: () => getenv("QUARTO_SHARE_PATH"),
+@@ -120,5 +121,5 @@ function terminatePreview(reason: string, cleanup?: VoidFunction) {
+ }
+ 
+ function quartoSrcDir() {
+-  return normalizePath(join(quartoConfig.binPath(), "../../../src"));
++  return normalizePath(join(quartoConfig.basePath(), "src"));
+ }
+--- a/src/core/resources.ts
++++ b/src/core/resources.ts
+@@ -73,7 +73,16 @@ export function toolsPath(binary: string, defaultPath?: string): string {
+       }
+     }
+   }
+-  return join(quartoConfig.toolsPath(), defaultPath || binary);
++  if(binary === "pandoc"){
++     const pandocBinsList = ["pandoc-quarto", "pandoc-bin"];
++     for(const pandocBin of pandocBinsList){
++         const binaryPandocQuarto = join(quartoConfig.binPath(),pandocBin);
++         if(existsSync(binaryPandocQuarto) && Deno.statSync(binaryPandocQuarto).isFile){
++             return binaryPandocQuarto;
++         }
++     }
++  }
++  return join(quartoConfig.binPath(), binary);
+ }
+ 
+ export function pandocBinaryPath(): string {
