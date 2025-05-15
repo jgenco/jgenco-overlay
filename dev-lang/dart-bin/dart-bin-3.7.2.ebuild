@@ -14,7 +14,7 @@ SRC_URI="https://storage.googleapis.com/download.dartlang.org/linux/debian/pool/
 
 LICENSE="BSD"
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 
 DEPEND=""
 RDEPEND="${DEPEND}"
