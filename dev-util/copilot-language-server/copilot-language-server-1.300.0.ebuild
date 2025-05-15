@@ -17,7 +17,7 @@ SRC_URI="
 LICENSE="MIT"
 LICENSE+=" Apache-2.0 BSD ( BSD MIT Apache-2.0 ) ISC MIT ( MIT WTFPL-2 )"
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 
 DEPEND="
 	app-arch/unzip
