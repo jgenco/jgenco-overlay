@@ -197,7 +197,7 @@ SRC_URI+="
 
 LICENSE="MIT GPL-2+ ZLIB BSD BSD-2 Apache-2.0 ISC || ( MIT GPL-3 ) Unlicense 0BSD"
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 IUSE="system-pandoc"
 RESTRICT="mirror test"
 PATCHES="
