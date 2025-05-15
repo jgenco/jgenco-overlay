@@ -407,7 +407,7 @@ LICENSE+="
 "
 
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 IUSE="doc embed-fonts test"
 RESTRICT="mirror !test? ( test )"
 
