@@ -159,7 +159,7 @@ SRC_URI="${SRC_URI} $(build_dart_uri ${DART_BOARD})"
 LICENSE="MIT Apache-2.0 BSD"
 
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 IUSE="test"
 RESTRICT="strip mirror !test? ( test )"
 
