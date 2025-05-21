@@ -1,0 +1,22 @@
+src/node/desktop is copied to src/node/desktop-build-$arch
+just make build dir and copy node_modules into it instead of removeing the excludes
+--- a/src/node/desktop/CMakeLists.txt
++++ b/src/node/desktop/CMakeLists.txt
+@@ -112,8 +112,6 @@ set(ELECTRON_BINARY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../desktop-build-${UNAME_M}
+ # copy sources to build directory. note that the build directory cannot
+ # be the "true" CMake directory as some files are resolved relative to
+ # the desktop project's relative path in the application structure
+-file(REMOVE_RECURSE "${ELECTRON_BINARY_DIR}")
+-file(MAKE_DIRECTORY "${ELECTRON_BINARY_DIR}")
+ file(
+    COPY "${CMAKE_CURRENT_SOURCE_DIR}/"
+    DESTINATION "${ELECTRON_BINARY_DIR}/"
+@@ -169,6 +167,8 @@ else()
+          ${CMAKE_COMMAND} -E env
+          "PATH=${MODIFIED_PATH}"
+          "MAKEFLAGS="
++	 "HOME=$ENV{WORKDIR}"
++	 "XDG_CACHE_HOME=$ENV{WORKDIR}/.cache"
+          ${NPM} run package
+    )
+ 
