@@ -43,6 +43,7 @@ src_configure() {
 		-DWITH_ORACLE=$(usex oracle)
 		-DWITH_POSTGRESQL=$(usex postgres)
 		-DWITH_SQLITE3=$(usex sqlite)
+		-DCMAKE_POLICY_VERSION_MINIMUM=3.5
 	)
 
 	cmake_src_configure
