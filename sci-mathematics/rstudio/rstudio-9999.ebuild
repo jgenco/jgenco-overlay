@@ -2,110 +2,100 @@
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
+LLVM_COMPAT=( {18..20} )
+LLVM_OPTIONAL=1
+inherit cmake java-pkg-2 java-ant-2 llvm-r1 multiprocessing npm optfeature pam prefix xdg-utils
 
-inherit cmake java-pkg-2 java-ant-2 llvm multiprocessing npm optfeature pam prefix xdg-utils
-
-P_PREBUILT="${PN}-2025.04.0.463"
-ELECTRON_VERSION="34.5.1"
-#DAILY_COMMIT="413726b91f5154053e1717d7f5da3615a9570826"
-QUARTO_COMMIT="8ee12b5d6bd49c7b212eae894bd011ffbeea1c48"
-QUARTO_CLI_VER="1.6.42"
-QUARTO_BRANCH="release/rstudio-mariposa-orchid"
-QUARTO_DATE="20250321"
+P_PREBUILT="${PN}-2025.08.0.183"
+ELECTRON_VERSION="36.3.2"
+DAILY_COMMIT="dea82d7963a15dca9f511d6f9ca7d6c85df394a9"
+QUARTO_COMMIT="cddc812744d735a43b0008d5c646322b763b7565"
+QUARTO_CLI_VER="1.7.31"
+QUARTO_BRANCH="main"
+QUARTO_DATE="20250526"
+GWT_VERSION="2.12.2"
 WEBSOCKETPP_COMMIT="ee8cf4257e001d939839cff5b1766a835b749cd6"
 
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
 R_RMARKDOWN_PKGS="
-rlang@1.1.3
-glue@1.7.0
-cli@3.6.2
+rlang@1.1.6
+glue@1.8.0
+cli@3.6.5
 lifecycle@1.0.4
-fastmap@1.1.1
-ellipsis@0.3.2
-digest@0.6.34
+fastmap@1.2.0
+digest@0.6.37
 base64enc@0.1-3
 vctrs@0.6.5
-utf8@1.2.4
-fansi@1.0.6
-colorspace@2.1-0
-lattice@0.22-5
-xfun@0.41
+utf8@1.2.5
+lattice@0.22-7
+xfun@0.52
 rappdirs@0.3.3
-R6@2.5.1
-htmltools@0.5.7
-fs@1.6.3
-cachem@1.0.8
+R6@2.6.1
+htmltools@0.5.8.1
+fs@1.6.6
+cachem@1.1.0
 pkgconfig@2.0.3
-pillar@1.9.0
+pillar@1.10.2
 magrittr@2.0.3
+fansi@1.0.6
 viridisLite@0.4.2
 RColorBrewer@1.1-3
-munsell@0.5.0
 labeling@0.4.3
-farver@2.1.1
-Matrix@1.6-5
-nlme@3.1-164
-stringi@1.8.3
-yaml@2.3.8
-highr@0.10
-evaluate@0.23
-sass@0.4.8
-mime@0.12
+farver@2.1.2
+Matrix@1.7-3
+nlme@3.1-168
+yaml@2.3.10
+highr@0.11
+evaluate@1.0.3
+sass@0.4.10
+mime@0.13
 memoise@2.0.1
-jsonlite@1.8.8
+jsonlite@2.0.0
 jquerylib@0.1.4
-withr@2.5.2
+withr@3.0.2
 tibble@3.2.1
-scales@1.3.0
-mgcv@1.9-1
-MASS@7.3-60.0.1
+scales@1.4.0
+mgcv@1.9-3
+MASS@7.3-65
 isoband@0.2.7
-gtable@0.3.4
-tinytex@0.49
-stringr@1.5.1
-knitr@1.45
-fontawesome@0.5.2
-bslib@0.6.1
-rmarkdown@2.25
-ggplot2@3.4.4
+gtable@0.3.6
+tinytex@0.57
+knitr@1.50
+fontawesome@0.5.3
+bslib@0.9.0
+rmarkdown@2.29
+ggplot2@3.5.2
 "
 #####End   of RMARKDOWN package list#####
 #####Start of TESTHAT   package list#####
 #also includes xml2
 R_TESTTHAT_PKGS="
-rlang@1.1.3
-glue@1.7.0
-cli@3.6.2
-lifecycle@1.0.4
-vctrs@0.6.5
-utf8@1.2.4
-fansi@1.0.6
-pkgconfig@2.0.3
-pillar@1.9.0
-magrittr@2.0.3
-R6@2.5.1
-ps@1.7.5
-processx@3.8.3
-tibble@3.2.1
-crayon@1.5.2
+R6@2.6.1
+ps@1.9.1
+cli@3.6.5
+processx@3.8.6
+crayon@1.5.3
 desc@1.4.3
-callr@3.7.3
-rematch2@2.1.2
-diffobj@0.3.5
-withr@2.5.2
+callr@3.7.6
+rlang@1.1.6
+glue@1.8.0
+diffobj@0.3.6
+withr@3.0.2
 rprojroot@2.0.4
-pkgbuild@1.4.3
-fs@1.6.3
-waldo@0.5.2
+pkgbuild@1.4.7
+lifecycle@1.0.4
+fs@1.6.6
+waldo@0.6.1
 praise@1.0.0
-pkgload@1.3.3
-jsonlite@1.8.8
-evaluate@0.23
-digest@0.6.34
-brio@1.1.4
-testthat@3.2.1
-xml2@1.3.6
+pkgload@1.4.0
+magrittr@2.0.3
+jsonlite@2.0.0
+evaluate@1.0.3
+digest@0.6.37
+brio@1.1.5
+testthat@3.2.3
+xml2@1.3.8
 "
 #####End   of TESTHAT   package list#####
 
@@ -140,7 +130,10 @@ build_r_src_uri() {
 	done
 }
 SRC_URI+="
-	https://github.com/amini-allight/websocketpp/archive/${WEBSOCKETPP_COMMIT}.tar.gz -> websocketpp-${WEBSOCKETPP_COMMIT:0:8}.tar.gz
+	https://rstudio-buildtools.s3.us-east-1.amazonaws.com/gwt/gwt-${GWT_VERSION}.tar.gz ->
+		rstudio-gwt-${GWT_VERSION}.tar.gz
+	https://github.com/amini-allight/websocketpp/archive/${WEBSOCKETPP_COMMIT}.tar.gz ->
+		websocketpp-${WEBSOCKETPP_COMMIT:0:8}.tar.gz
 	panmirror? (
 		https://github.com/jgenco/jgenco-overlay-files/releases/download/${P_PREBUILT}/${P_PREBUILT}-panmirror-node_modules.tar.xz
 	)
@@ -157,14 +150,16 @@ SRC_URI+="
 LICENSE="
 	AGPL-3 BSD MIT Apache-2.0 Boost-1.0 CC-BY-4.0 MIT OFL-1.1 GPL-3 ISC
 	test? ( EPL-1.0 )
-	panmirror? ( 0BSD Apache-2.0 BSD BSD-2 CC0-1.0 EPL-2.0 ISC || ( LGPL-2 MIT ) LGPL-3 MIT MPL-2.0 PYTHON Unlicense )
-	electron?  ( 0BSD Apache-2.0 BlueOak-1.0.0 BSD-2 BSD || ( BSD GPL-2 ) CC0-1.0 CC-BY-3.0 CC-BY-4.0 ISC MIT PYTHON Unlicense )
+	panmirror? ( 0BSD Apache-2.0 BSD BSD-2 CC0-1.0 EPL-2.0 ISC
+		|| ( LGPL-2 MIT ) LGPL-3 MIT MPL-2.0 PYTHON Unlicense )
+	electron?  ( 0BSD Apache-2.0 BlueOak-1.0.0 BSD-2 BSD
+		|| ( BSD GPL-2 ) CC0-1.0 CC-BY-3.0 CC-BY-4.0 ISC MIT PYTHON Unlicense )
 "
 SLOT="0"
 KEYWORDS=""
 
 IUSE="clang debug doc +electron panmirror quarto server test"
-REQUIRED_USE="!server? ( electron )"
+REQUIRED_USE="!server? ( electron ) clang? ( ${LLVM_REQUIRED_USE} )"
 RESTRICT="mirror !test? ( test )"
 
 RDEPEND="
@@ -217,14 +212,14 @@ RDEPEND="
 		x11-libs/libxkbcommon
 		x11-libs/pango
 	)
-	clang? (
-		llvm-core/clang
-	)
+	clang? ( $(llvm_gen_dep '
+		llvm-core/clang:${LLVM_SLOT}
+	') )
 	sys-apps/util-linux
 	sys-apps/which
 	sys-libs/zlib
 	sys-process/lsof
-	>=virtual/jdk-1.8:=
+	>=virtual/jdk-17:=
 "
 
 DEPEND="${RDEPEND}"
@@ -252,16 +247,16 @@ BDEPEND="
 		app-arch/unzip
 		net-libs/nodejs[npm]
 	)
-	>=virtual/jdk-1.8:=
+	>=virtual/jdk-17:=
 "
 PATCHES=(
-	"${FILESDIR}/${PN}-2025.05.0.496-cmake-bundled-dependencies.patch"
+	"${FILESDIR}/${PN}-9999-cmake-bundled-dependencies.patch"
 	"${FILESDIR}/${PN}-2024.09.0.375-resource-path.patch"
 	"${FILESDIR}/${PN}-2024.04.0.735-server-paths.patch"
 	"${FILESDIR}/${PN}-2024.12.0.467-package-build.patch"
 	"${FILESDIR}/${PN}-2025.05.0.496-pandoc_path_fix.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
-	"${FILESDIR}/${PN}-2025.05.0.496-node_electron_cmake.patch"
+	"${FILESDIR}/${PN}-9999-node_electron_cmake.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-add-support-for-RapidJSON.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-system-clang.patch"
 	"${FILESDIR}/${PN}-2024.12.0.467-disable-panmirror.patch"
@@ -290,7 +285,7 @@ pkg_setup() {
 	usr/share/${PN}/chrome_crashpad_handler
 	usr/share/${PN}/lib*
 	"
-	use clang && llvm_pkg_setup
+	use clang && llvm-r1_pkg_setup
 	java-pkg-2_pkg_setup
 }
 
@@ -302,8 +297,12 @@ src_unpack() {
 	else
 		unpack ${P}.tar.gz
 	fi
-
 	unpack websocketpp-${WEBSOCKETPP_COMMIT:0:8}.tar.gz
+
+	mkdir "${S}/dependencies/common/gwtproject"
+	pushd "${S}/dependencies/common/gwtproject" > /dev/null || die
+	unpack rstudio-gwt-${GWT_VERSION}.tar.gz
+	popd > /dev/null
 
 	if use panmirror;then
 		pushd "${S}/src/gwt/lib" > /dev/null|| die
@@ -316,25 +315,30 @@ src_unpack() {
 			unpack quarto-${QUARTO_BRANCH/release\/}-${QUARTO_DATE}.tar.gz
 			mv quarto-${QUARTO_COMMIT} quarto || die
 		fi
-		cd "${S}/src/gwt/lib/quarto" || die
+		cd quarto || die
 		unpack ${P_PREBUILT}-panmirror-node_modules.tar.xz
 		popd > /dev/null
 	fi
 
 	if use panmirror || use electron; then
-		local install_version="$(grep installVersion "${EPREFIX}/usr/$(get_libdir)/node_modules/npm/node_modules/node-gyp/package.json" |sed -E 's/.* ([0-9]+),/\1/')"
+		local install_version="$(grep installVersion \
+			"${EPREFIX}/usr/$(get_libdir)/node_modules/npm/node_modules/node-gyp/package.json" |\
+			sed -E 's/.* ([0-9]+),/\1/')"
 		[[ ${install_version} =~ ^[0-9]+$ ]] || die
 	fi
 
 	if use electron; then
 		#prepare electron node_modules
-		pushd "${S}/src/node/desktop" > /dev/null|| die
+		mkdir "${S}/src/node/desktop-build-x86_64"
+		pushd "${S}/src/node/desktop-build-x86_64" > /dev/null|| die
 		unpack ${P_PREBUILT}-electron-node_modules.tar.xz
-		sed -i "s/npm ci && //" package.json || die
+		sed -i "s/npm ci && //" ../desktop/package.json || die
 		popd > /dev/null
 
 		#prepare electron binaries
-		local electron_url_hash=$(echo -n "https://github.com/electron/electron/releases/download/v${ELECTRON_VERSION}" |sha256sum |cut -f1 -d\ )
+		local electron_url_hash=$(echo -n \
+			"https://github.com/electron/electron/releases/download/v${ELECTRON_VERSION}" |\
+			sha256sum |cut -f1 -d\ )
 		assert
 		local electron_hash=$(sha256sum "${DISTDIR}/electron-v${ELECTRON_VERSION}-linux-x64.zip" |cut -f1 -d\ )
 		assert
@@ -368,18 +372,20 @@ src_prepare() {
 	#SUSE has a good list of software bundled with rstudio
 	#https://build.opensuse.org/package/view_file/openSUSE:Factory/rstudio/rstudio.spec
 	#gwt - they bundle a custom gwt build github.com/rstudio/gwt tree v1.4#
+	local gwt_loc="/dependencies/common/gwtproject"
 	local debundles=(
-		"/src/gwt/lib/gin/2.1.2/aopalliance-1.0.jar:/usr/share/aopalliance-1/lib/aopalliance.jar"
-		"/src/gwt/lib/gin/2.1.2/jakarta.inject-api-2.0.1.jar:/usr/share/injection-api/lib/injection-api.jar"
-		"/src/gwt/lib/gin/2.1.2/javax.inject.jar:/usr/share/javax-inject/lib/javax-inject.jar"
-		"/src/gwt/lib/gin/2.1.2/gin-2.1.2.jar:/usr/share/gin-2.1/lib/gin.jar"
-#		"/src/gwt/lib/gin/2.1.2/guice-assistedinject-3.0.jar:/usr/share/gin-2.1/lib/guice-assistedinject-3.0.jar" #guice-assistedinject-6.0.0.jar - dev-java/guice
-#		"/src/gwt/lib/gin/2.1.2/guice-3.0.jar:/usr/share/gin-2.1/lib/guice-3.0.jar" #guice-6.0.0.jar - dev-java/guice
-		"/src/gwt/lib/gin/2.1.2/guava-32.1.3-jre.jar:/usr/share/guava/lib/guava.jar"
-		"/src/gwt/lib/gin/2.1.2/error_prone_annotations-2.23.0.jar:/usr/share/error-prone-annotations/lib/error-prone-annotations.jar"
-		#"/src/gwt/lib/gin/2.1.2/failureaccess-1.0.2.jar:/usr/share/failureaccess/lib/failureaccess.jar"
-		"/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA.jar:/usr/share/validation-api-1.0/lib/validation-api.jar"
-		"/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA-sources.jar:/usr/share/validation-api-1.0/sources/validation-api-src.zip"
+		"${gwt_loc}/gin/2.1.2/aopalliance-1.0.jar:/usr/share/aopalliance-1/lib/aopalliance.jar"
+		"${gwt_loc}/gin/2.1.2/jakarta.inject-api-2.0.1.jar:/usr/share/injection-api/lib/injection-api.jar"
+		"${gwt_loc}/gin/2.1.2/javax.inject.jar:/usr/share/javax-inject/lib/javax-inject.jar"
+		"${gwt_loc}/gin/2.1.2/gin-2.1.2.jar:/usr/share/gin-2.1/lib/gin.jar"
+#		guice-assistedinject-6.0.0.jar - dev-java/guice
+#		"${gwt_loc}/gin/2.1.2/guice-assistedinject-3.0.jar:/usr/share/gin-2.1/lib/guice-assistedinject-3.0.jar"
+#		"${gwt_loc}/gin/2.1.2/guice-3.0.jar:/usr/share/gin-2.1/lib/guice-3.0.jar" #guice-6.0.0.jar - dev-java/guice
+		"${gwt_loc}/gin/2.1.2/guava-32.1.3-jre.jar:/usr/share/guava/lib/guava.jar"
+		"${gwt_loc}/gin/2.1.2/error_prone_annotations-2.23.0.jar:/usr/share/error-prone-annotations/lib/error-prone-annotations.jar"
+#		"${gwt_loc}/gin/2.1.2/failureaccess-1.0.2.jar:/usr/share/failureaccess/lib/failureaccess.jar"
+		"${gwt_loc}/gwt/gwt-rstudio/validation-api-1.0.0.GA.jar:/usr/share/validation-api-1.0/lib/validation-api.jar"
+		"${gwt_loc}/gwt/gwt-rstudio/validation-api-1.0.0.GA-sources.jar:/usr/share/validation-api-1.0/sources/validation-api-src.zip"
 	)
 
 	#clang-c - inspired by SUSE
@@ -421,8 +427,9 @@ src_prepare() {
 	if use electron; then
 		#this allows the checking SHASUM256.txt file - easier way?
 		sed -i "s/ElectronDownloadCacheMode.Bypass/ElectronDownloadCacheMode.ReadOnly/" \
-			src/node/desktop/node_modules/@electron/get/dist/cjs/index.js || die
+			src/node/desktop-build-x86_64/node_modules/@electron/get/dist/cjs/index.js || die
 	fi
+	sed "s/NO_DEFAULT_PATH//" -i src/node/CMakeNodeTools.txt || die
 
 	#fix path rstudio bin path from "${EPREFIX}/usr/rstudio" to "${EPREFIX}/usr/bin/rstudio"
 	#NOTE: the actual bin is "${EPREFIX}/usr/share/rstudio/rstudio" but we symlink in src_install
@@ -478,7 +485,7 @@ src_configure() {
 		-DRSTUDIO_ELECTRON=$(usex electron)
 		-DRSTUDIO_UNIT_TESTS_DISABLED=$(usex test OFF ON)
 		#note RSTUDIO_USE_SYSTEM_DEPENDENCIES exist
-		-DRSTUDIO_USE_SYSTEM_EXPECTED=ON
+		-DRSTUDIO_USE_SYSTEM_TL_EXPECTED=ON
 		-DRSTUDIO_USE_SYSTEM_FMT=ON
 		-DRSTUDIO_USE_SYSTEM_GSL_LITE=ON
 		-DRSTUDIO_USE_SYSTEM_HUNSPELL=ON
@@ -524,8 +531,8 @@ src_compile() {
 		gyp_rebuild_folders+=" $(find src/gwt/lib/quarto  -name binding.gyp |sed "s/\/binding.gyp//")"
 	fi
 	if use electron; then
-		gyp_rebuild_folders+=" $(find src/node/desktop  -name binding.gyp |sed "s/\/binding.gyp//")"
-		pushd src/node/desktop >/dev/null || die
+		gyp_rebuild_folders+=" $(find src/node/desktop-build-x86_64 -name binding.gyp |sed "s/\/binding.gyp//")"
+		pushd src/node/desktop-build-x86_64 >/dev/null || die
 		einfo "Running ts-node"
 		npx ts-node scripts/generate.ts || die "Failed to run ts-node"
 		popd
@@ -564,7 +571,6 @@ src_compile() {
 		-Dbuild.dir="bin"
 		-Dwww.dir="www"
 		-Dextras.dir="extras"
-		-Dlib.dir="lib"
 		-Dgwt.main.module="org.rstudio.studio.${gwt_main_module}"
 		-DlocalWorkers=$(makeopts_jobs)
 	)
