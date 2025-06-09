@@ -384,7 +384,7 @@ declare -A GIT_CRATES=(
 	[typst-dev-assets]='https://github.com/typst/typst-dev-assets;61aebe9575a5abff889f76d73c7b01dc8e17e340;typst-dev-assets-%commit%'
 )
 
-RUST_MAX_VER="1.80.0"
+RUST_MIN_VER="1.80.0"
 RUST_MAX_VER="1.84.1" #1.84.1 tested
 
 inherit cargo shell-completion
