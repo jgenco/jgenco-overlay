@@ -776,7 +776,7 @@ LLVM_OPTIONAL=1
 PYTHON_COMPAT=( python3_{11..13} )
 
 RUST_MIN_VER="1.80.0"
-RUST_MAX_VER="1.82.0"
+RUST_MAX_VER="1.86.0"
 
 inherit cargo check-reqs llvm-r1 multiprocessing python-any-r1 shell-completion toolchain-funcs
 
