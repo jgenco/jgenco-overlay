@@ -234,7 +234,6 @@ BDEPEND="
 	dev-java/aopalliance:1
 	dev-java/injection-api
 	dev-java/error-prone-annotations
-	dev-java/gin:2.1
 	dev-java/guava
 	dev-java/javax-inject
 	=dev-java/validation-api-1.0*:1.0[source]
@@ -377,7 +376,7 @@ src_prepare() {
 		"${gwt_loc}/gin/2.1.2/aopalliance-1.0.jar:/usr/share/aopalliance-1/lib/aopalliance.jar"
 		"${gwt_loc}/gin/2.1.2/jakarta.inject-api-2.0.1.jar:/usr/share/injection-api/lib/injection-api.jar"
 		"${gwt_loc}/gin/2.1.2/javax.inject.jar:/usr/share/javax-inject/lib/javax-inject.jar"
-		"${gwt_loc}/gin/2.1.2/gin-2.1.2.jar:/usr/share/gin-2.1/lib/gin.jar"
+#		"${gwt_loc}/gin/2.1.2/gin-2.1.2.jar:/usr/share/gin-2.1/lib/gin.jar"
 #		guice-assistedinject-6.0.0.jar - dev-java/guice
 #		"${gwt_loc}/gin/2.1.2/guice-assistedinject-3.0.jar:/usr/share/gin-2.1/lib/guice-assistedinject-3.0.jar"
 #		"${gwt_loc}/gin/2.1.2/guice-3.0.jar:/usr/share/gin-2.1/lib/guice-3.0.jar" #guice-6.0.0.jar - dev-java/guice
