@@ -26,27 +26,9 @@ export QUARTO_BIN_PATH="${SCRIPT_PATH}"
 [[ ${QUARTO_DENO} == "" ]] && export QUARTO_DENO="$(type -P deno)"
 
 export DENO_DOM_PLUGIN="@GENTOO_PORTAGE_EPREFIX@/usr/lib64/deno-dom.so"
-export DENO_DIR="${HOME}/.cache/deno"
-
-QUARTO_DIR="${HOME}/.local/share/quarto"
 
 QUARTO_ACTION="run"
 QUARTO_DENO_OPTIONS="--unstable-ffi --unstable-kv --no-config --no-lock --allow-import ${QUARTO_CACHE_OPTIONS} --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi ${QUARTO_DENO_OPTIONS}"
-RELOAD_DENO_CACHE=""
-function compare_file(){
-	VER_CUR=$1
-	VER_FILE=$2
-	if [[ -f "${VER_FILE}" ]];then
-		VER=$(< "${VER_FILE}")
-		if [[ ${VER_CUR} != ${VER} ]];then
-			echo -n "${VER_CUR}" >  "${VER_FILE}"
-			RELOAD_DENO_CACHE="-r"
-		fi
-	else
-		echo -n "${VER_CUR}" >  "${VER_FILE}"
-		RELOAD_DENO_CACHE="-r"
-	fi
-}
 
 #RSTUDIO need --paths
 if [ "$1" == "--paths" ]; then
@@ -73,21 +55,11 @@ if [ "$1" == "--reload-deno-cache" ]; then
 	exit 0
 fi
 
-if [[ ! -d "${QUARTO_DIR}" ]];then
-	mkdir -p "${QUARTO_DIR}"
-fi
-#Deleting file that non-bundled version leaves
-if [[ ${BUNDLED} == "TRUE" && -f "${QUARTO_DIR}/deno-version" ]];then
-	rm "${QUARTO_DIR}/deno-version"
-fi
+#remove old unused files and hide results if it errors for some reason
+QUARTO_DIR_G="${HOME}/.local/share/quarto"
+[[ -w "${QUARTO_DIR_G}/deno-version" ]] && rm "${QUARTO_DIR_G}/deno-version" > /dev/null 2> /dev/null
+[[ -w "${QUARTO_DIR_G}/quarto-version" ]] && rm "${QUARTO_DIR_G}/quarto-version" > /dev/null 2> /dev/null
 
-if [[ ${BUNDLED} == "FALSE" ]];then
-	#version changed / #new install or change from bundle
-	compare_file $("${QUARTO_DENO}" -V |sed "s/deno //")  "${QUARTO_DIR}/deno-version"
-	#version changed / #new install
-	compare_file $(< "${QUARTO_SHARE_PATH}/version")  "${QUARTO_DIR}/quarto-version"
-fi
-QUARTO_DENO_OPTIONS+=" ${RELOAD_DENO_CACHE}"
 export DENO_TLS_CA_STORE=system,mozilla
 export DENO_NO_UPDATE_CHECK=1
 
