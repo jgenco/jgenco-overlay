@@ -11,7 +11,7 @@
 
 EAPI=8
 #19 fails fixed in 3.5.0ish - 2d0e514583129f30da2a529ae00a65ede4870c7a
-LLVM_COMPAT=( 18, 20 )
+LLVM_COMPAT=( {18,20} )
 LLVM_OPTIONAL=1
 
 PYTHON_COMPAT=( python3_{12..13} )
