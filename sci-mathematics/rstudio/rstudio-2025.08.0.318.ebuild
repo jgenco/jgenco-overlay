@@ -6,13 +6,13 @@ LLVM_COMPAT=( {18..20} )
 LLVM_OPTIONAL=1
 inherit cmake java-pkg-2 java-ant-2 llvm-r1 multiprocessing npm optfeature pam prefix xdg-utils
 
-P_PREBUILT="${PN}-2025.08.0.242"
-ELECTRON_VERSION="36.6.0"
-DAILY_COMMIT="76afe55c5e0a1922e16c5e9a9516fcec33522634"
-QUARTO_COMMIT="effd3a6429c8f08a10d0f74edb685e18e9ff2fcf"
+P_PREBUILT="${PN}-2025.08.0.318"
+ELECTRON_VERSION="37.2.4"
+DAILY_COMMIT="04518eff505cc50f88a648ddfc913c6c43ed2608"
+QUARTO_COMMIT="0424deb0f3e98d997e1b337c65c511e7ee15de5a"
 QUARTO_CLI_VER="1.7.31"
-QUARTO_BRANCH="main"
-QUARTO_DATE="20250703"
+QUARTO_BRANCH="release/rstudio-cucumberleaf-sunflower"
+QUARTO_DATE="20250711"
 GWT_VERSION="2.12.2"
 WEBSOCKETPP_COMMIT="ee8cf4257e001d939839cff5b1766a835b749cd6"
 
@@ -250,7 +250,7 @@ BDEPEND="
 "
 PATCHES=(
 	"${FILESDIR}/${PN}-9999-cmake-bundled-dependencies.patch"
-	"${FILESDIR}/${PN}-2024.09.0.375-resource-path.patch"
+	"${FILESDIR}/${PN}-9999-resource-path.patch"
 	"${FILESDIR}/${PN}-2024.04.0.735-server-paths.patch"
 	"${FILESDIR}/${PN}-2024.12.0.467-package-build.patch"
 	"${FILESDIR}/${PN}-2025.05.0.496-pandoc_path_fix.patch"
