@@ -1,10 +1,8 @@
 before applying patch run
 sed -i "s/QT5/QT6/g;s/Qt5/Qt6/g" src/cpp/desktop/CMakeLists.txt
-diff --git a/cmake/compiler.cmake b/cmake/compiler.cmake
-index 9ce12f4cec..df23cacd3f 100644
 --- a/cmake/compiler.cmake
 +++ b/cmake/compiler.cmake
-@@ -114,7 +114,7 @@ else()
+@@ -121,7 +121,7 @@ else()
      endif()
    endif() 
  
@@ -13,11 +11,9 @@ index 9ce12f4cec..df23cacd3f 100644
    # Use --as-needed when RSTUDIO_CONFIG_MONITOR_ONLY
    if(RSTUDIO_CONFIG_MONITOR_ONLY)
        foreach(TYPE EXE MODULE SHARED)
-diff --git a/src/cpp/CMakeLists.txt b/src/cpp/CMakeLists.txt
-index 4ff419e763..c1b4649fe2 100644
 --- a/src/cpp/CMakeLists.txt
 +++ b/src/cpp/CMakeLists.txt
-@@ -63,14 +63,14 @@ endif()
+@@ -66,14 +66,14 @@ endif()
  # test directory
  set(TESTS_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp" CACHE STRING "Test includes")
  
@@ -37,8 +33,6 @@ index 4ff419e763..c1b4649fe2 100644
     endif()
  endif()
  
-diff --git a/src/cpp/desktop/CMakeLists.txt b/src/cpp/desktop/CMakeLists.txt
-index df9a13accf..6babdb42be 100644
 --- a/src/cpp/desktop/CMakeLists.txt
 +++ b/src/cpp/desktop/CMakeLists.txt
 @@ -116,25 +116,27 @@ if(NOT RSTUDIO_ELECTRON)
@@ -76,7 +70,15 @@ index df9a13accf..6babdb42be 100644
     if(UNIX AND NOT APPLE)
        find_package(Qt6DBus REQUIRED)
     endif()
-@@ -296,14 +298,14 @@ if(NOT RSTUDIO_ELECTRON)
+@@ -156,6 +158,7 @@ if(NOT RSTUDIO_ELECTRON)
+ 
+    # include files
+    file(GLOB_RECURSE DESKTOP_HEADER_FILES "*.h*")
++   list(FILTER DESKTOP_HEADER_FILES EXCLUDE REGEX ${CMAKE_CURRENT_SOURCE_DIR}/html/.*\\.html)
+    if (NOT WIN32)
+       list(REMOVE_ITEM DESKTOP_HEADER_FILES ${CMAKE_CURRENT_SOURCE_DIR}/DesktopChooseRHome.hpp)
+    endif (NOT WIN32)
+@@ -296,14 +299,14 @@ if(NOT RSTUDIO_ELECTRON)
     )
  
     # ensure moc files are generated
@@ -94,7 +96,7 @@ index df9a13accf..6babdb42be 100644
  
     if(WIN32)
  
-@@ -346,17 +348,18 @@ if(NOT RSTUDIO_ELECTRON)
+@@ -346,17 +349,18 @@ if(NOT RSTUDIO_ELECTRON)
        Qt6::Gui
        Qt6::Network
        Qt6::WebChannel
@@ -118,7 +120,7 @@ index df9a13accf..6babdb42be 100644
     )
  
     if(UNIX AND NOT APPLE)
-@@ -390,7 +393,7 @@ if(NOT RSTUDIO_ELECTRON)
+@@ -390,7 +394,7 @@ if(NOT RSTUDIO_ELECTRON)
        # These cause issues with macdeployqt due to missing dependencies; suspect we don't need
        # these on any platform.
        set(RSTUDIO_QTMODULES ${RSTUDIO_QTMODULES}
@@ -127,7 +129,29 @@ index df9a13accf..6babdb42be 100644
           Qt6::OpenGL
        )
  
-@@ -701,5 +704,6 @@ elseif(WIN32 AND NOT RSTUDIO_SESSION_WIN32)
+@@ -560,7 +564,11 @@ if(NOT RSTUDIO_ELECTRON)
+          set(ICU_LIBRARIES libicui18n libicuuc libicudata)
+          foreach(ICU_LIBRARY ${ICU_LIBRARIES})
+             add_library(${ICU_LIBRARY} SHARED IMPORTED)
+-            set_property(TARGET ${ICU_LIBRARY} PROPERTY IMPORTED_LOCATION "${QT_LIBRARY_DIR}/${ICU_LIBRARY}.so")
++           if(EXISTS "${QT_LIBRARY_DIR}64/${ICU_LIBRARY}.so")
++               set_property(TARGET ${ICU_LIBRARY} PROPERTY IMPORTED_LOCATION "${QT_LIBRARY_DIR}64/${ICU_LIBRARY}.so")
++           else()
++               set_property(TARGET ${ICU_LIBRARY} PROPERTY IMPORTED_LOCATION "${QT_LIBRARY_DIR}/${ICU_LIBRARY}.so")
++           endif()
+          endforeach()
+          target_link_libraries(rstudio ${ICU_LIBRARIES})
+ 
+@@ -570,8 +578,6 @@ if(NOT RSTUDIO_ELECTRON)
+             "${CMAKE_CURRENT_BINARY_DIR}/install/LinuxInstallQt.sh"
+             @ONLY)
+ 
+-         install_process(
+-            "${CMAKE_CURRENT_BINARY_DIR}/install/LinuxInstallQt.sh")
+ 
+       endif()
+ 
+@@ -701,5 +707,6 @@ elseif(WIN32 AND NOT RSTUDIO_SESSION_WIN32)
        ${TESTS_INCLUDE_DIR}
     )
  

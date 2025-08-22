@@ -1,0 +1,5072 @@
+From 5f46cc60b0e610f781223b4378fc2226b0f69485 Mon Sep 17 00:00:00 2001
+From: jgenco <102693391+jgenco@users.noreply.github.com>
+Date: Thu, 21 Aug 2025 12:37:52 -0400
+Subject: [PATCH 1/7] 15651.patch
+
+--- a/src/cpp/session/include/session/SessionModuleContext.hpp
++++ b/src/cpp/session/include/session/SessionModuleContext.hpp
+@@ -43,6 +43,20 @@
+ 
+ using namespace boost::placeholders;
+ 
++namespace rstudio {
++namespace core {
++
++// make_unique is not available in C++11, so we provide
++// a definition here just in case
++template <class T, class... Args>
++std::unique_ptr<T> make_unique(Args&&... args)
++{
++   return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
++}
++
++} // end namespace core
++} // end namespace rstudio
++
+ namespace rstudio {
+ namespace core {
+    class DistributedEvent;
+--- a/src/cpp/session/modules/rmarkdown/NotebookExec.cpp
++++ b/src/cpp/session/modules/rmarkdown/NotebookExec.cpp
+@@ -186,8 +186,10 @@ void ChunkExecContext::connect()
+ 
+    // leave an execution lock in this folder so it won't be moved if the notebook
+    // is saved while executing
+-   locks_.push_back(boost::make_shared<ScopedFileLock>(FileLock::createDefault(),
+-            outputPath_.completePath(kExecutionLock)));
++   auto lock = make_unique<ScopedFileLock>(
++       FileLock::createDefault(),
++       outputPath_.completePath(kExecutionLock));
++   locks_.push_back(std::move(lock));
+ 
+    // if executing the whole chunk, initialize output right away (otherwise we
+    // wait until we actually have output)
+@@ -195,10 +197,9 @@ void ChunkExecContext::connect()
+       initializeOutput();
+ 
+    // capture conditions
+-   boost::shared_ptr<ConditionCapture> pConditionCapture = 
+-      boost::make_shared<ConditionCapture>();
++   auto pConditionCapture = make_unique<ConditionCapture>();
+    pConditionCapture->connect();
+-   captures_.push_back(pConditionCapture);
++   captures_.push_back(std::move(pConditionCapture));
+    connections_.push_back(events().onCondition.connect(
+          boost::bind(&ChunkExecContext::onCondition, this, _1, _2)));
+ 
+@@ -224,9 +225,8 @@ void ChunkExecContext::connect()
+          boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2, 
+                      _3, ChunkOutputPlot, _4)));
+ 
+-   boost::shared_ptr<PlotCapture> pPlotCapture = 
+-      boost::make_shared<PlotCapture>();
+-   captures_.push_back(pPlotCapture);
++   auto pPlotCapture = make_unique<PlotCapture>();
++   captures_.push_back(std::move(pPlotCapture));
+ 
+    if (figWidth > 0 || figHeight > 0)
+    {
+@@ -248,9 +248,8 @@ void ChunkExecContext::connect()
+          boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2, _3, 
+                      ChunkOutputHtml, 0)));
+ 
+-   boost::shared_ptr<HtmlCapture> pHtmlCapture = 
+-      boost::make_shared<HtmlCapture>();
+-   captures_.push_back(pHtmlCapture);
++   auto pHtmlCapture = make_unique<HtmlCapture>();
++   captures_.push_back(std::move(pHtmlCapture));
+ 
+    error = pHtmlCapture->connectHtmlCapture(
+             outputPath_,
+@@ -283,18 +282,17 @@ void ChunkExecContext::connect()
+    prevCharWidth_ = r::options::getOptionWidth();
+    r::options::setOptionWidth(charWidth_);
+ 
+-   boost::shared_ptr<DirCapture> pDirCapture = boost::make_shared<DirCapture>();
++   auto pDirCapture = make_unique<DirCapture>();
+    error = pDirCapture->connectDir(docId_, workingDir_);
+    if (error)
+       LOG_ERROR(error);
+    else
+-      captures_.push_back(pDirCapture);
++      captures_.push_back(std::move(pDirCapture));
+ 
+    // begin capturing errors
+-   boost::shared_ptr<ErrorCapture> pErrorCapture = 
+-      boost::make_shared<ErrorCapture>();
++   auto pErrorCapture = make_unique<ErrorCapture>();
+    pErrorCapture->connect();
+-   captures_.push_back(pErrorCapture);
++   captures_.push_back(std::move(pErrorCapture));
+ 
+    connections_.push_back(events().onErrorOutput.connect(
+          boost::bind(&ChunkExecContext::onError, this, _1)));
+@@ -310,9 +308,8 @@ void ChunkExecContext::connect()
+          boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2, _3, 
+                      ChunkOutputData, 0)));
+ 
+-   boost::shared_ptr<DataCapture> pDataCapture = 
+-      boost::make_shared<DataCapture>();
+-   captures_.push_back(pDataCapture);
++   auto pDataCapture = make_unique<DataCapture>();
++   captures_.push_back(std::move(pDataCapture));
+ 
+    error = pDataCapture->connectDataCapture(
+             outputPath_,
+@@ -332,6 +329,7 @@ bool ChunkExecContext::onCondition(Condition condition,
+    {
+       return false;
+    }
++
+    if (condition == ConditionWarning && 
+        !options_.getOverlayOption("warning", true))
+    {
+@@ -339,7 +337,7 @@ bool ChunkExecContext::onCondition(Condition condition,
+    }
+ 
+    // give each capturing module a chance to handle the condition
+-   for (boost::shared_ptr<NotebookCapture> pCapture : captures_)
++   for (auto&& pCapture : captures_)
+    {
+       if (pCapture->onCondition(condition, message))
+          return true;
+@@ -509,7 +507,7 @@ void ChunkExecContext::disconnect()
+    flushPendingChunkConsoleOutputs(true);
+    
+    // clean up capturing modules (includes plots, errors, and HTML widgets)
+-   for (boost::shared_ptr<NotebookCapture> pCapture : captures_)
++   for (auto&& pCapture : captures_)
+    {
+       pCapture->disconnect();
+    }
+@@ -625,8 +623,10 @@ void ChunkExecContext::initializeOutput()
+ 
+    // leave an execution lock in this folder so it won't be moved if the notebook
+    // is saved while executing
+-   locks_.push_back(boost::make_shared<ScopedFileLock>(FileLock::createDefault(),
+-            outputPath.completePath(kExecutionLock)));
++   auto lock = make_unique<ScopedFileLock>(
++       FileLock::createDefault(),
++       outputPath.completePath(kExecutionLock));
++   locks_.push_back(std::move(lock));
+ 
+    hasOutput_ = true;
+ }
+@@ -644,7 +644,7 @@ ExecScope ChunkExecContext::execScope()
+ void ChunkExecContext::onExprComplete()
+ {
+    // notify capturing submodules
+-   for (boost::shared_ptr<NotebookCapture> pCapture : captures_)
++   for (auto&& pCapture : captures_)
+    {
+       pCapture->onExprComplete();
+    }
+--- a/src/cpp/session/modules/rmarkdown/NotebookExec.hpp
++++ b/src/cpp/session/modules/rmarkdown/NotebookExec.hpp
+@@ -114,8 +114,8 @@ private:
+    bool hasOutput_;
+    bool hasErrors_;
+ 
+-   std::vector<boost::shared_ptr<NotebookCapture> > captures_;
+-   std::vector<boost::shared_ptr<core::ScopedFileLock> > locks_;
++   std::vector<std::unique_ptr<NotebookCapture>> captures_;
++   std::vector<std::unique_ptr<core::ScopedFileLock>> locks_;
+    std::vector<RSTUDIO_BOOST_CONNECTION> connections_;
+ };
+ 
+-- 
+2.49.1
+
+
+From 85c65ba0eea7b445efa7a13ff8b66c8903ea69e6 Mon Sep 17 00:00:00 2001
+From: jgenco <102693391+jgenco@users.noreply.github.com>
+Date: Thu, 21 Aug 2025 12:38:30 -0400
+Subject: [PATCH 2/7] a03ec0935c48aea5dda54976873005906453e07e
+
+--- a/src/cpp/core/include/core/http/AsyncClient.hpp
++++ b/src/cpp/core/include/core/http/AsyncClient.hpp
+@@ -22,6 +22,8 @@
+ 
+ #include <boost/asio/write.hpp>
+ #include <boost/asio/io_service.hpp>
++#include <boost/asio/strand.hpp>
++#include <boost/asio/bind_executor.hpp>
+ #include <boost/asio/placeholders.hpp>
+ #include <boost/asio/streambuf.hpp>
+ #include <boost/asio/read.hpp>
+@@ -99,7 +101,8 @@ public:
+         connectionRetryContext_(ioService),
+         logToStderr_(logToStderr),
+         closed_(false),
+-        requestWritten_(false)
++        requestWritten_(false),
++        strand_(ioService)
+    {
+       // Make sure we read at least 8192 bytes from the socket at a time. The default ends up as 512.
+       responseBuffer_.prepare(8192);
+@@ -164,21 +167,21 @@ public:
+    virtual void asyncReadSome(boost::asio::mutable_buffers_1 buffer,
+                               Handler handler)
+    {
+-      socket().async_read_some(buffer, handler);
++      socket().async_read_some(buffer, boost::asio::bind_executor(strand_, handler));
+    }
+ 
+    virtual void asyncWrite(
+                      const boost::asio::const_buffers_1& buffer,
+                      Handler handler)
+    {
+-      boost::asio::async_write(socket(), buffer, handler);
++      boost::asio::async_write(socket(), buffer, boost::asio::bind_executor(strand_, handler));
+    }
+ 
+    virtual void asyncWrite(
+                      const std::vector<boost::asio::const_buffer>& buffers,
+                      Handler handler)
+    {
+-      boost::asio::async_write(socket(), buffers, handler);
++      boost::asio::async_write(socket(), buffers, boost::asio::bind_executor(strand_, handler));
+    }
+ 
+    virtual void close()
+@@ -290,10 +293,10 @@ protected:
+       boost::asio::async_write(
+           socket(),
+           request_.toBuffers(overrideHeader),
+-          boost::bind(
++          boost::asio::bind_executor(strand_, boost::bind(
+                &AsyncClient<SocketService>::handleWrite,
+                AsyncClient<SocketService>::shared_from_this(),
+-               boost::asio::placeholders::error)
++               boost::asio::placeholders::error))
+       );
+    }
+ 
+@@ -422,10 +425,10 @@ private:
+       // include error check to be paranoid/robust)
+       if (!ec)
+       {
+-         connectionRetryContext_.retryTimer.async_wait(boost::bind(
++         connectionRetryContext_.retryTimer.async_wait(boost::asio::bind_executor(strand_, boost::bind(
+                &AsyncClient<SocketService>::handleConnectionRetryTimer,
+                AsyncClient<SocketService>::shared_from_this(),
+-               boost::asio::placeholders::error));
++               boost::asio::placeholders::error)));
+ 
+          return true;
+       }
+@@ -477,9 +480,10 @@ private:
+               socket(),
+               responseBuffer_,
+               "\r\n",
+-              boost::bind(&AsyncClient<SocketService>::handleReadStatusLine,
+-                          AsyncClient<SocketService>::shared_from_this(),
+-                          boost::asio::placeholders::error));
++              boost::asio::bind_executor(strand_, 
++                                         boost::bind(&AsyncClient<SocketService>::handleReadStatusLine,
++                                                     AsyncClient<SocketService>::shared_from_this(),
++                                                     boost::asio::placeholders::error)));
+          }
+          else
+          {
+@@ -509,9 +513,10 @@ private:
+                  socket(),
+                  responseBuffer_,
+                  "\r\n\r\n",
+-                 boost::bind(&AsyncClient<SocketService>::handleReadHeaders,
+-                             AsyncClient<SocketService>::shared_from_this(),
+-                             boost::asio::placeholders::error));
++                 boost::asio::bind_executor(strand_, 
++                        boost::bind(&AsyncClient<SocketService>::handleReadHeaders,
++                                    AsyncClient<SocketService>::shared_from_this(),
++                                    boost::asio::placeholders::error)));
+             }
+          }
+          else
+@@ -541,9 +546,10 @@ private:
+          socket(),
+          responseBuffer_,
+          boost::asio::transfer_at_least(1),
+-         boost::bind(&AsyncClient<SocketService>::handleReadContent,
+-                     AsyncClient<SocketService>::shared_from_this(),
+-                     boost::asio::placeholders::error));
++         boost::asio::bind_executor(strand_,
++              boost::bind(&AsyncClient<SocketService>::handleReadContent,
++                          AsyncClient<SocketService>::shared_from_this(),
++                          boost::asio::placeholders::error)));
+    }
+ 
+    virtual bool stopReadingAndRespond()
+@@ -820,6 +826,10 @@ private:
+ 
+    bool requestWritten_;
+    ConnectHandler connectHandler_;
++
++protected:
++   boost::asio::io_context::strand strand_;
++
+ };
+    
+ 
+--- a/src/cpp/core/include/core/http/TcpIpAsyncClient.hpp
++++ b/src/cpp/core/include/core/http/TcpIpAsyncClient.hpp
+@@ -67,11 +67,12 @@ private:
+       pAsyncConnector->connect(
+             address_,
+             port_,
+-            boost::bind(&TcpIpAsyncClient::writeRequest,
+-                        TcpIpAsyncClient::sharedFromThis()),
+-            boost::bind(&TcpIpAsyncClient::handleConnectionError,
+-                        TcpIpAsyncClient::sharedFromThis(),
+-                        _1),
++            boost::asio::bind_executor(strand_,
++                 boost::bind(&TcpIpAsyncClient::writeRequest,
++                             TcpIpAsyncClient::sharedFromThis())),
++            boost::asio::bind_executor(strand_,
++                 boost::bind(&TcpIpAsyncClient::handleConnectionError,
++                             TcpIpAsyncClient::sharedFromThis(), _1)),
+             connectionTimeout_);
+ 
+    }
+--- a/src/cpp/core/include/core/http/TcpIpAsyncClientSsl.hpp
++++ b/src/cpp/core/include/core/http/TcpIpAsyncClientSsl.hpp
+@@ -80,11 +80,11 @@ protected:
+       pAsyncConnector->connect(
+             address_,
+             port_,
+-            boost::bind(&TcpIpAsyncClientSsl::performHandshake,
+-                        TcpIpAsyncClientSsl::sharedFromThis()),
+-            boost::bind(&TcpIpAsyncClientSsl::handleConnectionError,
+-                        TcpIpAsyncClientSsl::sharedFromThis(),
+-                        _1),
++            boost::asio::bind_executor(strand_, boost::bind(&TcpIpAsyncClientSsl::performHandshake,
++                                                            TcpIpAsyncClientSsl::sharedFromThis())),
++            boost::asio::bind_executor(strand_, boost::bind(&TcpIpAsyncClientSsl::handleConnectionError,
++                                                            TcpIpAsyncClientSsl::sharedFromThis(),
++                                                            _1)),
+             connectionTimeout_);
+    }
+ 
+@@ -113,9 +113,9 @@ private:
+ 
+       ptrSslStream_->async_handshake(
+             boost::asio::ssl::stream_base::client,
+-            boost::bind(&TcpIpAsyncClientSsl::handleHandshake,
+-                        sharedFromThis(),
+-                        boost::asio::placeholders::error));
++            boost::asio::bind_executor(strand_, boost::bind(&TcpIpAsyncClientSsl::handleHandshake,
++                                                            sharedFromThis(),
++                                                            boost::asio::placeholders::error)));
+    }
+ 
+    void handleHandshake(const boost::system::error_code& ec)
+-- 
+2.49.1
+
+
+From 676a33216d1edff8aa227cc550bb27addd619cb2 Mon Sep 17 00:00:00 2001
+From: jgenco <102693391+jgenco@users.noreply.github.com>
+Date: Thu, 21 Aug 2025 12:44:03 -0400
+Subject: [PATCH 3/7] 8ed7b75914b29ccc03babdba705bc3fa3c861266
+
+--- a/src/cpp/core/CMakeLists.txt
++++ b/src/cpp/core/CMakeLists.txt
+@@ -85,6 +85,8 @@ set(CORE_SOURCE_FILES
+    http/ChunkProxy.cpp
+    http/CSRFToken.cpp
+    http/FormProxy.cpp
++   http/ProxyUtils.cpp
++   http/NoProxyRules.cpp
+    http/Request.cpp
+    http/RequestParser.cpp
+    http/Response.cpp
+--- /dev/null
++++ b/src/cpp/core/http/NoProxyRules.cpp
+@@ -0,0 +1,223 @@
++/*
++ * NoProxyRules.cpp
++ *
++ * Copyright (C) 2024 by Posit Software, PBC
++ *
++ * Unless you have received this program directly from Posit Software pursuant
++ * to the terms of a commercial license agreement with Posit Software, then
++ * this program is licensed to you under the terms of version 3 of the
++ * GNU Affero General Public License. This program is distributed WITHOUT
++ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
++ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
++ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
++ *
++ */
++
++#include <core/http/NoProxyRules.hpp>
++
++#include <boost/algorithm/string.hpp>
++#include <boost/regex.hpp>
++#include <boost/lexical_cast.hpp>
++
++#include <core/Log.hpp>
++
++
++namespace rstudio {
++namespace core {
++namespace http {
++
++NoProxyRuleDomain::NoProxyRuleDomain(const std::string& domain)
++    : domain_(domain)
++{
++}
++
++bool NoProxyRuleDomain::match(const std::string& address,
++                              const std::string& port) const
++{
++   // Check if the address is within the domain
++   return boost::algorithm::ends_with(address, "." + domain_) ||
++          address == domain_;
++}
++
++std::string NoProxyRuleDomain::toString() const
++{
++   return "." + domain_;
++}
++
++bool NoProxyRuleWildcard::match(const std::string& address,
++                                const std::string& port) const
++{
++   // Always match
++   return true;
++}
++
++std::string NoProxyRuleWildcard::toString() const
++{
++   return "*";
++}
++
++NoProxyRuleAddress::NoProxyRuleAddress(const std::string& address,
++                                       const std::string& port)
++    : address_(address), port_(port)
++{
++}
++
++bool NoProxyRuleAddress::match(const std::string& address,
++                               const std::string& port) const
++{
++   // Check if the address and port match
++   return address == address_ && (port_.empty() || port == port_);
++}
++
++std::string NoProxyRuleAddress::toString() const
++{
++   return address_ + (port_.empty() ? "" : ":" + port_);
++}
++
++NoProxyRuleCidrBlock::NoProxyRuleCidrBlock(uint32_t range, uint32_t mask)
++    : cidrBlock_({range, mask})
++{
++}
++
++NoProxyRuleCidrBlock::NoProxyRuleCidrBlock(const CidrBlock& cidrBlock)
++    : cidrBlock_(cidrBlock)
++{
++}
++
++Result<CidrBlock>
++NoProxyRuleCidrBlock::parseCidrBlock(const std::string& cidrBlock)
++{
++   std::vector<std::string> parts;
++   boost::split(parts, cidrBlock, boost::is_any_of("/"));
++   if (parts.size() != 2)
++   {
++      return Unexpected(systemError(boost::system::errc::invalid_argument,
++                                    "Invalid CIDR block: " + cidrBlock,
++                                    ERROR_LOCATION));
++   }
++
++   const auto rangeResult = parseIpAddress(parts[0]);
++   if (!rangeResult)
++   {
++      auto error = rangeResult.error();
++      error.addProperty("description", "Unable to parse CIDR range.");
++      return Unexpected(error);
++   }
++
++   try
++   {
++      const auto range = rangeResult.value();
++      const auto mask = boost::lexical_cast<uint32_t>(parts[1]);
++      if (mask > 32)
++         return Unexpected(systemError(boost::system::errc::invalid_argument,
++                                       "Invalid CIDR block: " + cidrBlock +
++                                           ". Mask must be between 0 and 32.",
++                                       ERROR_LOCATION));
++      const auto maskBits = 0xFFFFFFFF << (32 - mask);
++      return CidrBlock{range, maskBits};
++   }
++   catch (const boost::bad_lexical_cast& e)
++   {
++      auto error = systemError(boost::system::errc::invalid_argument,
++                               "Invalid CIDR block: " + cidrBlock +
++                                   ". Unable to parse CIDR mask.",
++                               ERROR_LOCATION);
++      error.addProperty("what", e.what());
++      return Unexpected(error);
++   }
++}
++
++bool NoProxyRuleCidrBlock::match(const std::string& address,
++                                 const std::string& port) const
++{
++   const auto addrResult = parseIpAddress(address);
++   if (!addrResult)
++   {
++      // don't emit an error here, as the address may not be an IP address
++      return false;
++   }
++   const auto addr = addrResult.value();
++
++   // Check if the address is within the CIDR block
++   return (addr & cidrBlock_.mask) == cidrBlock_.range;
++}
++
++std::string NoProxyRuleCidrBlock::toString() const
++{
++   std::string address;
++   address += std::to_string((cidrBlock_.range >> 24) & 0xFF);
++   address += ".";
++   address += std::to_string((cidrBlock_.range >> 16) & 0xFF);
++   address += ".";
++   address += std::to_string((cidrBlock_.range >> 8) & 0xFF);
++   address += ".";
++   address += std::to_string(cidrBlock_.range & 0xFF);
++
++   std::string mask;
++   mask += std::to_string(32 - __builtin_clz(cidrBlock_.mask));
++
++   return address + "/" + mask;
++}
++
++Result<uint32_t>
++NoProxyRuleCidrBlock::parseIpAddress(const std::string& address)
++{
++   std::vector<std::string> parts;
++   boost::split(parts, address, boost::is_any_of("."));
++   if (parts.size() != 4)
++   {
++      return Unexpected(systemError(boost::system::errc::invalid_argument,
++                                    "Invalid IP address: " + address,
++                                    ERROR_LOCATION));
++   }
++
++   try
++   {
++      return (boost::lexical_cast<uint32_t>(parts[0]) << 24) |
++             (boost::lexical_cast<uint32_t>(parts[1]) << 16) |
++             (boost::lexical_cast<uint32_t>(parts[2]) << 8) |
++             boost::lexical_cast<uint32_t>(parts[3]);
++   }
++   catch (const boost::bad_lexical_cast& e)
++   {
++      auto error = systemError(boost::system::errc::invalid_argument,
++                               "Invalid IP address: " + address +
++                                   ". Unable to parse octets.",
++                               ERROR_LOCATION);
++      error.addProperty("what", e.what());
++      return Unexpected(error);
++   }
++}
++
++std::unique_ptr<NoProxyRule> createNoProxyRule(const std::string& rule)
++{
++   if (rule == "*")
++   {
++      return std::unique_ptr<NoProxyRule>(new NoProxyRuleWildcard());
++   }
++
++   boost::regex domainRegex("^\\.[a-zA-Z0-9\\-]+\\.[a-zA-Z0-9\\-]+$");
++   if (boost::regex_match(rule, domainRegex))
++   {
++      return std::unique_ptr<NoProxyRuleDomain>(new NoProxyRuleDomain(rule));
++   }
++
++   const auto cidrBlockResult = NoProxyRuleCidrBlock::parseCidrBlock(rule);
++   if (cidrBlockResult)
++   {
++      return std::unique_ptr<NoProxyRuleCidrBlock>(
++          new NoProxyRuleCidrBlock(cidrBlockResult.value()));
++   }
++
++   std::vector<std::string> parts;
++   boost::split(parts, rule, boost::is_any_of(":"));
++   if(parts.size() == 2) {
++      return std::unique_ptr<NoProxyRuleAddress>(new NoProxyRuleAddress(parts[0], parts[1]));
++   }
++
++   return std::unique_ptr<NoProxyRuleAddress>(new NoProxyRuleAddress(rule));
++}
++
++} // namespace http
++} // namespace core
++} // namespace rstudio
+--- /dev/null
++++ b/src/cpp/core/http/NoProxyRulesTests.cpp
+@@ -0,0 +1,140 @@
++/*
++ * NoProxyRulesTests.cpp
++ *
++ * Copyright (C) 2024 by Posit Software, PBC
++ *
++ * Unless you have received this program directly from Posit Software pursuant
++ * to the terms of a commercial license agreement with Posit Software, then
++ * this program is licensed to you under the terms of version 3 of the
++ * GNU Affero General Public License. This program is distributed WITHOUT
++ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
++ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
++ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
++ *
++ */
++
++#include <core/http/NoProxyRules.hpp>
++
++#include <tests/TestThat.hpp>
++
++namespace rstudio {
++namespace core {
++namespace http {
++namespace tests {
++
++test_context("NoProxyRulesTests")
++{
++   test_that("NoProxyRuleWildcard matches everything")
++   {
++      NoProxyRuleWildcard rule;
++      REQUIRE(rule.match("anything", "anyport"));
++      REQUIRE(rule.match("192.168.1.1", "80"));
++      REQUIRE(rule.match("example.com", "443"));
++      REQUIRE(rule.match("", ""));
++   }
++
++   test_that("NoProxyRuleDomain matches domains and subdomains")
++   {
++      NoProxyRuleDomain rule("example.com");
++      REQUIRE(rule.match("example.com", "443"));
++      REQUIRE(rule.match("sub.example.com", "443"));
++      REQUIRE(rule.match("example.com", "80"));
++      REQUIRE(rule.match("sub.example.com", "80"));
++      REQUIRE(rule.match("sub.sub.example.com", "443"));
++      REQUIRE_FALSE(rule.match("example.org", "443"));
++      REQUIRE_FALSE(rule.match("subexample.com", "443"));
++   }
++
++   test_that("NoProxyRuleAddress matches addresses and ports")
++   {
++      NoProxyRuleAddress ruleWithPort("example.com", "443");
++      REQUIRE(ruleWithPort.match("example.com", "443"));
++      REQUIRE_FALSE(ruleWithPort.match("example.com", "80"));
++      REQUIRE_FALSE(ruleWithPort.match("example.org", "443"));
++      REQUIRE_FALSE(ruleWithPort.match("sub.example.com", "443"));
++      REQUIRE_FALSE(ruleWithPort.match("example2.com", "443"));
++
++      NoProxyRuleAddress ruleWithoutPort("example.com");
++      REQUIRE(ruleWithoutPort.match("example.com", "443"));
++      REQUIRE(ruleWithoutPort.match("example.com", "80"));
++      REQUIRE_FALSE(ruleWithoutPort.match("example.org", "443"));
++      REQUIRE_FALSE(ruleWithoutPort.match("sub.example.com", "443"));
++      REQUIRE_FALSE(ruleWithoutPort.match("example2.com", "443"));
++
++      NoProxyRuleAddress ruleAsIp("192.168.4.3", "443");
++      REQUIRE(ruleAsIp.match("192.168.4.3", "443"));
++      REQUIRE_FALSE(ruleAsIp.match("example.com", "443"));
++      REQUIRE_FALSE(ruleAsIp.match("172.168.3.2", "443"));
++   }
++
++   test_that("NoProxyRuleCidrBlock matches CIDR blocks")
++   {
++      const auto cidrBlock = "192.0.2.0/24";
++      const auto cidrBlockResult = NoProxyRuleCidrBlock::parseCidrBlock(cidrBlock);
++      REQUIRE(cidrBlockResult);
++      NoProxyRuleCidrBlock rule(cidrBlockResult.value());
++      for(uint32_t i = 0; i < 256; ++i)
++      {
++         const auto address = "192.0.2." + std::to_string(i);
++         REQUIRE(rule.match(address, "443"));
++      }
++      REQUIRE_FALSE(rule.match("192.0.1.0", "443"));
++      REQUIRE_FALSE(rule.match("10.3.4.1", "443"));
++
++      const auto cidrBlock2 = "172.0.0.0/8";
++      const auto cidrBlockResult2 = NoProxyRuleCidrBlock::parseCidrBlock(cidrBlock2);
++      REQUIRE(cidrBlockResult2);
++      NoProxyRuleCidrBlock rule2(cidrBlockResult2.value());
++      REQUIRE(rule2.match("172.4.75.2", "443"));
++      REQUIRE_FALSE(rule2.match("171.4.75.2", "443"));
++
++      const auto invalidOctetsBlock = "1.1.1/24";
++      const auto invalidOctetsBlockResult = NoProxyRuleCidrBlock::parseCidrBlock(invalidOctetsBlock);
++      REQUIRE_FALSE(invalidOctetsBlockResult);
++      REQUIRE(invalidOctetsBlockResult.error() == systemError(boost::system::errc::invalid_argument,
++                                                             ERROR_LOCATION));
++
++      const auto invalidMaskBlock = "172.0.0.0/gh";
++      const auto invalidMaskBlockResult = NoProxyRuleCidrBlock::parseCidrBlock(invalidMaskBlock);
++      REQUIRE_FALSE(invalidMaskBlockResult);
++      REQUIRE(invalidMaskBlockResult.error() == systemError(boost::system::errc::invalid_argument,
++                                                             ERROR_LOCATION));
++
++      const auto invalidMaskBlockAbove32 = "127.0.0.0/400";
++      const auto invalidMaskBlockAbove32Result = NoProxyRuleCidrBlock::parseCidrBlock(invalidMaskBlockAbove32);
++      REQUIRE_FALSE(invalidMaskBlockAbove32Result);
++
++      const auto invalidMaskBlockNegative = "127.0.0.0/-32";
++      const auto invalidMaskBlockNegativeResult = NoProxyRuleCidrBlock::parseCidrBlock(invalidMaskBlockNegative);
++      REQUIRE_FALSE(invalidMaskBlockNegativeResult);
++
++   }
++
++   test_that("createNoProxyBuilder creates the correct rule")
++   {
++      auto rule = createNoProxyRule("*");
++      REQUIRE(dynamic_cast<NoProxyRuleWildcard*>(rule.get()) != nullptr);
++
++      rule = createNoProxyRule(".example.com");
++      REQUIRE(dynamic_cast<NoProxyRuleDomain*>(rule.get()) != nullptr);
++
++      rule = createNoProxyRule("example.com");
++      REQUIRE(dynamic_cast<NoProxyRuleAddress*>(rule.get()) != nullptr);
++
++      rule = createNoProxyRule("example.com:443");
++      REQUIRE(dynamic_cast<NoProxyRuleAddress*>(rule.get()) != nullptr);
++
++      rule = createNoProxyRule("192.0.2.0/24");
++      REQUIRE(dynamic_cast<NoProxyRuleCidrBlock*>(rule.get()) != nullptr);
++
++      // junk will always return an address rule
++      rule = createNoProxyRule("junk");
++      REQUIRE(dynamic_cast<NoProxyRuleAddress*>(rule.get()) != nullptr);
++   }
++
++}
++
++} // end namespace tests
++} // end namespace http
++} // end namespace core
++} // end namespace rstudio
+--- /dev/null
++++ b/src/cpp/core/http/ProxyUtils.cpp
+@@ -0,0 +1,111 @@
++/*
++ * ProxyUtils.cpp
++ *
++ * Copyright (C) 2024 by Posit Software, PBC
++ *
++ * Unless you have received this program directly from Posit Software pursuant
++ * to the terms of a commercial license agreement with Posit Software, then
++ * this program is licensed to you under the terms of version 3 of the
++ * GNU Affero General Public License. This program is distributed WITHOUT
++ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
++ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
++ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
++ *
++ */
++
++#include <core/http/ProxyUtils.hpp>
++
++#include <boost/algorithm/string.hpp>
++#include <boost/regex.hpp>
++
++#include <core/http/NoProxyRules.hpp>
++#include <core/system/Environment.hpp>
++#include <core/Log.hpp>
++#include <core/Result.hpp>
++
++
++namespace rstudio {
++namespace core {
++namespace http {
++
++ProxyUtils::ProxyUtils()
++{
++   auto http_proxy = system::getenv("http_proxy");
++   if (http_proxy.empty())
++   {
++      http_proxy = system::getenv("HTTP_PROXY");
++   }
++   httpProxyVar_ = http_proxy;
++
++   auto https_proxy = system::getenv("https_proxy");
++   if (https_proxy.empty())
++   {
++      https_proxy = system::getenv("HTTPS_PROXY");
++   }
++   httpsProxyVar_ = https_proxy;
++
++   noProxyRules_.clear();
++   std::vector<std::string> noProxyList;
++   auto no_proxy = system::getenv("no_proxy");
++   if (no_proxy.empty())
++   {
++      no_proxy = system::getenv("NO_PROXY");
++   }
++   if (!no_proxy.empty())
++   {
++      boost::split(noProxyList, no_proxy, boost::is_any_of(","));
++      for (const auto& rule : noProxyList)
++      {
++         noProxyRules_.emplace_back(createNoProxyRule(rule));
++      }
++   }
++}
++
++boost::optional<URL> ProxyUtils::httpProxyUrl(const std::string& address,
++                                              const std::string& port) const
++{
++   if (httpProxyVar_.empty() || !shouldProxy(address, port))
++   {
++      return boost::none;
++   }
++
++   return URL(httpProxyVar_);
++}
++
++boost::optional<URL> ProxyUtils::httpsProxyUrl(const std::string& address,
++                                               const std::string& port) const
++{
++   if (httpsProxyVar_.empty() || !shouldProxy(address, port))
++   {
++      return boost::none;
++   }
++
++   return URL(httpsProxyVar_);
++}
++
++bool ProxyUtils::shouldProxy(const std::string& address,
++                             const std::string& port) const
++{
++   if (address.empty() && port.empty())
++      return true;
++
++   for(const auto& rule : noProxyRules_)
++   {
++      if (rule->match(address, port))
++      {
++         LOG_DEBUG_MESSAGE("Bypassing proxy for address: " + address);
++         return false;
++      }
++   }
++   return true;
++}
++
++const ProxyUtils& proxyUtils()
++{
++   static ProxyUtils proxyUtils;
++   return proxyUtils;
++}
++
++} // namespace http
++} // namespace core
++} // namespace rstudio
+--- /dev/null
++++ b/src/cpp/core/http/ProxyUtilsTests.cpp
+@@ -0,0 +1,111 @@
++/*
++ * ProxyUtilsTests.cpp
++ *
++ * Copyright (C) 2024 by Posit Software, PBC
++ *
++ * Unless you have received this program directly from Posit Software pursuant
++ * to the terms of a commercial license agreement with Posit Software, then
++ * this program is licensed to you under the terms of version 3 of the
++ * GNU Affero General Public License. This program is distributed WITHOUT
++ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
++ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
++ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
++ *
++ */
++
++#include <core/http/ProxyUtils.hpp>
++
++#include <core/system/Environment.hpp>
++
++#include <tests/TestThat.hpp>
++
++namespace rstudio {
++namespace core {
++namespace http {
++namespace tests {
++
++test_context("ProxyUtilsTests")
++{
++   test_that("httpProxyUrl prefers lower case http_proxy")
++   {
++      system::setenv("http_proxy", "http://proxy.example.com:8080");
++      system::setenv("HTTP_PROXY", "http://proxy2.example.com:8080");
++
++      ProxyUtils utils;
++      auto url = utils.httpProxyUrl("example.com", "443");
++      REQUIRE(url.has_value());
++      REQUIRE(url->hostname() == "proxy.example.com");
++      REQUIRE(url->port() == 8080);
++   }
++
++   test_that("httpProxyUrl uses HTTP_PROXY if http_proxy is not set")
++   {
++      system::unsetenv("http_proxy");
++      system::setenv("HTTP_PROXY", "http://proxy.example.com:8080");
++
++      ProxyUtils utils;
++      auto url = utils.httpProxyUrl("example.com", "443");
++      REQUIRE(url.has_value());
++      REQUIRE(url->hostname() == "proxy.example.com");
++      REQUIRE(url->port() == 8080);
++   }
++
++   test_that("httpProxyUrl returns none if no proxy is set")
++   {
++      system::unsetenv("http_proxy");
++      system::unsetenv("HTTP_PROXY");
++
++      ProxyUtils utils;
++      auto url = utils.httpProxyUrl("example.com", "443");
++      REQUIRE_FALSE(url.has_value());
++   }
++
++   test_that("httpsProxyUrl prefers lower case https_proxy")
++   {
++      system::setenv("https_proxy", "http://proxy.example.com:8080");
++      system::setenv("HTTPS_PROXY", "http://proxy2.example.com:8080");
++
++      ProxyUtils utils;
++      auto url = utils.httpsProxyUrl("example.com", "443");
++      REQUIRE(url.has_value());
++      REQUIRE(url->hostname() == "proxy.example.com");
++      REQUIRE(url->port() == 8080);
++   }
++
++   test_that("httpsProxyUrl uses HTTPS_PROXY if https_proxy is not set")
++   {
++      system::unsetenv("https_proxy");
++      system::setenv("HTTPS_PROXY", "http://proxy.example.com:8080");
++
++      ProxyUtils utils;
++      auto url = utils.httpsProxyUrl("example.com", "443");
++      REQUIRE(url.has_value());
++      REQUIRE(url->hostname() == "proxy.example.com");
++      REQUIRE(url->port() == 8080);
++   }
++
++   test_that("httpsProxyUrl returns none if no proxy is set")
++   {
++      system::unsetenv("https_proxy");
++      system::unsetenv("HTTPS_PROXY");
++
++      ProxyUtils utils;
++      auto url = utils.httpsProxyUrl("example.com", "443");
++      REQUIRE_FALSE(url.has_value());
++   }
++
++   test_that("httpProxy returns none if address matches no_proxy rule")
++   {
++      system::setenv("http_proxy", "http://proxy.example.com:8080");
++      system::setenv("no_proxy", "example.com");
++
++      ProxyUtils utils;
++      auto url =  utils.httpProxyUrl("example.com", "443");
++      REQUIRE_FALSE(url.has_value());
++   }
++}
++
++} // end namespace tests
++} // end namespace http
++} // end namespace core
++} // end namespace rstudio
+--- /dev/null
++++ b/src/cpp/core/include/core/http/NoProxyRules.hpp
+@@ -0,0 +1,159 @@
++/*
++ * NoProxyRules.hpp
++ *
++ * Copyright (C) 2024 by Posit Software, PBC
++ *
++ * Unless you have received this program directly from Posit Software pursuant
++ * to the terms of a commercial license agreement with Posit Software, then
++ * this program is licensed to you under the terms of version 3 of the
++ * GNU Affero General Public License. This program is distributed WITHOUT
++ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
++ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
++ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
++ *
++ */
++
++#ifndef NO_PROXY_RULES
++#define NO_PROXY_RULES
++
++#include <core/Result.hpp>
++
++namespace rstudio {
++namespace core {
++namespace http {
++
++/**
++ * @class NoProxyRule
++ * @brief Abstract base class for defining rules to determine if a proxy should
++ * be bypassed.
++ *
++ * This class provides an interface for creating rules that can be used to check
++ * whether a given address and port should bypass the proxy.
++ */
++class NoProxyRule
++{
++ public:
++   /**
++    * @brief Checks if the given address and port match the no proxy rules.
++    *
++    * This function determines whether the specified address and port
++    * conform to the defined proxy rules.
++    *
++    * @param address The address to be checked against the proxy rules.
++    * @param port The port to be checked against the proxy rules.
++    * @return true if the address and port match the proxy rules, meaning the
++    * proxy should be bypassed. False otherwise.
++    */
++   virtual bool match(const std::string& address,
++                      const std::string& port) const = 0;
++   /**
++    * @brief Converts the rule to a string.
++    * 
++    * This function converts the rule to a string.
++    * 
++    * @return The rule as a string.
++    */
++   virtual std::string toString() const = 0;
++   virtual ~NoProxyRule() = default;
++};
++
++/**
++ * @class NoProxyRuleDomain
++ * @brief A rule that matches a domain name.
++ *
++ * This class provides a rule that matches an address to a domain name.
++ * The domain should be specified without any subdomains. When matching,
++ * the rule will check if the address is within the specified domain. e.g.
++ * home.example.com will match the domain example.com.
++ *
++ */
++class NoProxyRuleDomain : public NoProxyRule
++{
++ public:
++   explicit NoProxyRuleDomain(const std::string& domain);
++   bool match(const std::string& address,
++              const std::string& port) const override;
++   std::string toString() const override;
++
++ private:
++   std::string domain_;
++};
++
++/**
++ * @class NoProxyRuleWildcard
++ * @brief A rule that matches a wildcard.
++ *
++ * This class provides a rule that matches a single asterisk (*) wildcard,
++ * which matches any address. This rule is used to bypass the proxy for all
++ * addresses.
++ *
++ */
++class NoProxyRuleWildcard : public NoProxyRule
++{
++ public:
++   bool match(const std::string& address,
++              const std::string& port) const override;
++   std::string toString() const override;
++};
++
++/**
++ * @class NoProxyRuleAddress
++ * @brief A rule that matches an address and optional port.
++ *
++ * This class provides a rule that matches exactly to an address and optional
++ * port.
++ */
++class NoProxyRuleAddress : public NoProxyRule
++{
++ public:
++   NoProxyRuleAddress(const std::string& address,
++                      const std::string& port = std::string());
++
++   bool match(const std::string& address,
++              const std::string& port) const override;
++   std::string toString() const override;
++
++ private:
++   std::string address_;
++   std::string port_;
++};
++
++struct CidrBlock
++{
++   uint32_t range;
++   uint32_t mask;
++};
++
++/**
++ * @class NoProxyRuleCidrBlock
++ * @brief A rule that matches an address to a CIDR block.
++ *
++ * This class provides a rule that matches an address to a CIDR block, e.g.
++ * 192.168.0.0/16 will match any address in the entire 16 bit network starting
++ * with 192.168.
++ */
++class NoProxyRuleCidrBlock : public NoProxyRule
++{
++ public:
++   NoProxyRuleCidrBlock(uint32_t range, uint32_t mask);
++   NoProxyRuleCidrBlock(const CidrBlock& cidrBlock);
++
++   static Result<CidrBlock> parseCidrBlock(const std::string& cidrBlock);
++
++   bool match(const std::string& address,
++              const std::string& port) const override;
++   std::string toString() const override;
++
++ private:
++   static Result<uint32_t> parseIpAddress(const std::string& address);
++
++   CidrBlock cidrBlock_;
++};
++
++std::unique_ptr<NoProxyRule> createNoProxyRule(const std::string& rule);
++
++} // namespace http
++} // namespace core
++} // namespace rstudio
++
++#endif // NoProxyRules
+--- /dev/null
++++ b/src/cpp/core/include/core/http/ProxyUtils.hpp
+@@ -0,0 +1,55 @@
++/*
++ * ProxyUtils.hpp
++ *
++ * Copyright (C) 2024 by Posit Software, PBC
++ *
++ * Unless you have received this program directly from Posit Software pursuant
++ * to the terms of a commercial license agreement with Posit Software, then
++ * this program is licensed to you under the terms of version 3 of the
++ * GNU Affero General Public License. This program is distributed WITHOUT
++ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
++ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
++ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
++ *
++ */
++#ifndef PROXY_UTILS
++#define PROXY_UTILS
++
++#include <boost/optional.hpp>
++#include <core/http/URL.hpp>
++
++#include <core/http/NoProxyRules.hpp>
++
++namespace rstudio {
++namespace core {
++namespace http {
++
++using NoProxyRules = std::vector<std::unique_ptr<NoProxyRule>>; 
++
++class ProxyUtils
++{
++public:
++   ProxyUtils();
++   boost::optional<URL>
++   httpProxyUrl(const std::string& address = std::string(),
++                const std::string& port = std::string()) const;
++
++   boost::optional<URL>
++   httpsProxyUrl(const std::string& address = std::string(),
++                 const std::string& port = std::string()) const;
++
++   const NoProxyRules& noProxyRules() const { return noProxyRules_; }      
++private:
++   bool shouldProxy(const std::string& address, const std::string& port) const;
++   std::string httpProxyVar_;
++   std::string httpsProxyVar_;
++   NoProxyRules noProxyRules_;
++};
++
++const ProxyUtils& proxyUtils();
++
++} // namespace http
++} // namespace core
++} // namespace rstudio
++
++#endif // PROXY_UTILS
+--- a/src/cpp/core/include/core/http/TcpIpAsyncClient.hpp
++++ b/src/cpp/core/include/core/http/TcpIpAsyncClient.hpp
+@@ -26,6 +26,7 @@
+ #include <core/http/AsyncClient.hpp>
+ #include <core/http/TcpIpSocketUtils.hpp>
+ #include <core/http/TcpIpAsyncConnector.hpp>
++#include <core/http/ProxyUtils.hpp>
+ 
+ using namespace boost::placeholders;
+ 
+@@ -63,10 +64,22 @@ private:
+    {
+       boost::shared_ptr<TcpIpAsyncConnector> pAsyncConnector(
+                      new TcpIpAsyncConnector(ioService(), &(socket())));
++   
++      auto connectAddress = address_;
++      auto connectPort = port_;
++      
++      const auto proxyUrl = proxyUtils().httpProxyUrl(address_, port_);
++
++      if(proxyUrl.has_value())
++      {
++         connectAddress = proxyUrl->hostname();
++         connectPort = std::to_string(proxyUrl->port());
++         LOG_DEBUG_MESSAGE("Using proxy: " + connectAddress + ":" + connectPort);
++      }
+ 
+       pAsyncConnector->connect(
+-            address_,
+-            port_,
++            connectAddress,
++            connectPort,
+             boost::asio::bind_executor(strand_,
+                  boost::bind(&TcpIpAsyncClient::writeRequest,
+                              TcpIpAsyncClient::sharedFromThis())),
+--- a/src/cpp/core/include/core/http/TcpIpAsyncClientSsl.hpp
++++ b/src/cpp/core/include/core/http/TcpIpAsyncClientSsl.hpp
+@@ -25,6 +25,7 @@
+ #include <core/http/AsyncClient.hpp>
+ #include <core/http/Ssl.hpp>
+ #include <core/http/TcpIpAsyncConnector.hpp>
++#include <core/http/ProxyUtils.hpp>
+ 
+ using namespace boost::placeholders;
+ 
+@@ -77,11 +78,24 @@ protected:
+                   new TcpIpAsyncConnector(ioService(),
+                                           &(ptrSslStream_->next_layer())));
+ 
++      auto connectAddress = address_;
++      auto connectPort = port_;
++
++      const auto proxyUrl = proxyUtils().httpsProxyUrl(address_, port_);
++
++      if (proxyUrl.has_value())
++      {
++         connectAddress = proxyUrl->hostname();
++         connectPort = std::to_string(proxyUrl->port());
++         LOG_DEBUG_MESSAGE("Using proxy: " + connectAddress + ":" + connectPort);
++      }
++
+       pAsyncConnector->connect(
+-            address_,
+-            port_,
+-            boost::asio::bind_executor(strand_, boost::bind(&TcpIpAsyncClientSsl::performHandshake,
+-                                                            TcpIpAsyncClientSsl::sharedFromThis())),
++            connectAddress,
++            connectPort,
++            boost::asio::bind_executor(strand_, boost::bind(&TcpIpAsyncClientSsl::handleConnect,
++                                                            TcpIpAsyncClientSsl::sharedFromThis(),
++                                                            proxyUrl)),
+             boost::asio::bind_executor(strand_, boost::bind(&TcpIpAsyncClientSsl::handleConnectionError,
+                                                             TcpIpAsyncClientSsl::sharedFromThis(),
+                                                             _1)),
+@@ -102,21 +116,106 @@ protected:
+    }
+ 
+ private:
++  void handleConnect(const boost::optional<URL>& proxyUrl)
++  {
++     if (proxyUrl)
++     {
++        http::Request connectRequest;
++        connectRequest.setMethod("CONNECT");
++        connectRequest.setUri(address_ + ":" + port_);
++        connectRequest.setHttpVersion(1, 1);
++        connectRequest.setHeader("Host", address_ + ":" + port_);
++        connectRequest.assign(connectRequest);
+ 
+-   void performHandshake()
+-   {
+-      if (verify_)
+-      {
+-         ptrSslStream_->set_verify_callback(
+-                            boost::asio::ssl::rfc2818_verification(verifyAddress_.empty() ? address_ : verifyAddress_));
+-      }
++        boost::asio::async_write(
++            socket().next_layer(),
++            connectRequest.toBuffers(),
++            boost::asio::bind_executor(
++                strand_,
++                boost::bind(&TcpIpAsyncClientSsl::handleProxyConnectWrite,
++                            sharedFromThis(),
++                            boost::asio::placeholders::error)));
++     }
++     else
++     {
++        performHandshake();
++     }
++  }
+ 
+-      ptrSslStream_->async_handshake(
+-            boost::asio::ssl::stream_base::client,
+-            boost::asio::bind_executor(strand_, boost::bind(&TcpIpAsyncClientSsl::handleHandshake,
+-                                                            sharedFromThis(),
+-                                                            boost::asio::placeholders::error)));
+-   }
++  void handleProxyConnectWrite(const boost::system::error_code& ec)
++  {
++
++     if (!ec)
++     {
++        // Only read until the end of the response line, we just want to know if
++        // the connection was successful
++        boost::asio::async_read_until(
++            socket().next_layer(),
++            connectResponseBuffer_,
++            "\r\n",
++            boost::asio::bind_executor(
++                strand_,
++                boost::bind(&TcpIpAsyncClientSsl::handleProxyConnectRead,
++                            sharedFromThis(),
++                            boost::asio::placeholders::error)));
++     }
++     else
++     {
++        handleErrorCode(ec, ERROR_LOCATION);
++     }
++  }
++
++  void handleProxyConnectRead(const boost::system::error_code& ec)
++  {
++
++     if (!ec)
++     {
++        http::Response connectResponse;
++        Error error = ResponseParser::parseStatusLine(&connectResponseBuffer_,
++                                                      &connectResponse);
++        if (error)
++        {
++           handleError(error);
++        }
++        else
++        {
++           // If the response is not a 200, we should close the connection
++           if (connectResponse.statusCode() != 200)
++           {
++              Error error = systemError(boost::system::errc::connection_refused,
++                                        "Proxy connection failed",
++                                        ERROR_LOCATION);
++              handleError(error);
++           }
++           else
++           {
++              performHandshake();
++           }
++        }
++     }
++     else
++     {
++        handleErrorCode(ec, ERROR_LOCATION);
++     }
++  }
++
++  void performHandshake()
++  {
++     if (verify_)
++     {
++        ptrSslStream_->set_verify_callback(
++            boost::asio::ssl::rfc2818_verification(
++                verifyAddress_.empty() ? address_ : verifyAddress_));
++     }
++
++     ptrSslStream_->async_handshake(
++         boost::asio::ssl::stream_base::client,
++         boost::asio::bind_executor(
++             strand_,
++             boost::bind(&TcpIpAsyncClientSsl::handleHandshake,
++                         sharedFromThis(),
++                         boost::asio::placeholders::error)));
++  }
+ 
+    void handleHandshake(const boost::system::error_code& ec)
+    {
+@@ -157,9 +256,10 @@ private:
+    std::string certificateAuthority_;
+    boost::posix_time::time_duration connectionTimeout_;
+    std::string verifyAddress_;
++   http::Request connectRequest_;
++   boost::asio::streambuf connectResponseBuffer_;
+ };
+ 
+-
+ } // namespace http
+ } // namespace core
+ } // namespace rstudio
+--- a/src/cpp/server/ServerEnvVars.cpp
++++ b/src/cpp/server/ServerEnvVars.cpp
+@@ -94,7 +94,12 @@ Error readEnvConfigFile(bool emitInfoLog)
+ // Forwards any HTTP proxy variables from the current process into the given environment.
+ void forwardHttpProxyVars(core::system::Options *pEnvironment)
+ {
+-   for (auto&& proxyVar: {"HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY"})
++   for (auto&& proxyVar : {"HTTP_PROXY",
++                           "HTTPS_PROXY",
++                           "NO_PROXY",
++                           "http_proxy",
++                           "https_proxy",
++                           "no_proxy"})
+    {
+       std::string val = core::system::getenv(proxyVar);
+       if (!val.empty())
+@@ -102,8 +107,9 @@ void forwardHttpProxyVars(core::system::Options *pEnvironment)
+          std::string oldVal = core::system::getenv(*pEnvironment, proxyVar);
+          if (!oldVal.empty() && oldVal != val)
+          {
+-             LOG_WARNING_MESSAGE("Overriding HTTP proxy setting " + std::string(proxyVar) +
+-                                 ": '" + oldVal + "' => '" + val + "'");
++            LOG_WARNING_MESSAGE("Overriding HTTP proxy setting " +
++                                std::string(proxyVar) + ": '" + oldVal +
++                                "' => '" + val + "'");
+          }
+          core::system::setenv(pEnvironment, proxyVar, val);
+       }
+--- a/src/cpp/server/ServerMain.cpp
++++ b/src/cpp/server/ServerMain.cpp
+@@ -36,6 +36,7 @@
+ #include <core/http/URL.hpp>
+ #include <core/http/AsyncUriHandler.hpp>
+ #include <core/http/TcpIpAsyncServer.hpp>
++#include <core/http/ProxyUtils.hpp>
+ 
+ #include <core/gwt/GwtLogHandler.hpp>
+ #include <core/gwt/GwtFileHandler.hpp>
+@@ -758,6 +759,23 @@ int main(int argc, char * const argv[])
+       core::system::setenv(kSessionTmpDirEnvVar, sessionTmpDir().getAbsolutePath());
+       core::system::setenv(kServerRpcSocketPathEnvVar, serverRpcSocketPath().getAbsolutePath());
+ 
++      // Log HTTP Proxy variables
++      const auto httpProxyVar = http::proxyUtils().httpProxyUrl();
++      if (httpProxyVar)
++         LOG_INFO_MESSAGE("Using HTTP Proxy: " + httpProxyVar.value().absoluteURL());
++      const auto httpsProxyVar = http::proxyUtils().httpsProxyUrl();
++      if (httpsProxyVar)
++         LOG_INFO_MESSAGE("Using HTTPS Proxy: " + httpsProxyVar.value().absoluteURL());
++      const auto& noProxyRules = http::proxyUtils().noProxyRules();
++      if (!noProxyRules.empty()) 
++      {
++         std::string noProxyStr;
++         for (const auto& rule : noProxyRules)
++            noProxyStr += rule->toString() + ",";
++         noProxyStr.pop_back();
++         LOG_INFO_MESSAGE("No Proxy Rules: " + noProxyStr);
++      }
++
+       // initialize File Lock
+       FileLock::initialize();
+ 
+-- 
+2.49.1
+
+
+From 455fe334314249d809c47a08f6b23acbc73ba175 Mon Sep 17 00:00:00 2001
+From: jgenco <102693391+jgenco@users.noreply.github.com>
+Date: Thu, 21 Aug 2025 12:44:24 -0400
+Subject: [PATCH 4/7] fff72e0ad5ea3c2a391f7327cc562796557f7a98
+
+--- a/src/cpp/core/include/core/http/AsyncClient.hpp
++++ b/src/cpp/core/include/core/http/AsyncClient.hpp
+@@ -85,6 +85,7 @@ public:
+    virtual void resumeChunkProcessing() = 0;
+    virtual void disableHandlers() = 0;
+    virtual void close() = 0;
++   virtual void setStrand(boost::asio::io_context::strand* pStrand) = 0;
+ };
+ 
+ template <typename SocketService>
+@@ -102,7 +103,7 @@ public:
+         logToStderr_(logToStderr),
+         closed_(false),
+         requestWritten_(false),
+-        strand_(ioService)
++        defaultStrand_(ioService)
+    {
+       // Make sure we read at least 8192 bytes from the socket at a time. The default ends up as 512.
+       responseBuffer_.prepare(8192);
+@@ -167,21 +168,21 @@ public:
+    virtual void asyncReadSome(boost::asio::mutable_buffers_1 buffer,
+                               Handler handler)
+    {
+-      socket().async_read_some(buffer, boost::asio::bind_executor(strand_, handler));
++      socket().async_read_some(buffer, boost::asio::bind_executor(*pStrand_, handler));
+    }
+ 
+    virtual void asyncWrite(
+                      const boost::asio::const_buffers_1& buffer,
+                      Handler handler)
+    {
+-      boost::asio::async_write(socket(), buffer, boost::asio::bind_executor(strand_, handler));
++      boost::asio::async_write(socket(), buffer, boost::asio::bind_executor(*pStrand_, handler));
+    }
+ 
+    virtual void asyncWrite(
+                      const std::vector<boost::asio::const_buffer>& buffers,
+                      Handler handler)
+    {
+-      boost::asio::async_write(socket(), buffers, boost::asio::bind_executor(strand_, handler));
++      boost::asio::async_write(socket(), buffers, boost::asio::bind_executor(*pStrand_, handler));
+    }
+ 
+    virtual void close()
+@@ -256,6 +257,11 @@ public:
+          connectHandler();
+    }
+ 
++   virtual void setStrand(boost::asio::io_context::strand* pStrand)
++   {
++      pStrand_ = pStrand;
++   }
++
+ protected:
+ 
+    boost::asio::io_service& ioService() { return ioService_; }
+@@ -293,7 +299,7 @@ protected:
+       boost::asio::async_write(
+           socket(),
+           request_.toBuffers(overrideHeader),
+-          boost::asio::bind_executor(strand_, boost::bind(
++          boost::asio::bind_executor(*pStrand_, boost::bind(
+                &AsyncClient<SocketService>::handleWrite,
+                AsyncClient<SocketService>::shared_from_this(),
+                boost::asio::placeholders::error))
+@@ -425,7 +431,7 @@ private:
+       // include error check to be paranoid/robust)
+       if (!ec)
+       {
+-         connectionRetryContext_.retryTimer.async_wait(boost::asio::bind_executor(strand_, boost::bind(
++         connectionRetryContext_.retryTimer.async_wait(boost::asio::bind_executor(*pStrand_, boost::bind(
+                &AsyncClient<SocketService>::handleConnectionRetryTimer,
+                AsyncClient<SocketService>::shared_from_this(),
+                boost::asio::placeholders::error)));
+@@ -480,7 +486,7 @@ private:
+               socket(),
+               responseBuffer_,
+               "\r\n",
+-              boost::asio::bind_executor(strand_, 
++              boost::asio::bind_executor(*pStrand_,
+                                          boost::bind(&AsyncClient<SocketService>::handleReadStatusLine,
+                                                      AsyncClient<SocketService>::shared_from_this(),
+                                                      boost::asio::placeholders::error)));
+@@ -513,7 +519,7 @@ private:
+                  socket(),
+                  responseBuffer_,
+                  "\r\n\r\n",
+-                 boost::asio::bind_executor(strand_, 
++                 boost::asio::bind_executor(*pStrand_,
+                         boost::bind(&AsyncClient<SocketService>::handleReadHeaders,
+                                     AsyncClient<SocketService>::shared_from_this(),
+                                     boost::asio::placeholders::error)));
+@@ -546,7 +552,7 @@ private:
+          socket(),
+          responseBuffer_,
+          boost::asio::transfer_at_least(1),
+-         boost::asio::bind_executor(strand_,
++         boost::asio::bind_executor(*pStrand_,
+               boost::bind(&AsyncClient<SocketService>::handleReadContent,
+                           AsyncClient<SocketService>::shared_from_this(),
+                           boost::asio::placeholders::error)));
+@@ -827,8 +833,10 @@ private:
+    bool requestWritten_;
+    ConnectHandler connectHandler_;
+ 
++   boost::asio::io_context::strand defaultStrand_;
++
+ protected:
+-   boost::asio::io_context::strand strand_;
++   boost::asio::io_context::strand* pStrand_ = &defaultStrand_;
+ 
+ };
+    
+--- a/src/cpp/core/include/core/http/AsyncConnection.hpp
++++ b/src/cpp/core/include/core/http/AsyncConnection.hpp
+@@ -90,6 +90,8 @@ public:
+    virtual const std::string& handlerPrefix() const = 0;
+ 
+    virtual void setHandlerPrefix(const std::string& prefix) = 0;
++
++   virtual boost::asio::io_context::strand& getStrand() = 0;
+ };
+ 
+ } // namespace http
+--- a/src/cpp/core/include/core/http/AsyncConnectionImpl.hpp
++++ b/src/cpp/core/include/core/http/AsyncConnectionImpl.hpp
+@@ -63,7 +63,10 @@ template <typename StreamType>
+ class SocketOperations : public ISocketOperations
+ {
+ public:
+-   SocketOperations(const boost::shared_ptr<StreamType>& stream) : stream_(stream)
++   SocketOperations(const boost::shared_ptr<StreamType>& stream,
++                    boost::asio::io_context::strand& strand) :
++                          stream_(stream),
++                          strand_(strand)
+    {
+    }
+ 
+@@ -73,26 +76,27 @@ public:
+ 
+    virtual void asyncReadSome(const boost::asio::mutable_buffers_1& buffers, ReadHandler handler)
+    {
+-      stream_->async_read_some(buffers, handler);
++      stream_->async_read_some(buffers, boost::asio::bind_executor(strand_, handler));
+    }
+ 
+    virtual void asyncWrite(const boost::asio::mutable_buffers_1& buffers, Socket::Handler handler)
+    {
+-      boost::asio::async_write(*stream_, buffers, handler);
++      boost::asio::async_write(*stream_, buffers, boost::asio::bind_executor(strand_, handler));
+    }
+ 
+    virtual void asyncWrite(const boost::asio::const_buffers_1& buffer, Socket::Handler handler)
+    {
+-      boost::asio::async_write(*stream_, buffer, handler);
++      boost::asio::async_write(*stream_, buffer, boost::asio::bind_executor(strand_, handler));
+    }
+ 
+    virtual void asyncWrite(const std::vector<boost::asio::const_buffer>& buffers, Socket::Handler handler)
+    {
+-      boost::asio::async_write(*stream_, buffers, handler);
++      boost::asio::async_write(*stream_, buffers, boost::asio::bind_executor(strand_, handler));
+    }
+ 
+ private:
+    boost::shared_ptr<StreamType> stream_;
++   boost::asio::io_context::strand& strand_;
+ };
+ 
+ template <typename SocketType>
+@@ -130,7 +134,8 @@ public:
+         responseFilter_(responseFilter),
+         closed_(false),
+         requestSequence_(requestSequence),
+-        bytesTransferred_(0)
++        bytesTransferred_(0),
++        strand_(ioService)
+         
+    {
+       if (sslContext)
+@@ -141,12 +146,12 @@ public:
+          // the owner is the SSL stream pointer - this ensures we don't double delete
+          socket_.reset(sslStream_, &sslStream_->next_layer());
+ 
+-         socketOperations_.reset(new SocketOperations<boost::asio::ssl::stream<SocketType> >(sslStream_));
++         socketOperations_.reset(new SocketOperations<boost::asio::ssl::stream<SocketType> >(sslStream_, strand_));
+       }
+       else
+       {
+          socket_.reset(new SocketType(ioService));
+-         socketOperations_.reset(new SocketOperations<SocketType>(socket_));
++         socketOperations_.reset(new SocketOperations<SocketType>(socket_, strand_));
+       }
+       request_.setRequestSequence(requestSequence);
+    }
+@@ -337,7 +342,7 @@ public:
+          {
+             Error error = closeSocket(*socket_);
+             if (error && !core::http::isConnectionTerminatedError(error))
+-               LOG_ERROR(error);
++               logConnectionError(error);
+ 
+             closed_ = true;
+             closedHandler = onClosed_;
+@@ -354,6 +359,11 @@ public:
+          closedHandler(AsyncConnectionImpl<SocketType>::weak_from_this(), fromDestructor, requestParsed_);
+    }
+ 
++   virtual boost::asio::io_context::strand& getStrand()
++   {
++      return strand_;
++   }
++
+    void setUploadHandler(const AsyncUriUploadHandlerFunction& handler)
+    {
+       FormHandler formHandler = boost::bind(handler,
+@@ -442,6 +452,12 @@ public:
+    
+ private:
+ 
++   void logConnectionError(Error error)
++   {
++      error.addProperty("request", request().debugInfo());
++      LOG_ERROR(error);
++   }
++
+    void handleRead(const boost::system::error_code& e,
+                    std::size_t bytesTransferred)
+    {
+@@ -463,7 +479,7 @@ private:
+                                              buffer_.data() + bytesTransferred);
+             }
+             END_LOCK_MUTEX
+-            
++
+             // error - return bad request
+             if (status == RequestParser::error)
+             {
+@@ -541,7 +557,7 @@ private:
+             // log the error if it wasn't connection terminated
+             Error error(e, ERROR_LOCATION);
+             if (!isConnectionTerminatedError(error))
+-               LOG_ERROR(error);
++               logConnectionError(error);
+             
+             // close the socket
+             close();
+@@ -603,7 +619,7 @@ private:
+             if (!http::isConnectionTerminatedError(error) &&
+                 !http::isWrongProtocolTypeError((error)))
+             {
+-               LOG_ERROR(error);
++               logConnectionError(error);
+             }
+          }
+          
+@@ -636,7 +652,7 @@ private:
+       {
+          Error error(ec, ERROR_LOCATION);
+          if (!core::http::isConnectionTerminatedError(error))
+-            LOG_ERROR(error);
++            logConnectionError(error);
+ 
+          return;
+       }
+@@ -657,7 +673,7 @@ private:
+    void handleStreamError(bool close, Socket::Handler handler, const Error& error)
+    {
+       if (!core::http::isConnectionTerminatedError(error))
+-         LOG_ERROR(error);
++         logConnectionError(error);
+       if (close)
+          this->close();
+       // jcheng: boost::system::generic_category() isn't correct, but I don't
+@@ -703,6 +719,9 @@ private:
+    size_t bytesTransferred_;
+ 
+    boost::any connectionData_;
++
++protected:
++   boost::asio::io_context::strand strand_;
+ };
+ 
+ } // namespace http
+--- a/src/cpp/core/include/core/http/TcpIpAsyncClient.hpp
++++ b/src/cpp/core/include/core/http/TcpIpAsyncClient.hpp
+@@ -80,10 +80,10 @@ private:
+       pAsyncConnector->connect(
+             connectAddress,
+             connectPort,
+-            boost::asio::bind_executor(strand_,
++            boost::asio::bind_executor(*pStrand_,
+                  boost::bind(&TcpIpAsyncClient::writeRequest,
+                              TcpIpAsyncClient::sharedFromThis())),
+-            boost::asio::bind_executor(strand_,
++            boost::asio::bind_executor(*pStrand_,
+                  boost::bind(&TcpIpAsyncClient::handleConnectionError,
+                              TcpIpAsyncClient::sharedFromThis(), _1)),
+             connectionTimeout_);
+--- a/src/cpp/core/include/core/http/TcpIpAsyncClientSsl.hpp
++++ b/src/cpp/core/include/core/http/TcpIpAsyncClientSsl.hpp
+@@ -93,10 +93,10 @@ protected:
+       pAsyncConnector->connect(
+             connectAddress,
+             connectPort,
+-            boost::asio::bind_executor(strand_, boost::bind(&TcpIpAsyncClientSsl::handleConnect,
++            boost::asio::bind_executor(*pStrand_, boost::bind(&TcpIpAsyncClientSsl::handleConnect,
+                                                             TcpIpAsyncClientSsl::sharedFromThis(),
+                                                             proxyUrl)),
+-            boost::asio::bind_executor(strand_, boost::bind(&TcpIpAsyncClientSsl::handleConnectionError,
++            boost::asio::bind_executor(*pStrand_, boost::bind(&TcpIpAsyncClientSsl::handleConnectionError,
+                                                             TcpIpAsyncClientSsl::sharedFromThis(),
+                                                             _1)),
+             connectionTimeout_);
+@@ -131,7 +131,7 @@ private:
+             socket().next_layer(),
+             connectRequest.toBuffers(),
+             boost::asio::bind_executor(
+-                strand_,
++                *pStrand_,
+                 boost::bind(&TcpIpAsyncClientSsl::handleProxyConnectWrite,
+                             sharedFromThis(),
+                             boost::asio::placeholders::error)));
+@@ -154,7 +154,7 @@ private:
+             connectResponseBuffer_,
+             "\r\n",
+             boost::asio::bind_executor(
+-                strand_,
++                *pStrand_,
+                 boost::bind(&TcpIpAsyncClientSsl::handleProxyConnectRead,
+                             sharedFromThis(),
+                             boost::asio::placeholders::error)));
+@@ -211,7 +211,7 @@ private:
+      ptrSslStream_->async_handshake(
+          boost::asio::ssl::stream_base::client,
+          boost::asio::bind_executor(
+-             strand_,
++             *pStrand_,
+              boost::bind(&TcpIpAsyncClientSsl::handleHandshake,
+                          sharedFromThis(),
+                          boost::asio::placeholders::error)));
+--- a/src/cpp/server/session/ServerSessionProxy.cpp
++++ b/src/cpp/server/session/ServerSessionProxy.cpp
+@@ -1210,6 +1210,8 @@ void proxyLocalhostRequest(
+    // create async tcp/ip client and assign request
+    boost::shared_ptr<http::IAsyncClient> pClient(
+       new server_core::http::LocalhostAsyncClient(ptrConnection->ioService(), address, port));
++   // Ensure async operations on both the browser->rserver and rserver->backend run on the same thread. 
++   pClient->setStrand(&ptrConnection->getStrand());
+    pClient->request().assign(request);
+ 
+    // execute request
+-- 
+2.49.1
+
+
+From 1cb8c126f65d21c6e7157b0f9ec1a17bba28616d Mon Sep 17 00:00:00 2001
+From: jgenco <102693391+jgenco@users.noreply.github.com>
+Date: Thu, 21 Aug 2025 13:07:23 -0400
+Subject: [PATCH 5/7] f324fc353c09452070c2c866d7c814efb352d0c5 partial
+
+--- a/src/cpp/session/modules/rmarkdown/NotebookExec.cpp
++++ b/src/cpp/session/modules/rmarkdown/NotebookExec.cpp
+@@ -226,8 +226,6 @@ void ChunkExecContext::connect()
+                      _3, ChunkOutputPlot, _4)));
+ 
+    auto pPlotCapture = make_unique<PlotCapture>();
+-   captures_.push_back(std::move(pPlotCapture));
+-
+    if (figWidth > 0 || figHeight > 0)
+    {
+       // user specified plot size, use it
+@@ -243,6 +241,8 @@ void ChunkExecContext::connect()
+    if (error)
+       LOG_ERROR(error);
+ 
++   captures_.push_back(std::move(pPlotCapture));
++
+    // begin capturing HTML input
+    connections_.push_back(events().onHtmlOutput.connect(
+          boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2, _3, 
+-- 
+2.49.1
+
+
+From 9cd0ff0de6fe357ca3a617cd13ab574bb716b71a Mon Sep 17 00:00:00 2001
+From: jgenco <102693391+jgenco@users.noreply.github.com>
+Date: Thu, 21 Aug 2025 13:15:10 -0400
+Subject: [PATCH 6/7] 547d09df48e5f1bcd43927055d7906eb6348a43e
+
+--- a/src/cpp/session/modules/rmarkdown/NotebookExec.cpp
++++ b/src/cpp/session/modules/rmarkdown/NotebookExec.cpp
+@@ -249,14 +249,13 @@ void ChunkExecContext::connect()
+                      ChunkOutputHtml, 0)));
+ 
+    auto pHtmlCapture = make_unique<HtmlCapture>();
+-   captures_.push_back(std::move(pHtmlCapture));
+-
+    error = pHtmlCapture->connectHtmlCapture(
+             outputPath_,
+             outputPath_.getParent().completePath(kChunkLibDir),
+             options_.chunkOptions());
+    if (error)
+       LOG_ERROR(error);
++   captures_.push_back(std::move(pHtmlCapture));
+ 
+    // log warnings immediately (unless user's changed the default warning
+    // level)
+@@ -286,8 +285,7 @@ void ChunkExecContext::connect()
+    error = pDirCapture->connectDir(docId_, workingDir_);
+    if (error)
+       LOG_ERROR(error);
+-   else
+-      captures_.push_back(std::move(pDirCapture));
++   captures_.push_back(std::move(pDirCapture));
+ 
+    // begin capturing errors
+    auto pErrorCapture = make_unique<ErrorCapture>();
+@@ -309,13 +307,12 @@ void ChunkExecContext::connect()
+                      ChunkOutputData, 0)));
+ 
+    auto pDataCapture = make_unique<DataCapture>();
+-   captures_.push_back(std::move(pDataCapture));
+-
+    error = pDataCapture->connectDataCapture(
+             outputPath_,
+             options_.mergedOptions());
+    if (error)
+       LOG_ERROR(error);
++   captures_.push_back(std::move(pDataCapture));
+ 
+    NotebookCapture::connect();
+ }
+-- 
+2.49.1
+
+
+From 32cef2932af281ac485d0a6b9ae8393460838147 Mon Sep 17 00:00:00 2001
+From: jgenco <102693391+jgenco@users.noreply.github.com>
+Date: Thu, 21 Aug 2025 13:17:11 -0400
+Subject: [PATCH 7/7] 15739
+
+--- a/dependencies/common/install-boost
++++ b/dependencies/common/install-boost
+@@ -3,7 +3,7 @@
+ #
+ # install-boost
+ #
+-# Copyright (C) 2022 by Posit Software, PBC
++# Copyright (C) 2025 by Posit Software, PBC
+ #
+ # Unless you have received this program directly from Posit Software pursuant
+ # to the terms of a commercial license agreement with Posit Software, then
+@@ -17,132 +17,125 @@
+ 
+ set -e
+ 
+-source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
+-section "Installing Boost"
++# The version of Boost to be downloaded and built.
++BOOST_VERSION=1.87.0
+ 
+-# install dir
+-INSTALL_DIR=$(pwd)
++source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
++section "Installing Boost ${BOOST_VERSION}"
+ 
+-# determine platform
+-PLATFORM=$(uname)
++OWD=$(pwd)
+ 
+ # constants
+-BOOST_VERSION_NUMBER=1.83.0
+-BOOST_VERSION=boost_1_83_0
+-BOOST_TAR=$BOOST_VERSION.tar.bz2
+-BOOST_BUILD_DIR=boost-build
+-BOOST_MODULES=(
+-   algorithm asio array bind build chrono circular_buffer config context crc
+-   date_time filesystem foreach format function interprocess iostreams
+-   lambda lexical_cast optional program_options predef property_tree random range ref
+-   regex scope_exit signals signals2 smart_ptr spirit string_algo system
+-   test thread tokenizer type_traits typeof unordered utility variant
+-)
+-
+-# compute boost dir
+-BOOST_DIR="${RSTUDIO_TOOLS_ROOT}/boost/${BOOST_VERSION}"
+-
+-
+-if [ "${PLATFORM}" = "Darwin" ]; then
+-   TOOLSET="toolset=clang-darwin"
++BOOST_FOLDER="boost_${BOOST_VERSION//./_}"
++BOOST_TARBALL="${BOOST_FOLDER}.tar.bz2"
++BOOST_PREFIX="${RSTUDIO_TOOLS_ROOT}/boost/${BOOST_FOLDER}"
++BOOST_URL="${RSTUDIO_BUILDTOOLS}/Boost/${BOOST_TARBALL}"
++BOOST_BUILDDIR="/tmp/rstudio-build/${BOOST_FOLDER}"
++
++# help Boost find correct libraries with Homebrew
++if command -v brew &> /dev/null ; then
++   BREW_PREFIX="$(brew --prefix)"
++   BOOST_EXTRA="include=${BREW_PREFIX}/include library-path=${BREW_PREFIX}/lib"
+ fi
+ 
+ # install if we aren't already installed
+-if [ -e "${BOOST_DIR}" ]; then
+-   info "Boost ${BOOST_VERSION_NUMBER} already installed at '${BOOST_DIR}'"
++if [ -e "${BOOST_PREFIX}" ]; then
++   info "Boost ${BOOST_VERSION} already installed at '${BOOST_PREFIX}'"
+    exit 0
+ fi
+ 
+ # re-run as root if necessary
+ sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
+ 
+-# move to tempdir for build
+-TEMP_DIR="$(mktemp -d)"
+-cd "${TEMP_DIR}"
+-
+-# download boost
+-BOOST_URL="${RSTUDIO_BUILDTOOLS}/Boost/${BOOST_TAR}"
+-download "${BOOST_URL}"
+-
+-# remove existing boost directory
+-rm -rf "${BOOST_DIR}"
+-
+-# untar source (remove existing)
+-rm -rf "${BOOST_BUILD_DIR}"
+-mkdir -p "${BOOST_BUILD_DIR}"
+-cd "${BOOST_BUILD_DIR}"
+-tar --bzip2 -xf "../$BOOST_TAR"
+-
+-# change to boost version folder
+-cd $BOOST_VERSION
+-
+-# bootstrap boost
+-./bootstrap.sh
+-
+-# build bcp helper
+-./b2 "${TOOLSET}" tools/bcp
++# dump the BOOST variables we've defined
++declare -p | grep BOOST_ | cut -d' ' -f3 | sort
+ 
+-# copy back to root
+-cp dist/bin/bcp bcp
+-
+-# use bcp to copy to rstudio folder (use custom namespace)
+-mkdir -p rstudio
+-
+-# shellcheck disable=SC2086
+-./bcp --namespace=rstudio_boost --namespace-alias ${BOOST_MODULES[*]} config build rstudio
+-
+-# move to rstudio folder
+-cd rstudio
+-
+-# bootstrap again
+-./bootstrap.sh
+-cp b2 bjam
+-
+-# special variation of build for osx
+-if [ "$PLATFORM" = "Darwin" ]; then
+-
+-   BJAM_CXXFLAGS="cxxflags=-fPIC -std=c++11 -mmacosx-version-min=10.12"
+-   BJAM_LDFLAGS=""
+-
+-   ./bjam                   \
+-      "${BOOST_BJAM_FLAGS}" \
+-      --prefix="$BOOST_DIR" \
+-      "${TOOLSET}"          \
+-      "${BJAM_CXXFLAGS}"    \
+-      "${BJAM_LDFLAGS}"     \
+-      variant=release       \
+-      threading=multi       \
+-      link=static           \
+-      install
+-
+-else
+-
+-   # plain old build for other platforms
+-   ./bjam                    \
+-      "${BOOST_BJAM_FLAGS}"  \
+-      --prefix="$BOOST_DIR"  \
+-      variant=release        \
+-      cxxflags="-fPIC -std=c++11" \
+-      install
++# move to build directory
++mkdir -p "${BOOST_BUILDDIR}"
++cd "${BOOST_BUILDDIR}"
+ 
++# download boost
++if ! [ -f "${BOOST_TARBALL}" ]; then
++   subsection "Downloading ${BOOST_URL}"
++   download "${BOOST_URL}"
+ fi
+ 
+-# rename libraries in the boost install dir
+-cd "$BOOST_DIR/lib"
+-for file in librstudio*; do
+-   src=$file
+-   tgt="${src//rstudio_/}"
+-   mv "$src" "$tgt"
+-done
+-
+-for file in libboost*.so; do
+-   ln -nfs "$file.$BOOST_VERSION_NUMBER" "$file"
+-done
+-
+-# go back to the original install dir and remove build and tmp dirs
+-cd "${INSTALL_DIR}"
+-rm -rf "${BOOST_BUILD_DIR}"
+-rm -rf "${TEMP_DIR}"
++# untar source; removing an existing build directory if one exists
++subsection "Extracting Boost"
++rm -rf "${BOOST_FOLDER}"
++tar --bzip2 -xf "${BOOST_TARBALL}"
++cd "${BOOST_FOLDER}"
++
++# use 'rstudio_boost' namespace instead of 'boost'
++R --no-save --no-restore -s <<- EOF
++
++# figure out which files to explore
++exts <- c("cpp", "h", "hpp", "inc", "inl", "ipp")
++pattern <- sprintf("[.](%s)$", paste(exts, collapse = "|"))
++
++# find all the files we might need to modify
++files <- list.files(
++   path       = c("boost", "libs"),
++   pattern    = pattern,
++   full.names = TRUE,
++   recursive  = TRUE
++)
+ 
+-info "Boost ${BOOST_VERSION} installed to '${BOOST_DIR}'"
++# skip examples
++files <- grep("/(examples?)/", files, value = TRUE, invert = TRUE)
++
++for (file in files) {
++   
++   # read the file as a string
++   contents <- readLines(file, warn = FALSE, encoding = "latin1")
++   original <- paste(contents, collapse = "\n")
++   replacement <- original
++   
++   # make replacements
++   replacement <- gsub(
++      pattern     = "namespace[[:space:]]+boost[[:space:]\\\\\\\\]*{",
++      replacement = "namespace rstudio_boost {} namespace boost = rstudio_boost; namespace rstudio_boost {",
++      x           = replacement,
++      perl        = TRUE
++   )
++   
++   # also needed for some macro Boost stuff
++   replacement <- gsub(
++      pattern     = "(boost)",
++      replacement = "(rstudio_boost)",
++      x           = replacement,
++      fixed       = TRUE
++   )
++   
++   # for nested namespaces
++   replacement <- gsub(
++      pattern     = "namespace boost::",
++      replacement = "namespace rstudio_boost::",
++      x           = replacement,
++      fixed       = TRUE
++   )
++   
++   if (!identical(original, replacement)) {
++      writeLines(replacement, con = file, useBytes = TRUE)
++      writeLines(sprintf("-- Updated \"%s\"", file))
++   }
++
++}
++
++EOF
++
++# bootstrap
++subsection "Bootstrapping Boost"
++./bootstrap.sh --prefix="${BOOST_PREFIX}" --without-icu --without-libraries=graph_parallel,mpi,python
++
++# build it
++subsection "Building Boost"
++./b2 -q ${BOOST_EXTRA} variant=release link=static install
++
++# clean up
++cd "${OWD}"
++is-interactive || rm -rf "${BOOST_BUILDDIR}"
++
++# all done
++yay "Boost ${BOOST_VERSION} installed to '${BOOST_PREFIX}'."
+ 
+--- a/dependencies/common/install-soci
++++ b/dependencies/common/install-soci
+@@ -26,7 +26,7 @@ SOCI_DIR="$RSTUDIO_TOOLS_ROOT/soci-${SOCI_VERSION}"
+ SOCI_BIN_DIR="${SOCI_DIR}/build"
+ SOCI_ARCHIVE=soci-${SOCI_VERSION}.tar.gz
+ SOCI_URL="${RSTUDIO_BUILDTOOLS}/${SOCI_ARCHIVE}"
+-BOOST_VERSION="1_83_0"
++BOOST_VERSION="1_87_0"
+ BOOST_DIR="$RSTUDIO_TOOLS_ROOT/boost/boost_$BOOST_VERSION"
+ 
+ # install SOCI if it isn't already installed
+--- a/dependencies/tools/rstudio-tools.sh
++++ b/dependencies/tools/rstudio-tools.sh
+@@ -20,6 +20,14 @@ section () {
+ 	echo -e "\033[1m\033[36m==>\033[39m $*\033[0m"
+ }
+ 
++subsection () {
++	echo -e "\033[1m\033[36m---\033[39m $*\033[0m"
++}
++
++subsection () {
++	echo -e "\033[1m\033[36m---\033[39m $*\033[0m"
++}
++
+ info () {
+ 	echo -e "\033[1m[I]\033[0m $*"
+ }
+@@ -40,6 +48,14 @@ error () {
+ 
+ }
+ 
++yay ()  { 
++   echo -e "\033[1;48:5:22m ✔ \033[0m \033[1m$@\033[0m"
++}
++
++yay ()  { 
++   echo -e "\033[1;48:5:22m ✔ \033[0m \033[1m$@\033[0m"
++}
++
+ set-default () {
+ 
+ 	if [ "$#" = "0" ]; then
+@@ -280,6 +296,14 @@ extract () {
+ 	esac
+ }
+ 
++is-interactive () {
++   [ -t 0 ]
++}
++
++is-interactive () {
++   [ -t 0 ]
++}
++
+ # Platform Detection ----
+ 
+ platform () {
+--- /dev/null
++++ b/dependencies/tools/use-rstudio-boost-namespace.R
+@@ -0,0 +1,53 @@
++
++# figure out which files to explore
++exts <- c("cpp", "h", "hpp", "inc", "inl", "ipp")
++pattern <- sprintf("[.](%s)$", paste(exts, collapse = "|"))
++
++# find all the files we might need to modify
++files <- list.files(
++   path       = c("boost", "libs"),
++   pattern    = pattern,
++   full.names = TRUE,
++   recursive  = TRUE
++)
++
++# skip examples
++files <- grep("/(examples?)/", files, value = TRUE, invert = TRUE)
++
++for (file in files) {
++   
++   # read the file as a string
++   contents <- readLines(file, warn = FALSE, encoding = "latin1")
++   original <- paste(contents, collapse = "\n")
++   replacement <- original
++   
++   # make replacements
++   replacement <- gsub(
++      pattern     = "namespace[[:space:]]+boost[[:space:]\\\\\\\\]*{",
++      replacement = "namespace rstudio_boost {} namespace boost = rstudio_boost; namespace rstudio_boost {",
++      x           = replacement,
++      perl        = TRUE
++   )
++   
++   # also needed for some macro Boost stuff
++   replacement <- gsub(
++      pattern     = "(boost)",
++      replacement = "(rstudio_boost)",
++      x           = replacement,
++      fixed       = TRUE
++   )
++   
++   # for nested namespaces
++   replacement <- gsub(
++      pattern     = "namespace boost::",
++      replacement = "namespace rstudio_boost::",
++      x           = replacement,
++      fixed       = TRUE
++   )
++   
++   if (!identical(original, replacement)) {
++      writeLines(replacement, con = file, useBytes = TRUE)
++      writeLines(sprintf("-- Updated \"%s\"", file))
++   }
++   
++}
+--- a/dependencies/windows/install-boost.cmd
++++ b/dependencies/windows/install-boost.cmd
+@@ -2,7 +2,7 @@
+ setlocal
+ 
+ set PATH=%CD%\tools;%PATH%
+-
++set BOOST_VERSION=1.87.0
+ 
+ REM Build Boost.
+ cd install-boost
+@@ -11,8 +11,8 @@ R --vanilla -s -f install-boost.R --args release static
+ cd ..
+ 
+ REM Build the Boost archive for upload to S3.
+-echo --^> Packaging Boost 1.83.0 ...
+-zip -r -q -9 boost-1.83.0-win-msvc142.zip ^
+-	boost-1.83.0-win-msvc142-debug-static ^
+-	boost-1.83.0-win-msvc142-release-static
++echo --^> Packaging Boost %BOOST_VERSION% ...
++zip -r -q -9 boost-%BOOST_VERSION%-win-msvc142.zip ^
++	boost-%BOOST_VERSION%-win-msvc142-debug-static ^
++	boost-%BOOST_VERSION%-win-msvc142-release-static
+ echo --^> Done!
+--- a/dependencies/windows/install-boost/install-boost.R
++++ b/dependencies/windows/install-boost/install-boost.R
+@@ -1,4 +1,6 @@
+ 
++BOOST_VERSION <- Sys.getenv("BOOST_VERSION", unset = "1.87.0")
++
+ argument <- function(index, default) {
+    args <- commandArgs(TRUE)
+    if (length(args) < index)
+@@ -29,8 +31,9 @@ options(log.dir = normalizePath("logs"))
+ PATH$prepend("../tools")
+ 
+ # initialize variables
+-boost_url <- "https://s3.amazonaws.com/rstudio-buildtools/Boost/boost_1_83_0.7z"
+-output_name <- sprintf("boost-1.83.0-win-msvc142-%s-%s.zip", variant, link)
++boost_name <- sprintf("boost_%s.7z", chartr(".", "_", BOOST_VERSION))
++boost_url <- sprintf("https://s3.amazonaws.com/rstudio-buildtools/Boost/%s", boost_name)
++output_name <- sprintf("boost-%s-win-msvc142-%s-%s.zip", BOOST_VERSION, variant, link)
+ output_dir <- normalizePath(file.path(owd, ".."), winslash = "/")
+ output_file <- file.path(output_dir, output_name)
+ install_dir <- file.path(owd, "..", tools::file_path_sans_ext(output_name))
+@@ -40,17 +43,6 @@ unlink(install_dir, recursive = TRUE)
+ ensure_dir(install_dir)
+ install_dir <- normalizePath(install_dir)
+ 
+-# boost modules we need to alias
+-boost_modules <- c(
+-   "algorithm", "asio", "array", "bind", "build", "chrono", "circular_buffer",
+-   "config", "context", "crc", "date_time", "filesystem", "foreach", "format",
+-   "function", "interprocess", "iostreams", "lambda", "lexical_cast",
+-   "optional", "predef", "program_options", "property_tree", "random", "range",
+-   "ref", "regex", "scope_exit", "signals2", "smart_ptr", "spirit",
+-   "string_algo", "system", "test", "thread", "tokenizer", "type_traits",
+-   "typeof", "unordered", "utility", "variant"
+-)
+-
+ # construct paths of interest
+ boost_filename <- basename(boost_url)
+ boost_dirname <- tools::file_path_sans_ext(boost_filename)
+@@ -113,23 +105,16 @@ if (is.na(Sys.getenv("B2_TOOLSET_ROOT", unset = NA))) {
+    
+ }
+ 
+-exec("cmd.exe", "/C call bootstrap.bat vc142")
+-
+-# create bcp executable
+-# (so we can create Boost using a private namespace)
+-exec("b2", "-j 4 tools\\bcp")
+-invisible(file.copy("dist/bin/bcp.exe", "bcp.exe"))
+-
+-# use bcp to copy boost into 'rstudio' sub-directory
+-unlink("rstudio", recursive = TRUE)
+-dir.create("rstudio")
+-fmt <- "--namespace=rstudio_boost --namespace-alias %s config build rstudio"
+-args <- sprintf(fmt, paste(boost_modules, collapse = " "))
+-exec("bcp", args)
++# use rstudio_boost for namespaces
++progress("Patching Boost namespaces")
++source("../../../tools/use-rstudio-boost-namespace.R")
+ 
+-# enter the 'rstudio' directory and re-bootstrap
+-enter("rstudio")
+-exec("cmd.exe", "/C call bootstrap.bat vc142")
++# bootstrap the project
++# TODO: system2() seems to hang and never exits, so we use processx
++args <- c("/c", "call", "bootstrap.bat", "vc142")
++result <- processx::run("cmd.exe", args, stdout = "", stderr = "")
++if (result$status != 0L)
++   stop("Error bootstrapping Boost. Sorry.")
+ 
+ # construct common arguments for 32bit, 64bit boost builds
+ b2_build_args <- function(bitness) {
+@@ -138,15 +123,20 @@ b2_build_args <- function(bitness) {
+    unlink(prefix, recursive = TRUE)
+    
+    paste(
++      "-q",
++      "--without-graph_parallel",
++      "--without-mpi",
++      "--without-python",
++      "--abbreviate-paths",
++      sprintf("--prefix=\"%s\"", prefix),
+       sprintf("address-model=%s", bitness),
+       "toolset=msvc-14.2",
+-      sprintf("--prefix=\"%s\"", prefix),
+-      "--abbreviate-paths",
+       sprintf("variant=%s", variant),
+       sprintf("link=%s", link),
+       "runtime-link=shared",
+       "threading=multi",
+       "define=BOOST_USE_WINDOWS_H",
++      "define=NOMINMAX",
+       "install"
+    )
+ }
+--- a/dependencies/windows/install-dependencies.cmd
++++ b/dependencies/windows/install-dependencies.cmd
+@@ -32,7 +32,7 @@ set SUMATRA_PDF_FILE=SumatraPDF-3.1.2-64.zip
+ set WINUTILS_FILE=winutils-1.0.zip
+ set WINPTY_FILES=winpty-0.4.3-msys2-2.7.0.zip
+ set OPENSSL_FILES=openssl-3.1.4.zip
+-set BOOST_FILES=boost-1.83.0-win-msvc142.zip
++set BOOST_FILES=boost-1.87.0-win-msvc142.zip
+ set RESOURCE_HACKER=resource_hacker.zip
+ 
+ set NSIS_NSPROCESS_VERSION=1.6
+--- a/dependencies/windows/install-soci/install-soci.R
++++ b/dependencies/windows/install-soci/install-soci.R
+@@ -28,7 +28,7 @@ soci_base_name <- paste0("soci-", soci_version)
+ soci_tar <- paste0(soci_base_name, ".tar")
+ soci_archive <- paste0(soci_tar, ".gz")
+ output_dir <- normalizePath(file.path(owd, ".."), winslash = "\\")
+-boost_dir <- normalizePath(file.path(output_dir, "boost-1.83.0-win-msvc142-release-static\\boost64"), winslash = "\\")
++boost_dir <- normalizePath(file.path(output_dir, "boost-1.87.0-win-msvc142-release-static\\boost64"), winslash = "\\")
+ soci_url <- paste0("https://rstudio-buildtools.s3.amazonaws.com/soci-", soci_version, ".tar.gz")
+ soci_dir <- file.path(owd, soci_base_name)
+ soci_build_dir <- file.path(soci_dir, "build")
+@@ -41,7 +41,7 @@ postgresql_zip <- file.path(owd, "win-postgresql.zip")
+ postgresql_zip_url <- "https://rstudio-buildtools.s3.amazonaws.com/win-postgresql.zip"
+ 
+ downloadAndUnzip <- function(outputFile, extractDir, url) {
+-   
++
+    # download zip if we don't already have it
+    if (!file.exists(outputFile)) {
+       section("Downloading '%s' from '%s'", outputFile, url)
+@@ -56,7 +56,7 @@ downloadAndUnzip <- function(outputFile, extractDir, url) {
+ }
+ 
+ if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\libsoci_core_4_0.lib"), winslash = "\\", mustWork = FALSE))) {
+-   
++
+    # download and install sqlite source
+    dir.create(sqlite_dir, recursive = TRUE, showWarnings = FALSE)
+    downloadAndUnzip(sqlite_header_zip, sqlite_dir, sqlite_header_zip_url)
+@@ -100,13 +100,13 @@ if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\lib
+                         "-DPOSTGRESQL_INCLUDE_DIR=\"", file.path(postgresql_dir, "include"), "\" ",
+                         "-DPOSTGRESQL_LIBRARY=\"", file.path(postgresql_dir, "lib/x86/Debug/libpq.lib"), "\" ",
+                         "..\\..")
+-   
++
+    # remove rtools from path, as otherwise CMake may find and try to use the
+    # standard library headers from the Rtools installation and barf
+    path <- strsplit(Sys.getenv("PATH"), ";")[[1]]
+    path <- grep("rtools", path, invert = TRUE, value = TRUE)
+    Sys.setenv(PATH = paste(path, collapse = ";"))
+-   
++
+    # x86 debug build
+    exec("cmake", cmake_args)
+    exec("cmake", "--build . --config Debug")
+@@ -130,7 +130,7 @@ if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\lib
+    cmake_args <- gsub("lib/x64/Debug/libpq.lib", "lib/x64/Release/libpq.lib", cmake_args)
+    exec("cmake", cmake_args)
+    exec("cmake", "--build . --config Release")
+-   
++
+ }
+ 
+ progress("SOCI installed successfully!")
+--- a/src/cpp/CMakeLists.txt
++++ b/src/cpp/CMakeLists.txt
+@@ -39,15 +39,6 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/globals.cmake")
+ # global directives
+ add_definitions(-DBOOST_ENABLE_ASSERT_HANDLER -DBOOST_BIND_GLOBAL_PLACEHOLDERS)
+ 
+-# explicitly do not use new c++ 11 features for websocketpp
+-# they currently do not work with our source
+-add_definitions(-D_WEBSOCKETPP_NO_CPP11_MEMORY_=1)
+-
+-# the non-strict masking option was identified as a potentially crashing
+-# issue due to reliance on undefined C++ behavior, and was removed entirely in
+-# websocketpp 0.7 (RStudio is using 0.5.1 at this time)
+-add_definitions(-DWEBSOCKETPP_STRICT_MASKING)
+-
+ # make websockets build with MSVC
+ if(WIN32 AND MSVC)
+    add_definitions(
+@@ -94,7 +85,7 @@ if(UNIX)
+ 
+    if(APPLE)
+       add_definitions(-Wno-unknown-warning-option -Wsign-compare -Wno-unused-local-typedefs -fvisibility=hidden)
+-      
++
+       find_library(APPLICATION_SERVICES_LIBRARY NAMES ApplicationServices)
+       find_library(COCOA_LIBRARY NAMES Cocoa)
+       find_library(SECURITY_LIBRARY NAMES Security)
+@@ -210,7 +201,7 @@ elseif(CMAKE_VERSION VERSION_GREATER "3.14")
+    if(WIN32)
+       add_definitions(-DYAML_CPP_STATIC_DEFINE)
+    endif()
+-      
++
+    include(FetchContent)
+    FetchContent_Declare(yaml-cpp
+      GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+@@ -249,9 +240,17 @@ endif()
+ 
+ # default Boost versions
+ if(NOT RSTUDIO_BOOST_REQUESTED_VERSION)
+-   set(RSTUDIO_BOOST_REQUESTED_VERSION 1.83.0)
++   set(RSTUDIO_BOOST_REQUESTED_VERSION 1.87.0)
+ endif()
+ 
++# set up rstudio boost version components
++set(RSTUDIO_BOOST_VERSION "${RSTUDIO_BOOST_REQUESTED_VERSION}")
++string(REPLACE "." "_" RSTUDIO_BOOST_VERSION_UNDERSCORE "${RSTUDIO_BOOST_VERSION}")
++string(REPLACE "." ";" RSTUDIO_BOOST_VERSION_LIST "${RSTUDIO_BOOST_VERSION}")
++list(GET RSTUDIO_BOOST_VERSION_LIST 0 RSTUDIO_BOOST_VERSION_MAJOR)
++list(GET RSTUDIO_BOOST_VERSION_LIST 1 RSTUDIO_BOOST_VERSION_MINOR)
++list(GET RSTUDIO_BOOST_VERSION_LIST 2 RSTUDIO_BOOST_VERSION_PATCH)
++
+ # disable system boost if we're not using it.
+ if(NOT RSTUDIO_USE_SYSTEM_BOOST)
+    set(Boost_NO_SYSTEM_PATHS ON)
+@@ -276,7 +275,7 @@ list(APPEND BOOST_LIBS
+ # UNIX BOOST
+ if(UNIX)
+    # prefer static link to our custom built version
+-   set(RSTUDIO_TOOLS_BOOST "${RSTUDIO_TOOLS_ROOT}/boost/boost_1_83_0")
++   set(RSTUDIO_TOOLS_BOOST "${RSTUDIO_TOOLS_ROOT}/boost/boost_${RSTUDIO_BOOST_VERSION_UNDERSCORE}")
+    if(NOT RSTUDIO_USE_SYSTEM_BOOST AND EXISTS ${RSTUDIO_TOOLS_BOOST})
+       add_definitions(-DRSTUDIO_BOOST_NAMESPACE=rstudio_boost)
+ 
+@@ -313,17 +312,17 @@ else()
+       set(BOOST_ARCH "64")
+    endif()
+    if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+-      set(BOOST_SUFFIX "vc142-mt-x${BOOST_ARCH}-1_83.lib")
+-      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.83.0-win-msvc142-release-static/boost${BOOST_ARCH}")
++      set(BOOST_SUFFIX "vc142-mt-x${BOOST_ARCH}-${RSTUDIO_BOOST_VERSION_MAJOR}_${RSTUDIO_BOOST_VERSION_MINOR}.lib")
++      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-${RSTUDIO_BOOST_REQUESTED_VERSION}-win-msvc142-release-static/boost${BOOST_ARCH}")
+    else()
+-      set(BOOST_SUFFIX "vc142-mt-gd-x${BOOST_ARCH}-1_83.lib")
+-      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.83.0-win-msvc142-debug-static/boost${BOOST_ARCH}")
++      set(BOOST_SUFFIX "vc142-mt-gd-x${BOOST_ARCH}-${RSTUDIO_BOOST_VERSION_MAJOR}_${RSTUDIO_BOOST_VERSION_MINOR}.lib")
++      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-${RSTUDIO_BOOST_REQUESTED_VERSION}-win-msvc142-debug-static/boost${BOOST_ARCH}")
+    endif()
+-   set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-1_83")
++   set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-${RSTUDIO_BOOST_VERSION_MAJOR}_${RSTUDIO_BOOST_VERSION_MINOR}")
+    find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} EXACT REQUIRED)
+    set(BOOST_LIBRARYDIR "${BOOST_ROOT}/lib")
+    foreach(BOOST_LIB ${BOOST_LIBS})
+-      list(APPEND Boost_LIBRARIES "${BOOST_LIBRARYDIR}/librstudio_boost_${BOOST_LIB}-${BOOST_SUFFIX}")
++      list(APPEND Boost_LIBRARIES "${BOOST_LIBRARYDIR}/libboost_${BOOST_LIB}-${BOOST_SUFFIX}")
+    endforeach()
+    message(STATUS "Using RStudio-provided Boost ${RSTUDIO_BOOST_REQUESTED_VERSION}: ${BOOST_ROOT}")
+ endif()
+@@ -523,7 +522,7 @@ else()
+       endif()
+    else()
+        file(GLOB_RECURSE SOCI_LIBRARIES "${SOCI_LIBRARY_DIR}/Release/*.lib")
+-       list(LENGTH SOCI_LIBRARIES SOCI_LIB_COUNT) 
++       list(LENGTH SOCI_LIBRARIES SOCI_LIB_COUNT)
+        if (NOT SOCI_LIB_COUNT EQUAL 0)
+          list(APPEND SOCI_LIBRARIES "Wldap32")
+          list(APPEND SOCI_LIBRARIES "Secur32")
+--- a/src/cpp/core/ExponentialBackoff.cpp
++++ b/src/cpp/core/ExponentialBackoff.cpp
+@@ -20,11 +20,11 @@
+ namespace rstudio {
+ namespace core {
+ 
+-ExponentialBackoff::ExponentialBackoff(boost::asio::io_service& ioService,
++ExponentialBackoff::ExponentialBackoff(boost::asio::io_context& ioContext,
+                                        const boost::posix_time::time_duration& initialWait,
+                                        const boost::posix_time::time_duration& maxWait,
+                                        const boost::function<void(ExponentialBackoffPtr)>& action) :
+-   ioService_(ioService),
++   ioContext_(ioContext),
+    initialWait_(initialWait),
+    maxWait_(maxWait),
+    maxNumRetries_(0),
+@@ -34,12 +34,12 @@ ExponentialBackoff::ExponentialBackoff(boost::asio::io_service& ioService,
+ {
+ }
+ 
+-ExponentialBackoff::ExponentialBackoff(boost::asio::io_service& ioService,
++ExponentialBackoff::ExponentialBackoff(boost::asio::io_context& ioContext,
+                                        const boost::posix_time::time_duration& initialWait,
+                                        const boost::posix_time::time_duration& maxWait,
+                                        unsigned int maxNumRetries,
+                                        const boost::function<void(ExponentialBackoffPtr)>& action) :
+-   ioService_(ioService),
++   ioContext_(ioContext),
+    initialWait_(initialWait),
+    maxWait_(maxWait),
+    maxNumRetries_(maxNumRetries),
+@@ -102,7 +102,7 @@ bool ExponentialBackoff::next()
+       }
+ 
+       boost::shared_ptr<boost::asio::deadline_timer> timer =
+-            boost::make_shared<boost::asio::deadline_timer>(ioService_, timeout);
++            boost::make_shared<boost::asio::deadline_timer>(ioContext_, timeout);
+ 
+       timer->async_wait([=](const boost::system::error_code& error) mutable
+       {
+--- a/src/cpp/core/SocketRpc.cpp
++++ b/src/cpp/core/SocketRpc.cpp
+@@ -163,7 +163,7 @@ void onRpcResponse(const std::string& endpoint,
+ }
+ 
+ #ifndef _WIN32
+-void sendRequestAsync(boost::asio::io_service& ioService,
++void sendRequestAsync(boost::asio::io_context& ioContext,
+                       const FilePath& socketPath,
+                       const std::string& endpoint,
+                       const http::Request& request,
+@@ -171,14 +171,14 @@ void sendRequestAsync(boost::asio::io_service& ioService,
+                       const RpcErrorHandler& onError)
+ {
+    boost::shared_ptr<http::LocalStreamAsyncClient> pClient(
+-            new http::LocalStreamAsyncClient(ioService, socketPath));
++            new http::LocalStreamAsyncClient(ioContext, socketPath));
+ 
+    pClient->request().assign(request);
+    pClient->execute(boost::bind(onRpcResponse, endpoint, _1, onResult, onError), onError);
+ }
+ #endif
+ 
+-void sendRequestAsync(boost::asio::io_service& ioService,
++void sendRequestAsync(boost::asio::io_context& ioContext,
+                       const std::string& address,
+                       const std::string& port,
+                       bool useSsl,
+@@ -193,7 +193,7 @@ void sendRequestAsync(boost::asio::io_service& ioService,
+ 
+    if (useSsl)
+    {
+-      pClient.reset(new http::TcpIpAsyncClientSsl(ioService,
++      pClient.reset(new http::TcpIpAsyncClientSsl(ioContext,
+                                                   address,
+                                                   port,
+                                                   verifySslCerts, 
+@@ -202,7 +202,7 @@ void sendRequestAsync(boost::asio::io_service& ioService,
+    }
+    else
+    {
+-      pClient.reset(new http::TcpIpAsyncClient(ioService,
++      pClient.reset(new http::TcpIpAsyncClient(ioContext,
+                                                address,
+                                                port,
+                                                connectionTimeout));
+@@ -254,7 +254,7 @@ Error invokeRpc(const FilePath& socketPath,
+    return sendRequest(socketPath, endpoint, req, pResult);
+ }
+ 
+-void invokeRpcAsync(boost::asio::io_service& ioService,
++void invokeRpcAsync(boost::asio::io_context& ioContext,
+                     const FilePath& socketPath,
+                     const std::string& endpoint,
+                     const json::Object& request,
+@@ -263,7 +263,7 @@ void invokeRpcAsync(boost::asio::io_service& ioService,
+ {
+    http::Request req;
+    constructUnixRequest(endpoint, request, &req);
+-   sendRequestAsync(ioService, socketPath, endpoint, req, onResult, onError);
++   sendRequestAsync(ioContext, socketPath, endpoint, req, onResult, onError);
+ }
+ #endif
+ 
+@@ -281,7 +281,7 @@ Error invokeRpc(const std::string& address,
+    return sendRequest(address, port, useSsl, verifySslCerts, connectionTimeout, endpoint, req, pResult);
+ }
+ 
+-void invokeRpcAsync(boost::asio::io_service& ioService,
++void invokeRpcAsync(boost::asio::io_context& ioContext,
+                     const std::string& address,
+                     const std::string& port,
+                     bool useSsl,
+@@ -294,7 +294,7 @@ void invokeRpcAsync(boost::asio::io_service& ioService,
+ {
+    http::Request req;
+    constructTcpRequest(address, endpoint, request, &req);
+-   sendRequestAsync(ioService, address, port, useSsl, verifySslCerts, connectionTimeout, endpoint, req, onResult, onError);
++   sendRequestAsync(ioContext, address, port, useSsl, verifySslCerts, connectionTimeout, endpoint, req, onResult, onError);
+ }
+ 
+ Error initialize()
+--- a/src/cpp/core/Timer.cpp
++++ b/src/cpp/core/Timer.cpp
+@@ -18,8 +18,8 @@
+ namespace rstudio {
+ namespace core {
+ 
+-Timer::Timer(boost::asio::io_service& ioService) :
+-   timer_(ioService)
++Timer::Timer(boost::asio::io_context& ioContext) :
++   timer_(ioContext)
+ {
+ }
+ 
+--- a/src/cpp/core/file_lock/FileLock.cpp
++++ b/src/cpp/core/file_lock/FileLock.cpp
+@@ -319,7 +319,7 @@ void schedulePeriodicExecution(
+ 
+ } // end anonymous namespace
+ 
+-void FileLock::refreshPeriodically(boost::asio::io_service& service,
++void FileLock::refreshPeriodically(boost::asio::io_context& service,
+                                    boost::posix_time::seconds interval)
+ {
+    // protect against re-entrancy
+--- a/src/cpp/core/http/ChunkProxy.cpp
++++ b/src/cpp/core/http/ChunkProxy.cpp
+@@ -124,7 +124,7 @@ void ChunkProxy::writeChunk()
+ 
+    const std::string& chunk = writeBuffer_.front();
+ 
+-   boost::asio::const_buffers_1 buffer(chunk.c_str(), chunk.size());
++   boost::asio::const_buffer buffer(chunk.c_str(), chunk.size());
+    pClientConnection_->asyncWrite(buffer,
+                                   boost::bind(&ChunkProxy::onChunkWrote,
+                                               shared_from_this(),
+--- a/src/cpp/core/http/FormProxy.cpp
++++ b/src/cpp/core/http/FormProxy.cpp
+@@ -95,7 +95,7 @@ void FormProxy::writeData()
+ 
+    const std::string& data = writeBuffer_.front();
+ 
+-   boost::asio::const_buffers_1 buffer(data.c_str(), data.size());
++   boost::asio::const_buffer buffer(data.c_str(), data.size());
+    pDownstreamConnection_->asyncWrite(buffer,
+                                       boost::bind(&FormProxy::onDataWrote,
+                                                   shared_from_this(),
+--- a/src/cpp/core/http/Util.cpp
++++ b/src/cpp/core/http/Util.cpp
+@@ -541,21 +541,23 @@ std::string formatMessageAsHttpChunk(const std::string& message)
+ bool isIpAddress(const std::string& str)
+ {
+    boost::system::error_code err;
+-   boost::asio::ip::address::from_string(str, err);
++   boost::asio::ip::make_address(str, err);
+    return !err;
+ }
+ 
+ bool isNetworkAddress(const std::string& str)
+ {
+-   boost::asio::io_service io_service;
++   // initialize resolver
++   boost::asio::io_context ioContext;
++   boost::asio::ip::tcp::resolver resolver(ioContext);
+ 
+    // query DNS for this address
+-   boost::asio::ip::tcp::resolver resolver(io_service);
+-   boost::asio::ip::tcp::resolver::query query(str, "");
+-
+    boost::system::error_code ec;
+-   boost::asio::ip::tcp::resolver::iterator iter = resolver.resolve(query, ec);
+-   return (!ec && iter != boost::asio::ip::tcp::resolver::iterator());
++   auto endpoint = resolver.resolve(str, "", ec);
++   if (ec)
++      return false;
++
++   return endpoint.size();
+ }
+ 
+ namespace {
+--- a/src/cpp/core/include/core/ExponentialBackoff.hpp
++++ b/src/cpp/core/include/core/ExponentialBackoff.hpp
+@@ -32,12 +32,12 @@ typedef boost::shared_ptr<ExponentialBackoff> ExponentialBackoffPtr;
+ class ExponentialBackoff : public boost::enable_shared_from_this<ExponentialBackoff>
+ {
+ public:
+-   ExponentialBackoff(boost::asio::io_service& ioService,
++   ExponentialBackoff(boost::asio::io_context& ioContext,
+                       const boost::posix_time::time_duration& initialWait,
+                       const boost::posix_time::time_duration& maxWait,
+                       const boost::function<void(ExponentialBackoffPtr)>& action);
+ 
+-   ExponentialBackoff(boost::asio::io_service& ioService,
++   ExponentialBackoff(boost::asio::io_context& ioContext,
+                       const boost::posix_time::time_duration& initialWait,
+                       const boost::posix_time::time_duration& maxWait,
+                       unsigned int maxNumRetries,
+@@ -55,7 +55,7 @@ public:
+    void reset();
+ 
+ private:
+-   boost::asio::io_service& ioService_;
++   boost::asio::io_context& ioContext_;
+    boost::posix_time::time_duration initialWait_;
+    boost::posix_time::time_duration maxWait_;
+    unsigned int maxNumRetries_;
+--- a/src/cpp/core/include/core/FileLock.hpp
++++ b/src/cpp/core/include/core/FileLock.hpp
+@@ -26,6 +26,7 @@
+ #include <boost/shared_ptr.hpp>
+ #include <boost/scoped_ptr.hpp>
+ #include <boost/asio.hpp>
++#include <boost/asio/io_context.hpp>
+ 
+ #include <core/Log.hpp>
+ #include <core/Settings.hpp>
+@@ -58,7 +59,7 @@ public:
+    
+    // refreshes all FileLock implementations
+    static void refresh();
+-   static void refreshPeriodically(boost::asio::io_service& service,
++   static void refreshPeriodically(boost::asio::io_context& service,
+                                    boost::posix_time::seconds interval = s_refreshRate);
+    
+    // sub-classes implement locking semantics
+--- a/src/cpp/core/include/core/SocketRpc.hpp
++++ b/src/cpp/core/include/core/SocketRpc.hpp
+@@ -16,7 +16,7 @@
+ #ifndef CORE_SOCKET_RPC_HPP
+ #define CORE_SOCKET_RPC_HPP
+ 
+-#include <boost/asio/io_service.hpp>
++#include <boost/asio/io_context.hpp>
+ #include <boost/function.hpp>
+ #include <shared_core/json/Json.hpp>
+ #include <boost/date_time/posix_time/posix_time.hpp>
+@@ -47,7 +47,7 @@ core::Error invokeRpc(const core::FilePath& socketPath,
+                       const core::json::Object& request,
+                       core::json::Value* pResult);
+ 
+-void invokeRpcAsync(boost::asio::io_service& ioService,
++void invokeRpcAsync(boost::asio::io_context& ioContext,
+                     const core::FilePath& socketPath,
+                     const std::string& endpoint,
+                     const core::json::Object& request,
+@@ -64,7 +64,7 @@ core::Error invokeRpc(const std::string& address,
+                       const core::json::Object& request,
+                       core::json::Value* pResult);
+ 
+-void invokeRpcAsync(boost::asio::io_service& ioService,
++void invokeRpcAsync(boost::asio::io_context& ioContext,
+                     const std::string& address,
+                     const std::string& port,
+                     bool useSsl,
+--- a/src/cpp/core/include/core/Timer.hpp
++++ b/src/cpp/core/include/core/Timer.hpp
+@@ -17,7 +17,7 @@
+ #define CORE_TIMER_HPP
+ 
+ #include <functional>
+-#include <boost/asio/io_service.hpp>
++#include <boost/asio/io_context.hpp>
+ #include <boost/asio/deadline_timer.hpp>
+ 
+ namespace rstudio {
+@@ -38,7 +38,7 @@ public:
+ class Timer : public ITimer
+ {
+ public:
+-   Timer(boost::asio::io_service& ioService);
++   Timer(boost::asio::io_context& ioContext);
+    virtual ~Timer() {}
+ 
+    virtual void cancel() override;
+--- a/src/cpp/core/include/core/http/AsyncClient.hpp
++++ b/src/cpp/core/include/core/http/AsyncClient.hpp
+@@ -21,7 +21,7 @@
+ #include <boost/enable_shared_from_this.hpp>
+ 
+ #include <boost/asio/write.hpp>
+-#include <boost/asio/io_service.hpp>
++#include <boost/asio/io_context.hpp>
+ #include <boost/asio/strand.hpp>
+ #include <boost/asio/bind_executor.hpp>
+ #include <boost/asio/placeholders.hpp>
+@@ -95,15 +95,15 @@ class AsyncClient :
+    boost::noncopyable
+ {
+ public:
+-   AsyncClient(boost::asio::io_service& ioService,
++   AsyncClient(boost::asio::io_context& ioContext,
+                bool logToStderr = false)
+       : chunkedEncoding_(false),
+-        ioService_(ioService),
+-        connectionRetryContext_(ioService),
++        ioContext_(ioContext),
++        connectionRetryContext_(ioContext),
+         logToStderr_(logToStderr),
+         closed_(false),
+         requestWritten_(false),
+-        defaultStrand_(ioService)
++        defaultStrand_(ioContext)
+    {
+       // Make sure we read at least 8192 bytes from the socket at a time. The default ends up as 512.
+       responseBuffer_.prepare(8192);
+@@ -165,14 +165,14 @@ public:
+    // the request/response protocol used by the class in the ordinary
+    // course of business)
+ 
+-   virtual void asyncReadSome(boost::asio::mutable_buffers_1 buffer,
++   virtual void asyncReadSome(boost::asio::mutable_buffer buffer,
+                               Handler handler)
+    {
+       socket().async_read_some(buffer, boost::asio::bind_executor(*pStrand_, handler));
+    }
+ 
+    virtual void asyncWrite(
+-                     const boost::asio::const_buffers_1& buffer,
++                     const boost::asio::const_buffer& buffer,
+                      Handler handler)
+    {
+       boost::asio::async_write(socket(), buffer, boost::asio::bind_executor(*pStrand_, handler));
+@@ -218,21 +218,17 @@ public:
+ 
+       // deliver the chunks on the thread pool instead of directly from this method
+       // so that it is not a re-entrant method (beneficial for clients if they are holding locks, etc)
+-      boost::shared_ptr<AsyncClient<SocketService> > sharedThis =
+-            AsyncClient<SocketService>::shared_from_this();
+-
+-      ioService_.post([=]()
++      boost::asio::post(ioContext_, [this]()
+       {
+-         bool complete = chunkState_->complete;
+-
+          // capture shared_ptr of this to keep instance alive while posting callback
+          // to io service
+-         bool handled = sharedThis->deliverChunks(chunkState_->chunks, complete);
++         bool complete = chunkState_->complete;
++         bool handled = deliverChunks(chunkState_->chunks, complete);
+ 
+          if (handled)
+          {
+             if (!complete)
+-               sharedThis->readSomeContent();
++               readSomeContent();
+             else
+                closeAndRespond();
+          }
+@@ -264,7 +260,7 @@ public:
+ 
+ protected:
+ 
+-   boost::asio::io_service& ioService() { return ioService_; }
++   boost::asio::io_context& ioContext() { return ioContext_; }
+ 
+    virtual SocketService& socket() = 0;
+ 
+@@ -679,11 +675,11 @@ private:
+       }
+ 
+       // get the underlying bytes from the response buffer
+-      const char* bufferPtr = boost::asio::buffer_cast<const char*>(responseBuffer_.data());
++      auto buffer = responseBuffer_.data();
+ 
+       // parse the bytes into chunks
+-      std::deque<boost::shared_ptr<std::string> > chunks;
+-      bool complete = chunkParser_->parse(bufferPtr, responseBuffer_.size(), &chunks);
++      std::deque<boost::shared_ptr<std::string>> chunks;
++      bool complete = chunkParser_->parse(static_cast<const char*>(buffer.data()), buffer.size(), &chunks);
+ 
+       // break up any enormous chunks into more manageable pieces ensure we
+       // do not hit any buffering limits preventing us from forwarding the chunk
+@@ -784,9 +780,9 @@ private:
+ private:
+    struct ConnectionRetryContext
+    {
+-      ConnectionRetryContext(boost::asio::io_service& ioService)
++      ConnectionRetryContext(boost::asio::io_context& ioContext)
+          : stopTryingTime(boost::posix_time::not_a_date_time),
+-           retryTimer(ioService)
++           retryTimer(ioContext)
+       {
+       }
+ 
+@@ -815,7 +811,7 @@ protected:
+ private:
+    static constexpr double maxChunkSize = 1024.0*1024.0; // 1MB
+ 
+-   boost::asio::io_service& ioService_;
++   boost::asio::io_context& ioContext_;
+    ConnectionRetryContext connectionRetryContext_;
+    bool logToStderr_;
+    ResponseHandler responseHandler_;
+--- a/src/cpp/core/include/core/http/AsyncConnection.hpp
++++ b/src/cpp/core/include/core/http/AsyncConnection.hpp
+@@ -18,7 +18,7 @@
+ 
+ #include <boost/any.hpp>
+ #include <boost/shared_ptr.hpp>
+-#include <boost/asio/io_service.hpp>
++#include <boost/asio/io_context.hpp>
+ 
+ #include <core/http/Response.hpp>
+ #include <core/http/Socket.hpp>
+@@ -37,7 +37,7 @@ class AsyncConnection;
+ 
+ typedef boost::function<void(boost::shared_ptr<Response>)> RequestFilterContinuation;
+ 
+-typedef boost::function<void(boost::asio::io_service&,
++typedef boost::function<void(boost::asio::io_context&,
+                              Request*,
+                              RequestFilterContinuation)> RequestFilter;
+ 
+@@ -50,7 +50,7 @@ public:
+    virtual ~AsyncConnection() {}
+ 
+    // io service for initiating dependent async network operations
+-   virtual boost::asio::io_service& ioService() = 0;
++   virtual boost::asio::io_context& ioContext() = 0;
+ 
+    // request
+    virtual const http::Request& request() const = 0;
+--- a/src/cpp/core/include/core/http/AsyncConnectionImpl.hpp
++++ b/src/cpp/core/include/core/http/AsyncConnectionImpl.hpp
+@@ -24,7 +24,7 @@
+ #include <boost/date_time/posix_time/ptime.hpp>
+ 
+ #include <boost/asio/write.hpp>
+-#include <boost/asio/io_service.hpp>
++#include <boost/asio/io_context.hpp>
+ #include <boost/asio/placeholders.hpp>
+ #include <boost/asio/ssl.hpp>
+ #include <boost/asio/ip/tcp.hpp>
+@@ -53,9 +53,9 @@ typedef boost::function<void(const boost::system::error_code&, bool)> WriteHandl
+ class ISocketOperations
+ {
+ public:
+-   virtual void asyncReadSome(const boost::asio::mutable_buffers_1& buffers, ReadHandler handler) = 0;
+-   virtual void asyncWrite(const boost::asio::mutable_buffers_1& buffers, Socket::Handler handler) = 0;
+-   virtual void asyncWrite(const boost::asio::const_buffers_1& buffers, Socket::Handler handler) = 0;
++   virtual void asyncReadSome(const boost::asio::mutable_buffer& buffers, ReadHandler handler) = 0;
++   virtual void asyncWrite(const boost::asio::mutable_buffer& buffers, Socket::Handler handler) = 0;
++   virtual void asyncWrite(const boost::asio::const_buffer& buffers, Socket::Handler handler) = 0;
+    virtual void asyncWrite(const std::vector<boost::asio::const_buffer>& buffers, Socket::Handler handler) = 0;
+ };
+ 
+@@ -74,17 +74,17 @@ public:
+    {
+    }
+ 
+-   virtual void asyncReadSome(const boost::asio::mutable_buffers_1& buffers, ReadHandler handler)
++   virtual void asyncReadSome(const boost::asio::mutable_buffer& buffers, ReadHandler handler)
+    {
+       stream_->async_read_some(buffers, boost::asio::bind_executor(strand_, handler));
+    }
+ 
+-   virtual void asyncWrite(const boost::asio::mutable_buffers_1& buffers, Socket::Handler handler)
++   virtual void asyncWrite(const boost::asio::mutable_buffer& buffers, Socket::Handler handler)
+    {
+       boost::asio::async_write(*stream_, buffers, boost::asio::bind_executor(strand_, handler));
+    }
+ 
+-   virtual void asyncWrite(const boost::asio::const_buffers_1& buffer, Socket::Handler handler)
++   virtual void asyncWrite(const boost::asio::const_buffer& buffer, Socket::Handler handler)
+    {
+       boost::asio::async_write(*stream_, buffer, boost::asio::bind_executor(strand_, handler));
+    }
+@@ -118,7 +118,7 @@ public:
+          http::Request*)> HeadersParsedHandler;
+ 
+ public:
+-   AsyncConnectionImpl(boost::asio::io_service& ioService,
++   AsyncConnectionImpl(boost::asio::io_context& ioContext,
+                        boost::shared_ptr<boost::asio::ssl::context> sslContext,
+                        long requestSequence,
+                        const HeadersParsedHandler& onHeadersParsed,
+@@ -126,7 +126,7 @@ public:
+                        const ClosedHandler& onClosed,
+                        const RequestFilter& requestFilter = RequestFilter(),
+                        const ResponseFilter& responseFilter = ResponseFilter())
+-      : ioService_(ioService),
++      : ioContext_(ioContext),
+         onHeadersParsed_(onHeadersParsed),
+         onRequestParsed_(onRequestParsed),
+         onClosed_(onClosed),
+@@ -135,12 +135,12 @@ public:
+         closed_(false),
+         requestSequence_(requestSequence),
+         bytesTransferred_(0),
+-        strand_(ioService)
++        strand_(ioContext)
+         
+    {
+       if (sslContext)
+       {
+-         sslStream_.reset(new boost::asio::ssl::stream<SocketType>(ioService, *sslContext));
++         sslStream_.reset(new boost::asio::ssl::stream<SocketType>(ioContext, *sslContext));
+ 
+          // get socket and store it in a separate shared pointer
+          // the owner is the SSL stream pointer - this ensures we don't double delete
+@@ -150,7 +150,7 @@ public:
+       }
+       else
+       {
+-         socket_.reset(new SocketType(ioService));
++         socket_.reset(new SocketType(ioContext));
+          socketOperations_.reset(new SocketOperations<SocketType>(socket_, strand_));
+       }
+       request_.setRequestSequence(requestSequence);
+@@ -191,9 +191,9 @@ public:
+       }
+    }
+ 
+-   virtual boost::asio::io_service& ioService()
++   virtual boost::asio::io_context& ioContext()
+    {
+-      return ioService_;
++      return ioContext_;
+    }
+ 
+    virtual const http::Request& request() const
+@@ -301,7 +301,7 @@ public:
+    // request/response protocol used by the class in the ordinary course
+    // of business)
+ 
+-   virtual void asyncReadSome(boost::asio::mutable_buffers_1 buffer,
++   virtual void asyncReadSome(boost::asio::mutable_buffer buffer,
+                               Socket::Handler handler)
+    {
+       socketOperations_->asyncReadSome(buffer, handler);
+@@ -315,7 +315,7 @@ public:
+    }
+ 
+    virtual void asyncWrite(
+-                     const boost::asio::const_buffers_1& buffer,
++                     const boost::asio::const_buffer& buffer,
+                      Socket::Handler handler)
+    {
+       socketOperations_->asyncWrite(buffer, handler);
+@@ -378,11 +378,15 @@ public:
+    {
+       // continue parsing by reinvoking the read handler
+       // with the amount of bytes that were read last time it was called
+-      // this is posted to the io_service to be invoked asynchronously
++      // this is posted to the io_context to be invoked asynchronously
+       // so callers are not reentrantly locked
+-      ioService_.post(boost::bind(&AsyncConnectionImpl<SocketType>::handleRead,
+-                                  AsyncConnectionImpl<SocketType>::shared_from_this(),
+-                                  boost::system::error_code(), bytesTransferred_));
++      boost::asio::post(
++               ioContext_,
++               boost::bind(
++                  &AsyncConnectionImpl<SocketType>::handleRead,
++                  AsyncConnectionImpl<SocketType>::shared_from_this(),
++                  boost::system::error_code(),
++                  bytesTransferred_));
+    }
+ 
+    virtual void setData(const boost::any& data)
+@@ -505,7 +509,7 @@ private:
+                   // call the filter (passing a continuation to be invoked
+                   // once the filter is completed)
+                   requestFilter_(
+-                     ioService(),
++                     ioContext(),
+                      &request_,
+                      boost::bind(
+                         &AsyncConnectionImpl<SocketType>::requestFilterContinuation,
+@@ -684,7 +688,7 @@ private:
+    }
+ 
+ private:
+-   boost::asio::io_service& ioService_;
++   boost::asio::io_context& ioContext_;
+ 
+    // optional ssl stream
+    // not used if the connection is not ssl enabled
+--- a/src/cpp/core/include/core/http/AsyncServer.hpp
++++ b/src/cpp/core/include/core/http/AsyncServer.hpp
+@@ -20,7 +20,7 @@
+ 
+ #include <boost/shared_ptr.hpp>
+ #include <boost/date_time/posix_time/ptime.hpp>
+-#include <boost/asio/io_service.hpp>
++#include <boost/asio/io_context.hpp>
+ 
+ #include <core/ScheduledCommand.hpp>
+ 
+@@ -57,7 +57,7 @@ public:
+    {
+    }
+ 
+-   virtual boost::asio::io_service& ioService() = 0;
++   virtual boost::asio::io_context& ioContext() = 0;
+    
+    virtual void setAbortOnResourceError(bool abortOnResourceError) = 0;
+    
+--- a/src/cpp/core/include/core/http/AsyncServerImpl.hpp
++++ b/src/cpp/core/include/core/http/AsyncServerImpl.hpp
+@@ -24,7 +24,7 @@
+ #include <boost/algorithm/string.hpp>
+ #include <boost/variant/static_visitor.hpp>
+ 
+-#include <boost/asio/io_service.hpp>
++#include <boost/asio/io_context.hpp>
+ #include <boost/asio/placeholders.hpp>
+ #include <boost/asio/deadline_timer.hpp>
+ 
+@@ -89,7 +89,7 @@ public:
+         allowedOrigins_(allowedOrigins),
+         additionalResponseHeaders_(additionalResponseHeaders),
+         scheduledCommandInterval_(boost::posix_time::seconds(3)),
+-        scheduledCommandTimer_(acceptorService_.ioService()),
++        scheduledCommandTimer_(acceptorService_.ioContext()),
+         running_(false),
+         totalTime_(boost::posix_time::seconds(0)),
+         minTime_(boost::posix_time::seconds(0)),
+@@ -104,9 +104,9 @@ public:
+    {
+    }
+ 
+-   virtual boost::asio::io_service& ioService()
++   virtual boost::asio::io_context& ioContext()
+    {
+-      return acceptorService_.ioService();
++      return acceptorService_.ioContext();
+    }
+    
+    virtual void setAbortOnResourceError(bool abortOnResourceError)
+@@ -376,7 +376,7 @@ public:
+          LOG_ERROR(Error(closeEc, ERROR_LOCATION));
+       
+       // stop the server 
+-      acceptorService_.ioService().stop();
++      acceptorService_.ioContext().stop();
+ 
+       std::set<boost::weak_ptr<AsyncConnectionImpl<typename ProtocolType::socket> >> connections;
+       boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket>> pendingConnection;
+@@ -457,10 +457,11 @@ private:
+    {
+       try
+       {
+-         boost::system::error_code ec;
+-         acceptorService_.ioService().run(ec);
+-         if (ec)
+-            LOG_ERROR(Error(ec, ERROR_LOCATION));
++         acceptorService_.ioContext().run();
++      }
++      catch (boost::system::system_error& error)
++      {
++         LOG_ERROR(Error(error.code(), ERROR_LOCATION));
+       }
+       CATCH_UNEXPECTED_EXCEPTION
+    }
+@@ -552,8 +553,8 @@ private:
+       ptrNextConnection_.reset(
+                new AsyncConnectionImpl<typename ProtocolType::socket> (
+ 
+-         // controlling io_service
+-         acceptorService_.ioService(),
++         // controlling io_context
++         acceptorService_.ioContext(),
+ 
+          // optional ssl context - only used for SSL connections
+          sslContext_,
+@@ -800,12 +801,12 @@ private:
+    }
+ 
+    void connectionRequestFilter(
+-            boost::asio::io_service& ioService,
++            boost::asio::io_context& ioContext,
+             http::Request* pRequest,
+             http::RequestFilterContinuation continuation)
+    {
+       if (requestFilter_)
+-         requestFilter_(ioService, pRequest, continuation);
++         requestFilter_(ioContext, pRequest, continuation);
+       else
+          continuation(boost::shared_ptr<http::Response>());
+    }
+--- a/src/cpp/core/include/core/http/BlockingClient.hpp
++++ b/src/cpp/core/include/core/http/BlockingClient.hpp
+@@ -45,7 +45,7 @@ void errorHandler(const Error& error, Error* pTargetError)
+ }
+ 
+ template <typename SocketService>
+-Error sendRequest(boost::asio::io_service& ioService,
++Error sendRequest(boost::asio::io_context& ioContext,
+                   boost::shared_ptr<AsyncClient<SocketService> > pClient,
+                   const http::Request& request,
+                   http::Response* pResponse)
+@@ -59,10 +59,14 @@ Error sendRequest(boost::asio::io_service& ioService,
+                     boost::bind(errorHandler, _1, &error));
+ 
+    // run the io service
+-   boost::system::error_code ec;
+-   ioService.run(ec);
+-   if (ec)
+-      return Error(ec, ERROR_LOCATION);
++   try
++   {
++      ioContext.run();
++   }
++   catch (boost::system::system_error& error)
++   {
++      return Error(error.code(), ERROR_LOCATION);
++   }
+ 
+    // return error status
+    return error;
+--- a/src/cpp/core/include/core/http/BoostAsioSsl.hpp
++++ b/src/cpp/core/include/core/http/BoostAsioSsl.hpp
+@@ -23,7 +23,7 @@
+ 
+ #include <boost/asio/ssl/context.hpp>
+ #include <boost/asio/ssl/stream.hpp>
+-#include <boost/asio/ssl/rfc2818_verification.hpp>
++#include <boost/asio/ssl/host_name_verification.hpp>
+ 
+ #ifdef __clang__
+ #pragma clang diagnostic pop
+--- a/src/cpp/core/include/core/http/LocalStreamAsyncClient.hpp
++++ b/src/cpp/core/include/core/http/LocalStreamAsyncClient.hpp
+@@ -39,15 +39,15 @@ class LocalStreamAsyncClient
+    : public AsyncClient<boost::asio::local::stream_protocol::socket>
+ {
+ public:
+-   LocalStreamAsyncClient(boost::asio::io_service& ioService,
++   LocalStreamAsyncClient(boost::asio::io_context& ioContext,
+                           const FilePath localStreamPath,
+                           bool logToStderr = false,
+                           boost::optional<UidType> validateUid = boost::none,
+                           const http::ConnectionRetryProfile& retryProfile =
+                                                 http::ConnectionRetryProfile())
+-     : AsyncClient<boost::asio::local::stream_protocol::socket>(ioService,
++     : AsyncClient<boost::asio::local::stream_protocol::socket>(ioContext,
+                                                                 logToStderr),
+-       socket_(ioService),
++       socket_(ioContext),
+        localStreamPath_(localStreamPath),
+        validateUid_(validateUid),
+        retriedPermDenied_(false)
+--- a/src/cpp/core/include/core/http/LocalStreamAsyncServer.hpp
++++ b/src/cpp/core/include/core/http/LocalStreamAsyncServer.hpp
+@@ -16,7 +16,7 @@
+ #ifndef CORE_HTTP_LOCAL_STREAM_ASYNC_SERVER_HPP
+ #define CORE_HTTP_LOCAL_STREAM_ASYNC_SERVER_HPP
+ 
+-#include <boost/asio/io_service.hpp>
++#include <boost/asio/io_context.hpp>
+ 
+ #include <core/http/LocalStreamSocketUtils.hpp>
+ #include <core/http/AsyncServerImpl.hpp>
+--- a/src/cpp/core/include/core/http/LocalStreamBlockingClient.hpp
++++ b/src/cpp/core/include/core/http/LocalStreamBlockingClient.hpp
+@@ -30,12 +30,12 @@ inline Error sendRequest(const FilePath& localStreamPath,
+                          http::Response* pResponse)
+ {
+    // create client
+-   boost::asio::io_service ioService;
++   boost::asio::io_context ioContext;
+    boost::shared_ptr<LocalStreamAsyncClient> pClient(
+-         new LocalStreamAsyncClient(ioService, localStreamPath, true));
++         new LocalStreamAsyncClient(ioContext, localStreamPath, true));
+ 
+    // execute blocking request
+-   return sendRequest<boost::asio::local::stream_protocol::socket>(ioService,
++   return sendRequest<boost::asio::local::stream_protocol::socket>(ioContext,
+                                                                    pClient,
+                                                                    request,
+                                                                    pResponse);
+--- a/src/cpp/core/include/core/http/LocalStreamSocketUtils.hpp
++++ b/src/cpp/core/include/core/http/LocalStreamSocketUtils.hpp
+@@ -81,7 +81,7 @@ inline Error initLocalStreamAcceptor(
+       return error;
+    
+    // listen
+-   acceptor.listen(boost::asio::socket_base::max_connections, ec);
++   acceptor.listen(boost::asio::socket_base::max_listen_connections, ec);
+    if (ec)
+       return Error(ec, ERROR_LOCATION);
+    
+--- a/src/cpp/core/include/core/http/NamedPipeAsyncClient.hpp
++++ b/src/cpp/core/include/core/http/NamedPipeAsyncClient.hpp
+@@ -18,7 +18,7 @@
+ 
+ #include <boost/function.hpp>
+ 
+-#include <boost/asio/io_service.hpp>
++#include <boost/asio/io_context.hpp>
+ #include <boost/asio/windows/stream_handle.hpp>
+ 
+ #include <shared_core/Error.hpp>
+@@ -42,11 +42,11 @@ public:
+    // to ConnectNamedPipe). rather than create yet another timer-based
+    // retry mechanism for CreateFile on the named pipe client handle we
+    // require that clients use a connection retry profile
+-   NamedPipeAsyncClient(boost::asio::io_service& ioService,
++   NamedPipeAsyncClient(boost::asio::io_context& ioContext,
+                         const std::string& pipeName,
+                         const http::ConnectionRetryProfile& retryProfile)
+-     : AsyncClient<boost::asio::windows::stream_handle>(ioService),
+-       handle_(ioService),
++     : AsyncClient<boost::asio::windows::stream_handle>(ioContext),
++       handle_(ioContext),
+        pipeName_(pipeName)
+    {  
+       setConnectionRetryProfile(retryProfile);
+--- a/src/cpp/core/include/core/http/NamedPipeBlockingClient.hpp
++++ b/src/cpp/core/include/core/http/NamedPipeBlockingClient.hpp
+@@ -31,12 +31,12 @@ inline Error sendRequest(const std::string& pipeName,
+                          http::Response* pResponse)
+ {
+    // create client
+-   boost::asio::io_service ioService;
++   boost::asio::io_context ioContext;
+    boost::shared_ptr<NamedPipeAsyncClient> pClient(
+-         new NamedPipeAsyncClient(ioService, pipeName, retryProfile));
++         new NamedPipeAsyncClient(ioContext, pipeName, retryProfile));
+ 
+    // execute blocking request
+-   return sendRequest<boost::asio::windows::stream_handle>(ioService,
++   return sendRequest<boost::asio::windows::stream_handle>(ioContext,
+                                                            pClient,
+                                                            request,
+                                                            pResponse);
+--- a/src/cpp/core/include/core/http/Socket.hpp
++++ b/src/cpp/core/include/core/http/Socket.hpp
+@@ -47,11 +47,11 @@ public:
+    }
+ 
+ public:
+-   virtual void asyncReadSome(boost::asio::mutable_buffers_1 buffers,
++   virtual void asyncReadSome(boost::asio::mutable_buffer buffers,
+                               Handler handler) = 0;
+ 
+    virtual void asyncWrite(
+-                     const boost::asio::const_buffers_1& buffer,
++                     const boost::asio::const_buffer& buffer,
+                      Handler handler) = 0;
+ 
+    virtual void asyncWrite(
+--- a/src/cpp/core/include/core/http/SocketAcceptorService.hpp
++++ b/src/cpp/core/include/core/http/SocketAcceptorService.hpp
+@@ -22,7 +22,7 @@
+ #include <boost/utility.hpp>
+ #include <boost/scoped_ptr.hpp>
+ 
+-#include <boost/asio/io_service.hpp>
++#include <boost/asio/io_context.hpp>
+ 
+ #include <shared_core/Error.hpp>
+ #include <core/Log.hpp>
+@@ -40,15 +40,15 @@ class SocketAcceptorService : boost::noncopyable
+ {
+ public:
+    SocketAcceptorService()
+-      : pInternalIOService_(new boost::asio::io_service()),
+-        ioService_(*pInternalIOService_),
+-        acceptor_(ioService_)
++      : pInternalIOService_(new boost::asio::io_context()),
++        ioContext_(*pInternalIOService_),
++        acceptor_(ioContext_)
+    {
+    }
+    
+-   explicit SocketAcceptorService(boost::asio::io_service& ioService)
+-      : ioService_(ioService),
+-        acceptor_(ioService_)
++   explicit SocketAcceptorService(boost::asio::io_context& ioContext)
++      : ioContext_(ioContext),
++        acceptor_(ioContext_)
+    {
+    }
+ 
+@@ -73,9 +73,9 @@ public:
+ 
+ public:
+ 
+-   boost::asio::io_service& ioService()
++   boost::asio::io_context& ioContext()
+    {
+-      return ioService_;
++      return ioContext_;
+    }
+    
+    typename ProtocolType::acceptor& acceptor()
+@@ -95,8 +95,8 @@ public:
+    }
+    
+ private:
+-   boost::scoped_ptr<boost::asio::io_service> pInternalIOService_;
+-   boost::asio::io_service& ioService_;
++   boost::scoped_ptr<boost::asio::io_context> pInternalIOService_;
++   boost::asio::io_context& ioContext_;
+    typename ProtocolType::acceptor acceptor_;
+ };
+ 
+--- a/src/cpp/core/include/core/http/SslAsyncServer.hpp
++++ b/src/cpp/core/include/core/http/SslAsyncServer.hpp
+@@ -16,7 +16,7 @@
+ #ifndef CORE_HTTP_SSL_ASYNC_SERVER_HPP
+ #define CORE_HTTP_SSL_ASYNC_SERVER_HPP
+ 
+-#include <boost/asio/io_service.hpp>
++#include <boost/asio/io_context.hpp>
+ #include <boost/asio/ssl.hpp>
+ 
+ #include <shared_core/FilePath.hpp>
+--- a/src/cpp/core/include/core/http/StreamWriter.hpp
++++ b/src/cpp/core/include/core/http/StreamWriter.hpp
+@@ -87,7 +87,7 @@ private:
+                return;
+ 
+              // next, write the chunk body
+-             boost::asio::mutable_buffers_1 buff(buffer->data, buffer->size);
++             boost::asio::mutable_buffer buff(buffer->data, buffer->size);
+              boost::asio::async_write(socket_, buff,
+               [=](const boost::system::error_code& ec, size_t written) mutable
+               {
+@@ -124,7 +124,7 @@ private:
+       sstr << std::hex << chunkSize << "\r\n";
+ 
+       boost::shared_ptr<std::string> headerBuff(new std::string(sstr.str()));
+-      boost::asio::const_buffers_1 buffer(static_cast<const void*>(headerBuff->c_str()), headerBuff->size());
++      boost::asio::const_buffer buffer(static_cast<const void*>(headerBuff->c_str()), headerBuff->size());
+       boost::asio::async_write(socket_, buffer,
+        [=](const boost::system::error_code& ec, size_t written) mutable
+        {
+@@ -138,14 +138,14 @@ private:
+    {
+       const char* footer = "\r\n";
+ 
+-      boost::asio::const_buffers_1 buffer(static_cast<const void*>(footer), 2);
++      boost::asio::const_buffer buffer(static_cast<const void*>(footer), 2);
+       boost::asio::async_write(socket_, buffer, handler);
+    }
+ 
+    void writeFinalChunk()
+    {
+       const char* finalChunk = "0\r\n\r\n";
+-      boost::asio::const_buffers_1 buffer(static_cast<const void*>(finalChunk), 5);
++      boost::asio::const_buffer buffer(static_cast<const void*>(finalChunk), 5);
+ 
+       // capture this instance so we stay alive while the writes are executing
+       boost::shared_ptr<StreamWriter> sharedThis = StreamWriter<SocketType>::shared_from_this();
+--- a/src/cpp/core/include/core/http/TcpIpAsyncClient.hpp
++++ b/src/cpp/core/include/core/http/TcpIpAsyncClient.hpp
+@@ -38,13 +38,13 @@ class TcpIpAsyncClient :
+       public AsyncClient<boost::asio::ip::tcp::socket>
+ {
+ public:
+-   TcpIpAsyncClient(boost::asio::io_service& ioService,
++   TcpIpAsyncClient(boost::asio::io_context& ioContext,
+                     const std::string& address,
+                     const std::string& port,
+                     const boost::posix_time::time_duration& connectionTimeout =
+                        boost::posix_time::time_duration(boost::posix_time::pos_infin))
+-     : AsyncClient<boost::asio::ip::tcp::socket>(ioService),
+-       socket_(ioService),
++     : AsyncClient<boost::asio::ip::tcp::socket>(ioContext),
++       socket_(ioContext),
+        address_(address),
+        port_(port),
+        connectionTimeout_(connectionTimeout)
+@@ -63,7 +63,7 @@ private:
+    virtual void connectAndWriteRequest()
+    {
+       boost::shared_ptr<TcpIpAsyncConnector> pAsyncConnector(
+-                     new TcpIpAsyncConnector(ioService(), &(socket())));
++                     new TcpIpAsyncConnector(ioContext(), &(socket())));
+    
+       auto connectAddress = address_;
+       auto connectPort = port_;
+--- a/src/cpp/core/include/core/http/TcpIpAsyncClientSsl.hpp
++++ b/src/cpp/core/include/core/http/TcpIpAsyncClientSsl.hpp
+@@ -37,7 +37,7 @@ class TcpIpAsyncClientSsl
+    : public AsyncClient<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> >
+ {
+ public:
+-   TcpIpAsyncClientSsl(boost::asio::io_service& ioService,
++   TcpIpAsyncClientSsl(boost::asio::io_context& ioContext,
+                        const std::string& address,
+                        const std::string& port,
+                        bool verify,
+@@ -46,7 +46,7 @@ public:
+                           boost::posix_time::time_duration(boost::posix_time::pos_infin),
+                        const std::string& hostname = std::string(),
+                        const std::string& verifyAddress = std::string())
+-     : AsyncClient<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> >(ioService),
++     : AsyncClient<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> >(ioContext),
+        sslContext_(boost::asio::ssl::context::sslv23_client),
+        address_(address),
+        port_(port),
+@@ -59,7 +59,7 @@ public:
+ 
+       // use scoped ptr so we can call the constructor after we've configured
+       // the ssl::context (immediately above)
+-      ptrSslStream_.reset(new boost::asio::ssl::stream<boost::asio::ip::tcp::socket>(ioService, sslContext_));
++      ptrSslStream_.reset(new boost::asio::ssl::stream<boost::asio::ip::tcp::socket>(ioContext, sslContext_));
+ 
+       ssl::initializeSslStream(ptrSslStream_.get(), (hostname.empty() ? address_.c_str() : hostname.c_str()));
+    }
+@@ -75,7 +75,7 @@ protected:
+    virtual void connectAndWriteRequest()
+    {
+       boost::shared_ptr<TcpIpAsyncConnector> pAsyncConnector(
+-                  new TcpIpAsyncConnector(ioService(),
++                  new TcpIpAsyncConnector(ioContext(),
+                                           &(ptrSslStream_->next_layer())));
+ 
+       auto connectAddress = address_;
+@@ -204,7 +204,7 @@ private:
+      if (verify_)
+      {
+         ptrSslStream_->set_verify_callback(
+-            boost::asio::ssl::rfc2818_verification(
++            boost::asio::ssl::host_name_verification(
+                 verifyAddress_.empty() ? address_ : verifyAddress_));
+      }
+ 
+--- a/src/cpp/core/include/core/http/TcpIpAsyncConnector.hpp
++++ b/src/cpp/core/include/core/http/TcpIpAsyncConnector.hpp
+@@ -53,11 +53,11 @@ public:
+    typedef boost::function<void(const core::Error&)> ErrorHandler;
+ 
+ public:
+-   TcpIpAsyncConnector(boost::asio::io_service& ioService,
++   TcpIpAsyncConnector(boost::asio::io_context& ioContext,
+                        boost::asio::ip::tcp::socket* pSocket)
+-     : service_(ioService),
++     : service_(ioContext),
+        pSocket_(pSocket),
+-       resolver_(ioService),
++       resolver_(ioContext),
+        isConnected_(false),
+        hasFailed_(false)
+    {
+@@ -88,14 +88,14 @@ public:
+                                                    boost::asio::placeholders::error));
+       }
+ 
+-      // start an async resolve
+-      boost::asio::ip::tcp::resolver::query query(address, port);
+-      resolver_.async_resolve(
+-            query,
+-            boost::bind(&TcpIpAsyncConnector::handleResolve,
+-                        TcpIpAsyncConnector::shared_from_this(),
+-                        boost::asio::placeholders::error,
+-                        boost::asio::placeholders::iterator));
++      auto callback = [this](
++            const boost::system::error_code& ec,
++            boost::asio::ip::tcp::resolver::results_type results)
++      {
++         handleResolve(ec, results.begin());
++      };
++
++      resolver_.async_resolve(address, port, std::move(callback));
+    }
+ 
+ private:
+@@ -133,7 +133,7 @@ private:
+ 
+    void handleResolve(
+          const boost::system::error_code& ec,
+-         boost::asio::ip::tcp::resolver::iterator endpoint_iterator)
++         boost::asio::ip::tcp::resolver::results_type::iterator endpoint_iterator)
+    {
+       if (ec == boost::asio::error::operation_aborted)
+          return;
+@@ -150,7 +150,7 @@ private:
+                // work-around - in some rare instances, we've seen that Boost will still
+                // return us an empty endpoint_iterator, even when successful, which is
+                // contrary to the documentation
+-               if (endpoint_iterator == boost::asio::ip::tcp::resolver::iterator())
++               if (endpoint_iterator == boost::asio::ip::tcp::resolver::results_type::iterator())
+                {
+                   handleErrorCode(boost::system::error_code(boost::system::errc::io_error,
+                                                             boost::system::system_category()),
+@@ -179,7 +179,7 @@ private:
+ 
+    void handleConnect(
+          const boost::system::error_code& ec,
+-         boost::asio::ip::tcp::resolver::iterator endpoint_iterator)
++         boost::asio::ip::tcp::resolver::results_type::iterator endpoint_iterator)
+    {
+       if (ec == boost::asio::error::operation_aborted)
+          return;
+@@ -202,7 +202,7 @@ private:
+                   connectedHandler_();
+             }
+             else if (endpoint_iterator !=
+-                     boost::asio::ip::tcp::resolver::iterator())
++                     boost::asio::ip::tcp::resolver::results_type::iterator())
+             {
+                // try next endpoint
+                pSocket_->close();
+@@ -254,7 +254,7 @@ private:
+    }
+ 
+ private:
+-   boost::asio::io_service& service_;
++   boost::asio::io_context& service_;
+    boost::asio::ip::tcp::socket* pSocket_;
+    boost::asio::ip::tcp::resolver resolver_;
+    ConnectedHandler connectedHandler_;
+--- a/src/cpp/core/include/core/http/TcpIpBlockingClient.hpp
++++ b/src/cpp/core/include/core/http/TcpIpBlockingClient.hpp
+@@ -32,14 +32,14 @@ inline Error sendRequest(const std::string& address,
+                          http::Response* pResponse)
+ {
+    // create client
+-   boost::asio::io_service ioService;
+-   boost::shared_ptr<TcpIpAsyncClient> pClient(new TcpIpAsyncClient(ioService,
++   boost::asio::io_context ioContext;
++   boost::shared_ptr<TcpIpAsyncClient> pClient(new TcpIpAsyncClient(ioContext,
+                                                                     address,
+                                                                     port,
+                                                                     connectionTimeout));
+ 
+    // execute blocking request
+-   return sendRequest<boost::asio::ip::tcp::socket>(ioService,
++   return sendRequest<boost::asio::ip::tcp::socket>(ioContext,
+                                                     pClient,
+                                                     request,
+                                                     pResponse);
+--- a/src/cpp/core/include/core/http/TcpIpBlockingClientSsl.hpp
++++ b/src/cpp/core/include/core/http/TcpIpBlockingClientSsl.hpp
+@@ -32,13 +32,13 @@ inline Error sendSslRequest(const std::string& address,
+                             Response* pResponse)
+ {
+    // create client
+-   boost::asio::io_service ioService;
++   boost::asio::io_context ioContext;
+    boost::shared_ptr<TcpIpAsyncClientSsl> pClient(
+-         new TcpIpAsyncClientSsl(ioService, address, port, verify, std::string(), connectionTimeout));
++         new TcpIpAsyncClientSsl(ioContext, address, port, verify, std::string(), connectionTimeout));
+ 
+    // execute blocking request
+    return sendRequest<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> >
+-                                                         (ioService,
++                                                         (ioContext,
+                                                           pClient,
+                                                           request,
+                                                           pResponse);
+--- a/src/cpp/core/include/core/http/TcpIpSocketUtils.hpp
++++ b/src/cpp/core/include/core/http/TcpIpSocketUtils.hpp
+@@ -30,7 +30,7 @@ namespace core {
+ namespace http {  
+      
+ template <typename SocketType>
+-Error connect(boost::asio::io_service& ioService,
++Error connect(boost::asio::io_context& ioContext,
+               const std::string& address,
+               const std::string& port,
+               SocketType* pSocket)
+@@ -38,17 +38,14 @@ Error connect(boost::asio::io_service& ioService,
+    using boost::asio::ip::tcp;
+    
+    // resolve the address
+-   tcp::resolver resolver(ioService);
+-   tcp::resolver::query query(address, port);
++   tcp::resolver resolver(ioContext);
+    
+    boost::system::error_code ec;
+-   tcp::resolver::iterator endpointIterator = resolver.resolve(query, ec);
++   auto endpoints = resolver.resolve(address, port, ec);
+    if (ec)
+       return Error(ec, ERROR_LOCATION);
+    
+-   tcp::resolver::iterator end;
+-   ec = boost::asio::error::host_not_found;
+-   while (ec && endpointIterator != end)
++   for (auto&& endpoint : endpoints)
+    {
+       // cleanup existing socket connection (if any). don't allow
+       // an error shutting down to prevent us from trying a
+@@ -57,18 +54,26 @@ Error connect(boost::asio::io_service& ioService,
+       if (closeError)
+          LOG_ERROR(closeError);
+       
+-      // attempt to connect
+-      pSocket->connect(*endpointIterator++, ec);
++      // attempt to connect; try next endpoint on failure
++      pSocket->connect(endpoint, ec);
++      if (ec)
++         continue;
++
++      // if we get here, we got a connection -- use it
++      break;
+    }
++
++   // if we don't have a connection still, just return
++   // the last error we got
+    if (ec)
+       return Error(ec, ERROR_LOCATION);
+-   
++
+    // set tcp nodelay (propagate any errors)
+    pSocket->set_option(tcp::no_delay(true), ec);
+    if (ec)
+       return Error(ec, ERROR_LOCATION);
+-   else
+-      return Success();
++
++   return Success();
+ }
+                      
+ 
+@@ -79,16 +84,18 @@ inline Error initTcpIpAcceptor(
+ {
+    using boost::asio::ip::tcp;
+    
+-   tcp::resolver resolver(acceptorService.ioService());
+-   tcp::resolver::query query(address, port);
+-   
++   auto& acceptor = acceptorService.acceptor();
++   tcp::resolver resolver(acceptorService.ioContext());
++
+    boost::system::error_code ec;
+-   tcp::resolver::iterator entries = resolver.resolve(query, ec);
++   auto entries = resolver.resolve(address, port, ec);
+    if (ec)
+       return Error(ec, ERROR_LOCATION);
+-   
+-   tcp::acceptor& acceptor = acceptorService.acceptor();
+-   const tcp::endpoint& endpoint = *entries;
++   else if (entries.empty())
++      return Error(boost::system::errc::protocol_error, ERROR_LOCATION);
++
++   auto entry = entries.begin();
++   auto endpoint = entry->endpoint();
+    acceptor.open(endpoint.protocol(), ec);
+    if (ec)
+       return Error(ec, ERROR_LOCATION);
+@@ -145,7 +152,7 @@ inline Error initTcpIpAcceptor(
+    if (ec)
+       return Error(ec, ERROR_LOCATION);
+    
+-   acceptor.listen(boost::asio::socket_base::max_connections, ec);
++   acceptor.listen(boost::asio::socket_base::max_listen_connections, ec);
+    if (ec)
+       return Error(ec, ERROR_LOCATION);
+    
+--- a/src/cpp/core/include/core/system/PosixChildProcess.hpp
++++ b/src/cpp/core/include/core/system/PosixChildProcess.hpp
+@@ -18,7 +18,7 @@
+ 
+ #include <set>
+ 
+-#include <boost/asio/io_service.hpp>
++#include <boost/asio/io_context.hpp>
+ 
+ #include <core/system/ChildProcess.hpp>
+ #include <core/system/Process.hpp>
+@@ -52,11 +52,11 @@ public:
+ class AsioAsyncChildProcess : public IAsioAsyncChildProcess, public AsyncChildProcess
+ {
+ public:
+-   AsioAsyncChildProcess(boost::asio::io_service& ioService,
++   AsioAsyncChildProcess(boost::asio::io_context& ioContext,
+                          const std::string& exe,
+                          const std::vector<std::string>& args,
+                          const core::system::ProcessOptions& options);
+-   AsioAsyncChildProcess(boost::asio::io_service& ioService,
++   AsioAsyncChildProcess(boost::asio::io_context& ioContext,
+                          const std::string& command,
+                          const core::system::ProcessOptions& options);
+ 
+--- a/src/cpp/core/include/core/system/PosixProcess.hpp
++++ b/src/cpp/core/include/core/system/PosixProcess.hpp
+@@ -16,7 +16,7 @@
+ #ifndef CORE_SYSTEM_POSIX_PROCESS_HPP
+ #define CORE_SYSTEM_POSIX_PROCESS_HPP
+ 
+-#include <boost/asio/io_service.hpp>
++#include <boost/asio/io_context.hpp>
+ 
+ #include <core/system/Process.hpp>
+ #include <core/system/PosixChildProcess.hpp>
+@@ -32,7 +32,7 @@ namespace system {
+ class AsioProcessSupervisor : boost::noncopyable
+ {
+ public:
+-   AsioProcessSupervisor(boost::asio::io_service& ioService);
++   AsioProcessSupervisor(boost::asio::io_context& ioContext);
+    virtual ~AsioProcessSupervisor();
+ 
+    core::Error runProgram(const std::string& executable,
+--- a/src/cpp/core/system/PosixChildProcess.cpp
++++ b/src/cpp/core/system/PosixChildProcess.cpp
+@@ -1235,9 +1235,9 @@ bool AsyncChildProcess::exited()
+ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioAsyncChildProcess::Impl>
+ {
+    Impl(AsioAsyncChildProcess* parent,
+-        boost::asio::io_service& ioService) :
+-      parent_(parent), ioService_(ioService), stdOutDescriptor_(ioService_),
+-      stdErrDescriptor_(ioService_), stdInDescriptor_(ioService_), exited_(false),
++        boost::asio::io_context& ioContext) :
++      parent_(parent), ioContext_(ioContext), stdOutDescriptor_(ioContext_),
++      stdErrDescriptor_(ioContext_), stdInDescriptor_(ioContext_), exited_(false),
+       stdoutFailure_(false), stderrFailure_(false), exitCode_(0), writing_(false),
+       cleanedUp_(false)
+    {
+@@ -1529,7 +1529,7 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
+                // check again in 20 milliseconds - this is a short amount of time, but long enough
+                // to play nice with the rest of the system. in terms of process cleanup time,
+                // in most cases this should be a significant amount of time
+-               exitTimer_.reset(new deadline_timer(ioService_, milliseconds(20)));
++               exitTimer_.reset(new deadline_timer(ioContext_, milliseconds(20)));
+                exitTimer_->async_wait(boost::bind(&Impl::checkExitedTimer,
+                                                   boost::weak_ptr<Impl>(shared_from_this()),
+                                                   boost::asio::placeholders::error,
+@@ -1561,10 +1561,10 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
+       {
+          // copy the function before posting the error to the thread pool
+          // we do this because this instance could be destroyed while in the
+-         // io_service queue, and so we want to copy these variables
++         // io_context queue, and so we want to copy these variables
+          // to ensure we don't try to access any members
+          boost::function<void(void)> handler = boost::bind(callbacks_.onExit, exitCode_);
+-         ioService_.post(handler);
++         boost::asio::post(ioContext_, handler);
+       }
+       else if (errorCode)
+       {
+@@ -1574,15 +1574,17 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
+          {
+             // copy members before posting the error to the thread pool
+             // we do this because this instance could be destroyed while in the
+-            // io_service queue, and so we want to copy these variables
++            // io_context queue, and so we want to copy these variables
+             // to ensure we don't try to access any members
+             boost::function<void(void)> handler = boost::bind(&Impl::invokeErrorHandler,
+                                                               boost::weak_ptr<Impl>(shared_from_this()),
+                                                               error);
+-            ioService_.post(handler);
++            boost::asio::post(ioContext_, handler);
+          }
+          else
++         {
+             LOG_ERROR(error);
++         }
+ 
+          // if we had an unexpected closure of the stream but no exit, terminate
+          error = parent_->terminate();
+@@ -1620,7 +1622,7 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
+    }
+ 
+    AsioAsyncChildProcess* parent_;
+-   boost::asio::io_service& ioService_;
++   boost::asio::io_context& ioContext_;
+    boost::asio::posix::stream_descriptor stdOutDescriptor_;
+    boost::asio::posix::stream_descriptor stdErrDescriptor_;
+    boost::asio::posix::stream_descriptor stdInDescriptor_;
+@@ -1643,20 +1645,20 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
+    bool cleanedUp_;
+ };
+ 
+-AsioAsyncChildProcess::AsioAsyncChildProcess(boost::asio::io_service& ioService,
++AsioAsyncChildProcess::AsioAsyncChildProcess(boost::asio::io_context& ioContext,
+                                              const std::string& exe,
+                                              const std::vector<std::string>& args,
+                                              const ProcessOptions& options) :
+    AsyncChildProcess(exe, args, options),
+-   pAsioImpl_(new Impl(const_cast<AsioAsyncChildProcess*>(this), ioService))
++   pAsioImpl_(new Impl(const_cast<AsioAsyncChildProcess*>(this), ioContext))
+ {
+ }
+ 
+-AsioAsyncChildProcess::AsioAsyncChildProcess(boost::asio::io_service& ioService,
++AsioAsyncChildProcess::AsioAsyncChildProcess(boost::asio::io_context& ioContext,
+                                              const std::string& command,
+                                              const ProcessOptions& options) :
+    AsyncChildProcess(command, options),
+-   pAsioImpl_(new Impl(const_cast<AsioAsyncChildProcess*>(this), ioService))
++   pAsioImpl_(new Impl(const_cast<AsioAsyncChildProcess*>(this), ioContext))
+ {
+ }
+ 
+--- a/src/cpp/core/system/PosixProcess.cpp
++++ b/src/cpp/core/system/PosixProcess.cpp
+@@ -32,9 +32,9 @@ namespace system {
+ // AsioProcessSupervisor currently on available on posix systems
+ struct AsioProcessSupervisor::Impl
+ {
+-   Impl(boost::asio::io_service& ioService) : ioService_(ioService) {}
++   Impl(boost::asio::io_context& ioContext) : ioContext_(ioContext) {}
+ 
+-   boost::asio::io_service& ioService_;
++   boost::asio::io_context& ioContext_;
+    std::set<boost::shared_ptr<AsioAsyncChildProcess> > children_;
+ 
+    boost::mutex mutex_;
+@@ -147,7 +147,7 @@ struct AsioProcessSupervisor::Impl
+    {
+       // remove exited children
+       // we lock here because this method can potentially be invoked by multiple threads
+-      // this is due to the fact that AsioAsyncChildProcess objects run on an io_service
++      // this is due to the fact that AsioAsyncChildProcess objects run on an io_context
+       LOCK_MUTEX(mutex_)
+       {
+          // upgrade this weak pointer to a shared pointer
+@@ -174,8 +174,8 @@ struct AsioProcessSupervisor::Impl
+    }
+ };
+ 
+-AsioProcessSupervisor::AsioProcessSupervisor(boost::asio::io_service& ioService) :
+-   pImpl_(new Impl(ioService))
++AsioProcessSupervisor::AsioProcessSupervisor(boost::asio::io_context& ioContext) :
++   pImpl_(new Impl(ioContext))
+ {
+ }
+ 
+@@ -191,7 +191,7 @@ Error AsioProcessSupervisor::runProgram(const std::string& executable,
+ {
+    // create the child
+    boost::shared_ptr<AsioAsyncChildProcess> pChild(
+-            new AsioAsyncChildProcess(pImpl_->ioService_, executable, args, options));
++            new AsioAsyncChildProcess(pImpl_->ioContext_, executable, args, options));
+ 
+    // wrap exit callback with our own so we reap dead child objects whenever they exit
+    // note the use of the weak_ptr to ensure that the child's copy of the process callbacks
+@@ -214,7 +214,7 @@ Error AsioProcessSupervisor::runCommand(const std::string& command,
+ {
+    // create the child
+    boost::shared_ptr<AsioAsyncChildProcess> pChild(
+-            new AsioAsyncChildProcess(pImpl_->ioService_, command, options));
++            new AsioAsyncChildProcess(pImpl_->ioContext_, command, options));
+ 
+    // wrap exit callback with our own so we reap dead child objects whenever they exit
+    // note the use of the weak_ptr to ensure that the child's copy of the process callbacks
+--- a/src/cpp/core/system/ProcessTests.cpp
++++ b/src/cpp/core/system/ProcessTests.cpp
+@@ -57,31 +57,32 @@ void appendOutput(const std::string& output, std::string* pOutput)
+    pOutput->append(output);
+ }
+ 
+-struct IoServiceFixture
++struct IoContextFixture
+ {
+-   boost::asio::io_service ioService;
+-   boost::asio::io_service::work work;
+-   std::vector<boost::shared_ptr<boost::thread> > threads;
++   boost::asio::io_context ioContext;
++   boost::asio::executor_work_guard<decltype(ioContext.get_executor())> guard;
++   std::vector<boost::shared_ptr<boost::thread>> threads;
+ 
+-   void runServiceThread()
+-   {
+-      ioService.run();
+-   }
+-
+-   IoServiceFixture() :
+-      ioService(), work(ioService)
++   IoContextFixture()
++      : ioContext(),
++        guard(ioContext.get_executor())
+    {
+       for (int i = 0; i < 4; ++i)
+       {
+          boost::shared_ptr<boost::thread> pThread(
+-                  new boost::thread(boost::bind(&IoServiceFixture::runServiceThread, this)));
++                  new boost::thread(boost::bind(&IoContextFixture::runServiceThread, this)));
+          threads.push_back(pThread);
+       }
+    }
+ 
+-   ~IoServiceFixture()
++   void runServiceThread()
++   {
++      ioContext.run();
++   }
++
++   ~IoContextFixture()
+    {
+-      ioService.stop();
++      ioContext.stop();
+       for (const boost::shared_ptr<boost::thread>& thread : threads)
+          thread->join();
+    }
+@@ -91,10 +92,10 @@ test_context("ProcessTests")
+ {
+    test_that("AsioProcessSupervisor can run program")
+    {
+-      IoServiceFixture fixture;
++      IoContextFixture fixture;
+ 
+       // create new supervisor
+-      AsioProcessSupervisor supervisor(fixture.ioService);
++      AsioProcessSupervisor supervisor(fixture.ioContext);
+ 
+       // create process options and callbacks
+       ProcessOptions options;
+@@ -121,10 +122,10 @@ test_context("ProcessTests")
+ 
+    test_that("AsioProcessSupervisor returns correct output from stdout")
+    {
+-      IoServiceFixture fixture;
++      IoContextFixture fixture;
+ 
+       // create new supervisor
+-      AsioProcessSupervisor supervisor(fixture.ioService);
++      AsioProcessSupervisor supervisor(fixture.ioContext);
+ 
+       // create process options and callbacks
+       ProcessOptions options;
+@@ -156,10 +157,10 @@ test_context("ProcessTests")
+     * commented out due to users being different on every machine
+    test_that("AsioProcessSupervisor can run process as another user")
+    {
+-      IoServiceFixture fixture;
++      IoContextFixture fixture;
+ 
+       // create new supervisor
+-      AsioProcessSupervisor supervisor(fixture.ioService);
++      AsioProcessSupervisor supervisor(fixture.ioContext);
+ 
+       // create process options and callbacks
+       ProcessOptions options;
+@@ -189,10 +190,10 @@ test_context("ProcessTests")
+ 
+    test_that("AsioProcessSupervisor returns correct error code for failure exit")
+    {
+-      IoServiceFixture fixture;
++      IoContextFixture fixture;
+ 
+       // create new supervisor
+-      AsioProcessSupervisor supervisor(fixture.ioService);
++      AsioProcessSupervisor supervisor(fixture.ioContext);
+ 
+       // create process options and callbacks
+       ProcessOptions options;
+@@ -218,7 +219,7 @@ test_context("ProcessTests")
+ 
+    test_that("AsioAsyncChildProcess can write to std in")
+    {
+-      IoServiceFixture fixture;
++      IoContextFixture fixture;
+ 
+       ProcessOptions options;
+       options.threadSafe = true;
+@@ -235,7 +236,7 @@ test_context("ProcessTests")
+       callbacks.onExit = boost::bind(&signalExit, _1, &exitCode, &mutex, &signal);
+       callbacks.onStdout = boost::bind(&appendOutput, _2, &output);
+ 
+-      AsioAsyncChildProcess proc(fixture.ioService, "cat", options);
++      AsioAsyncChildProcess proc(fixture.ioContext, "cat", options);
+       proc.run(callbacks);
+ 
+       proc.asyncWriteToStdin("Hello\n", false);
+@@ -292,7 +293,7 @@ test_context("ProcessTests")
+ 
+    test_that("Can spawn multiple async processes and they all return correct results")
+    {
+-      IoServiceFixture fixture;
++      IoContextFixture fixture;
+ 
+       std::string asioType;
+       #if defined(BOOST_ASIO_HAS_IOCP)
+@@ -322,7 +323,7 @@ test_context("ProcessTests")
+       std::cout << "Spawning " << numProcs << " child procs" << std::endl;
+ 
+       // create new supervisor
+-      AsioProcessSupervisor supervisor(fixture.ioService);
++      AsioProcessSupervisor supervisor(fixture.ioContext);
+ 
+       int exitCodes[1000];
+       std::string outputs[1000];
+@@ -384,10 +385,10 @@ test_context("ProcessTests")
+ 
+    test_that("Can kill child processes")
+    {
+-      IoServiceFixture fixture;
++      IoContextFixture fixture;
+ 
+       // create new supervisor
+-      AsioProcessSupervisor supervisor(fixture.ioService);
++      AsioProcessSupervisor supervisor(fixture.ioContext);
+ 
+       std::atomic<int> numStarted(0);
+       std::atomic<int> numExited(0);
+@@ -448,10 +449,10 @@ test_context("ProcessTests")
+ 
+    test_that("Error code for signal is reported bash-style")
+    {
+-      IoServiceFixture fixture;
++      IoContextFixture fixture;
+ 
+       // create new supervisor
+-      AsioProcessSupervisor supervisor(fixture.ioService);
++      AsioProcessSupervisor supervisor(fixture.ioContext);
+ 
+       boost::mutex mutex;
+       boost::condition_variable cond;
+@@ -521,10 +522,10 @@ test_context("ProcessTests")
+ 
+    test_that("Normal exit code is reported properly")
+    {
+-      IoServiceFixture fixture;
++      IoContextFixture fixture;
+ 
+       // create new supervisor
+-      AsioProcessSupervisor supervisor(fixture.ioService);
++      AsioProcessSupervisor supervisor(fixture.ioContext);
+ 
+       boost::mutex mutex;
+       boost::condition_variable cond;
+old mode 100755
+new mode 100644
+--- a/src/cpp/monitor/MonitorClient.cpp
++++ b/src/cpp/monitor/MonitorClient.cpp
+@@ -13,7 +13,7 @@
+  *
+  */
+ 
+-#include <boost/asio/io_service.hpp>
++#include <boost/asio/io_context.hpp>
+ 
+ #include <monitor/MonitorClient.hpp>
+ 
+@@ -77,11 +77,11 @@ void initializeMonitorClient(const std::string& metricsSocket,
+ 
+ void initializeMonitorClient(const std::string& metricsSocket,
+                              const std::string& auth,
+-                             boost::asio::io_service& ioService,
++                             boost::asio::io_context& ioContext,
+                              bool useSharedSecret)
+ {
+    BOOST_ASSERT(s_pClient == NULL);
+-   s_pClient = new AsyncClient(metricsSocket, auth, ioService, useSharedSecret);
++   s_pClient = new AsyncClient(metricsSocket, auth, ioContext, useSharedSecret);
+ }
+ 
+ void initializeMonitorClient(const std::string& tcpAddress,
+@@ -102,11 +102,11 @@ void initializeMonitorClient(const std::string& tcpAddress,
+                              bool verifySslCerts,
+                              const std::string& prefixUri,
+                              const std::string& auth,
+-                             boost::asio::io_service& ioService,
++                             boost::asio::io_context& ioContext,
+                              bool useSharedSecret)
+ {
+    BOOST_ASSERT(s_pClient == NULL);
+-   s_pClient = new AsyncClient(tcpAddress, tcpPort, useSsl, verifySslCerts, prefixUri, auth, ioService, useSharedSecret);
++   s_pClient = new AsyncClient(tcpAddress, tcpPort, useSsl, verifySslCerts, prefixUri, auth, ioContext, useSharedSecret);
+ }
+ 
+ Client& client()
+--- a/src/cpp/monitor/MonitorClientImpl.hpp
++++ b/src/cpp/monitor/MonitorClientImpl.hpp
+@@ -60,10 +60,10 @@ class AsyncClient : public Client
+ public:
+    AsyncClient(const std::string& metricsSocket,
+                const std::string& auth,
+-               boost::asio::io_service& ioService,
++               boost::asio::io_context& ioContext,
+                bool useSharedSecret = true)
+       : Client(metricsSocket, auth, useSharedSecret),
+-        ioService_(ioService)
++        ioContext_(ioContext)
+    {
+    }
+ 
+@@ -73,10 +73,10 @@ public:
+                bool verifySslCerts,
+                const std::string& prefixUri,
+                const std::string& auth,
+-               boost::asio::io_service& ioService,
++               boost::asio::io_context& ioContext,
+                bool useSharedSecret = false)
+       : Client(tcpAddress, tcpPort, useSsl, verifySslCerts, prefixUri, auth, useSharedSecret),
+-        ioService_(ioService)
++        ioContext_(ioContext)
+    {
+    }
+ 
+@@ -92,10 +92,10 @@ public:
+ 
+    void logConsoleAction(const audit::ConsoleAction& action);
+ 
+-   boost::asio::io_service& ioService() const { return ioService_; }
++   boost::asio::io_context& ioContext() const { return ioContext_; }
+ 
+ private:
+-   boost::asio::io_service& ioService_;
++   boost::asio::io_context& ioContext_;
+ };
+ 
+ } // namespace monitor
+--- a/src/cpp/monitor/include/monitor/MonitorClient.hpp
++++ b/src/cpp/monitor/include/monitor/MonitorClient.hpp
+@@ -18,7 +18,7 @@
+ 
+ #include <string>
+ 
+-#include <boost/asio/io_service.hpp>
++#include <boost/asio/io_context.hpp>
+ 
+ #include <core/system/System.hpp>
+ 
+@@ -122,7 +122,7 @@ void initializeMonitorClient(const std::string& metricsSocket,
+ 
+ void initializeMonitorClient(const std::string& metricsSocket,
+                              const std::string& auth,
+-                             boost::asio::io_service& ioService,
++                             boost::asio::io_context& ioContext,
+                              bool useSharedSecret = true);
+ 
+ void initializeMonitorClient(const std::string& tcpAddress,
+@@ -139,7 +139,7 @@ void initializeMonitorClient(const std::string& tcpAddress,
+                              bool verifySslCerts,
+                              const std::string& prefixUri,
+                              const std::string& auth,
+-                             boost::asio::io_service& ioService,
++                             boost::asio::io_context& ioContext,
+                              bool useSharedSecret = false);
+ 
+ Client& client();
+--- a/src/cpp/r/session/REmbeddedPosix.cpp
++++ b/src/cpp/r/session/REmbeddedPosix.cpp
+@@ -71,8 +71,7 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
+    // boost passes MSG_NOSIGNAL to sendmsg and on OSX sets the SO_NOSIGPIPE
+    // option on all sockets created. note that on other platforms including
+    // solaris, hpux, etc. boost uses detail/signal_init to ignore SIGPIPE
+-
+-   // globally (this is done in io_service.hpp).
++   // globally (this is done in io_context.hpp).
+    R_SignalHandlers = 0;
+ 
+    // set message callback early so we can see initialization error messages
+--- a/src/cpp/server/ServerMain.cpp
++++ b/src/cpp/server/ServerMain.cpp
+@@ -228,7 +228,7 @@ void pageNotFoundHandler(const http::Request& request,
+ }
+ 
+ void rootPathRequestFilter(
+-            boost::asio::io_service& ioService,
++            boost::asio::io_context& ioContext,
+             http::Request* pRequest,
+             http::RequestFilterContinuation continuation)
+ {
+@@ -824,7 +824,7 @@ int main(int argc, char * const argv[])
+       // to the server's io service)
+       monitor::initializeMonitorClient(monitorSocketPath().getAbsolutePath(),
+                                        server::options().monitorSharedSecret(),
+-                                       s_pHttpServer->ioService());
++                                       s_pHttpServer->ioContext());
+ 
+       if (!options.verifyInstallation())
+       {
+--- a/src/cpp/server/auth/ServerAuthHandler.cpp
++++ b/src/cpp/server/auth/ServerAuthHandler.cpp
+@@ -498,11 +498,11 @@ Error getUserFromDatabase(const boost::shared_ptr<IConnection>& connection,
+    return Success();
+ }
+ 
+-Error addUser(boost::asio::io_service& ioService,
++Error addUser(boost::asio::io_context& ioContext,
+               const std::string& username,
+               bool isAdmin)
+ {
+-   const auto result = overlay::addUser(ioService, username, isAdmin);
++   const auto result = overlay::addUser(ioContext, username, isAdmin);
+    Error overlayError;
+    bool wasHandled;
+    std::tie(overlayError, wasHandled) = result;
+--- a/src/cpp/server/auth/ServerAuthHandlerOverlay.cpp
++++ b/src/cpp/server/auth/ServerAuthHandlerOverlay.cpp
+@@ -91,28 +91,28 @@ json::Array getLicensedUsers()
+    return getAllUsers();
+ }
+ 
+-Error lockUser(boost::asio::io_service& ioService,
++Error lockUser(boost::asio::io_context& ioContext,
+                const std::string& username,
+                bool force)
+ {
+    return Success();
+ }
+ 
+-Error unlockUser(boost::asio::io_service& ioService,
++Error unlockUser(boost::asio::io_context& ioContext,
+                  const std::string& username,
+                  bool force)
+ {
+    return Success();
+ }
+ 
+-Error setAdmin(boost::asio::io_service& ioService,
++Error setAdmin(boost::asio::io_context& ioContext,
+                const std::string& username,
+                bool isAdmin)
+ {
+    return Success();
+ }
+ 
+-OverlayResult addUser(boost::asio::io_service& ioService,
++OverlayResult addUser(boost::asio::io_context& ioContext,
+                       const std::string& username,
+                       bool isAdmin)
+ {
+--- a/src/cpp/server/include/server/auth/ServerAuthHandler.hpp
++++ b/src/cpp/server/include/server/auth/ServerAuthHandler.hpp
+@@ -212,7 +212,7 @@ core::Error initialize();
+ bool isCookieRevoked(const std::string& cookie);
+ 
+ // User functions
+-core::Error addUser(boost::asio::io_service& ioService, const std::string& username, bool isAdmin = false);
++core::Error addUser(boost::asio::io_context& ioContext, const std::string& username, bool isAdmin = false);
+ core::json::Array getAllUsers();
+ core::Error getUserFromDatabase(const boost::shared_ptr<core::database::IConnection>& connection,
+                                 const core::system::User& user,
+--- a/src/cpp/server/include/server/auth/ServerAuthHandlerOverlay.hpp
++++ b/src/cpp/server/include/server/auth/ServerAuthHandlerOverlay.hpp
+@@ -67,19 +67,19 @@ unsigned int getNamedUserLimit();
+ 
+ core::json::Array getLicensedUsers();
+ 
+-core::Error lockUser(boost::asio::io_service& ioService,
++core::Error lockUser(boost::asio::io_context& ioContext,
+                      const std::string& username,
+                      bool force = false);
+ 
+-core::Error unlockUser(boost::asio::io_service& ioService,
++core::Error unlockUser(boost::asio::io_context& ioContext,
+                        const std::string& username,
+                      bool force = false);
+ 
+-core::Error setAdmin(boost::asio::io_service& ioService,
++core::Error setAdmin(boost::asio::io_context& ioContext,
+                      const std::string& username,
+                      bool isAdmin);
+ 
+-OverlayResult addUser(boost::asio::io_service& ioService,
++OverlayResult addUser(boost::asio::io_context& ioContext,
+                       const std::string& username,
+                       bool isAdmin = false);
+ 
+--- a/src/cpp/server/include/server/session/ServerSessionManager.hpp
++++ b/src/cpp/server/include/server/session/ServerSessionManager.hpp
+@@ -20,7 +20,7 @@
+ #include <vector>
+ #include <map>
+ 
+-#include <boost/asio/io_service.hpp>
++#include <boost/asio/io_context.hpp>
+ 
+ #include <core/BoostSignals.hpp>
+ #include <core/http/AsyncClient.hpp>
+@@ -60,7 +60,7 @@ private:
+ 
+ public:
+    // launching
+-   core::Error launchSession(boost::asio::io_service& ioService,
++   core::Error launchSession(boost::asio::io_context& ioContext,
+                              const core::r_util::SessionContext& context,
+                              const core::http::Request& request,
+                              bool &launched,
+@@ -72,7 +72,7 @@ public:
+ 
+    // set a custom session launcher
+    typedef boost::function<core::Error(
+-                           boost::asio::io_service&,
++                           boost::asio::io_context&,
+                            const core::r_util::SessionLaunchProfile&,
+                            const core::http::Request&,
+                            const core::http::ResponseHandler& onLaunch,
+@@ -96,7 +96,7 @@ private:
+    // default session launcher -- runs the process then uses the
+    // ChildProcessTracker to track it's pid for later reaping
+    core::Error launchAndTrackSession(
+-                        boost::asio::io_service&,
++                        boost::asio::io_context&,
+                         const core::r_util::SessionLaunchProfile& profile);
+ 
+    int cleanStalePendingLaunches();
+--- a/src/cpp/server/session/ServerSessionManager.cpp
++++ b/src/cpp/server/session/ServerSessionManager.cpp
+@@ -234,7 +234,7 @@ SessionManager::SessionManager()
+                                            this, _1, _2);
+ }
+ 
+-Error SessionManager::launchSession(boost::asio::io_service& ioService,
++Error SessionManager::launchSession(boost::asio::io_context& ioContext,
+                                     const r_util::SessionContext& context,
+                                     const http::Request& request,
+                                     bool &launched,
+@@ -299,7 +299,7 @@ Error SessionManager::launchSession(boost::asio::io_service& ioService,
+    }
+ 
+    // launch the session
+-   Error error = sessionLaunchFunction_(ioService, profile, request, onLaunch, onError);
++   Error error = sessionLaunchFunction_(ioContext, profile, request, onLaunch, onError);
+    if (error)
+    {
+       removePendingLaunch(context, false, "error during launch: " + error.asString());
+@@ -330,7 +330,7 @@ void setProcessConfigFilter(const core::system::ProcessConfigFilter& filter)
+ // default session launcher -- does the launch then tracks the pid
+ // for later reaping
+ Error SessionManager::launchAndTrackSession(
+-                           boost::asio::io_service&,
++                           boost::asio::io_context&,
+                            const core::r_util::SessionLaunchProfile& profile)
+ {
+    // if we are root then assume the identity of the user
+--- a/src/cpp/server/session/ServerSessionProxy.cpp
++++ b/src/cpp/server/session/ServerSessionProxy.cpp
+@@ -192,7 +192,7 @@ Error launchSessionRecovery(
+ 
+       bool launched;
+ 
+-      return sessionManager().launchSession(ptrConnection->ioService(), 
++      return sessionManager().launchSession(ptrConnection->ioContext(), 
+             context, request, launched);
+    }
+    else
+@@ -799,7 +799,7 @@ void proxyRequest(
+    // if the user is available on the system pass in the uid for validation to ensure
+    // that we only connect to the socket if it was created by the user
+    boost::shared_ptr<http::IAsyncClient> pClient(new http::LocalStreamAsyncClient(
+-                                                    ptrConnection->ioService(),
++                                                    ptrConnection->ioContext(),
+                                                     streamPath, false, validateUid));
+ 
+    // setup retry context
+@@ -821,7 +821,9 @@ void proxyRequest(
+    {
+       // invoke the client handler on the threadpool - we cannot do this
+       // from this thread because that will cause ordering issues for the caller
+-      ptrConnection->ioService().post(boost::bind(clientHandler, pClient));
++      boost::asio::post(
++               ptrConnection->ioContext(),
++               boost::bind(clientHandler, pClient));
+    }
+ }
+ 
+@@ -1209,7 +1211,7 @@ void proxyLocalhostRequest(
+ 
+    // create async tcp/ip client and assign request
+    boost::shared_ptr<http::IAsyncClient> pClient(
+-      new server_core::http::LocalhostAsyncClient(ptrConnection->ioService(), address, port));
++      new server_core::http::LocalhostAsyncClient(ptrConnection->ioContext(), address, port));
+    // Ensure async operations on both the browser->rserver and rserver->backend run on the same thread. 
+    pClient->setStrand(&ptrConnection->getStrand());
+    pClient->request().assign(request);
+--- a/src/cpp/server_core/include/server_core/http/LocalhostAsyncClient.hpp
++++ b/src/cpp/server_core/include/server_core/http/LocalhostAsyncClient.hpp
+@@ -57,12 +57,12 @@ bool keepConnectionAliveImpl(const core::http::Response& response)
+ class LocalhostAsyncClient : public core::http::TcpIpAsyncClient
+ {
+ public:
+-   LocalhostAsyncClient(boost::asio::io_service& ioService,
++   LocalhostAsyncClient(boost::asio::io_context& ioContext,
+                         const std::string& address,
+                         const std::string& port,
+                         const boost::posix_time::time_duration& connectionTimeout =
+                                                boost::posix_time::time_duration(boost::posix_time::pos_infin))
+-      : core::http::TcpIpAsyncClient(ioService, address, port, connectionTimeout)
++      : core::http::TcpIpAsyncClient(ioContext, address, port, connectionTimeout)
+    {
+    }
+ 
+@@ -81,7 +81,7 @@ private:
+ class LocalhostAsyncClientSsl : public core::http::TcpIpAsyncClientSsl
+ {
+ public:
+-   LocalhostAsyncClientSsl(boost::asio::io_service& ioService,
++   LocalhostAsyncClientSsl(boost::asio::io_context& ioContext,
+                            const std::string& address,
+                            const std::string& port,
+                            bool verifySslCerts,
+@@ -90,7 +90,7 @@ public:
+                                       boost::posix_time::time_duration(boost::posix_time::pos_infin),
+                            const std::string& hostname = std::string(),
+                            const std::string& verifyAddress = std::string())
+-      : core::http::TcpIpAsyncClientSsl(ioService, address, port, verifySslCerts, certificateAuthority, connectionTimeout, hostname, verifyAddress)
++      : core::http::TcpIpAsyncClientSsl(ioContext, address, port, verifySslCerts, certificateAuthority, connectionTimeout, hostname, verifyAddress)
+    {
+    }
+ 
+--- a/src/cpp/session/SessionConsoleProcessSocketTests.cpp
++++ b/src/cpp/session/SessionConsoleProcessSocketTests.cpp
+@@ -38,7 +38,7 @@ namespace {
+ 
+ void blockingwait(int ms)
+ {
+-   boost::asio::io_service io;
++   boost::asio::io_context io;
+    boost::asio::deadline_timer timer(io, boost::posix_time::milliseconds(ms));
+    timer.wait();
+ }
+@@ -262,7 +262,7 @@ public:
+          // the thread.
+          client_.connect(con);
+ 
+-         // Start the ASIO io_service run loop in a separate thread; allows
++         // Start the ASIO io_context run loop in a separate thread; allows
+          // us to perform multiple operations as part of the test.
+          core::thread::safeLaunchThread(
+                   boost::bind(&SocketClient::watchSocket, this),
+--- a/src/cpp/session/SessionMain.cpp
++++ b/src/cpp/session/SessionMain.cpp
+@@ -17,7 +17,7 @@
+ 
+ // required to avoid Win64 winsock order of include
+ // compilation problem
+-#include <boost/asio/io_service.hpp>
++#include <boost/asio/io_context.hpp>
+ #include <boost/scope_exit.hpp>
+ 
+ #ifndef _WIN32
+@@ -1869,18 +1869,18 @@ Error ensureLibRSoValid()
+    return Success();
+ }
+ 
+-// io_service for performing monitor work on the thread
+-boost::asio::io_service s_monitorIoService;
++// io_context for performing monitor work on the thread
++boost::asio::io_context s_monitorIoContext;
+ 
+ void monitorWorkerThreadFunc()
+ {
+-   boost::asio::io_service::work work(s_monitorIoService);
+-   s_monitorIoService.run();
++   auto guard = boost::asio::make_work_guard(s_monitorIoContext);
++   s_monitorIoContext.run();
+ }
+ 
+ void stopMonitorWorkerThread()
+ {
+-   s_monitorIoService.stop();
++   s_monitorIoContext.stop();
+ }
+ 
+ void initMonitorClient()
+@@ -1889,11 +1889,11 @@ void initMonitorClient()
+    {
+       monitor::initializeMonitorClient(core::system::getenv(kMonitorSocketPathEnvVar),
+                                        options().monitorSharedSecret(),
+-                                       s_monitorIoService);
++                                       s_monitorIoContext);
+    }
+    else
+    {
+-      modules::overlay::initMonitorClient(s_monitorIoService);
++      modules::overlay::initMonitorClient(s_monitorIoContext);
+    }
+ 
+    // start the monitor work thread
+--- a/src/cpp/session/SessionServerRpc.cpp
++++ b/src/cpp/session/SessionServerRpc.cpp
+@@ -39,7 +39,7 @@ namespace overlay {
+       json::Value* pResult);
+ 
+    void invokeServerRpcAsync(
+-      boost::asio::io_service& ioService,
++      boost::asio::io_context& ioContext,
+       const std::string& endpoint,
+       const json::Object& request,
+       const socket_rpc::RpcResultHandler& onResult,
+@@ -96,13 +96,12 @@ SEXP rs_invokeServerRpc(SEXP name, SEXP args)
+ // once flag for lazy initializing async RPC thread
+ boost::once_flag s_threadOnce = BOOST_ONCE_INIT;
+ 
+-// io_service for performing RPC work on the thread
+-boost::asio::io_service s_ioService;
++// io_context for performing RPC work on the thread
++boost::asio::io_context s_ioContext;
+ 
+ void rpcWorkerThreadFunc()
+ {
+-   boost::asio::io_service::work work(s_ioService);
+-   s_ioService.run();
++   s_ioContext.run();
+ }
+ 
+ } // anonymous namespace
+@@ -160,7 +159,7 @@ void invokeServerRpcAsync(const std::string& endpoint,
+                                 rpcWorkerThreadFunc,
+                                 nullptr));
+    if (overlay::useHttp())
+-      overlay::invokeServerRpcAsync(s_ioService, endpoint, request, onResult, onError);
++      overlay::invokeServerRpcAsync(s_ioContext, endpoint, request, onResult, onError);
+    else
+    {
+ #ifdef _WIN32
+@@ -170,7 +169,7 @@ void invokeServerRpcAsync(const std::string& endpoint,
+       FilePath rpcSocket(core::system::getenv(kServerRpcSocketPathEnvVar));
+       LOG_DEBUG_MESSAGE("Invoking rserver async RPC '" + endpoint + "' on socket " + 
+             rpcSocket.getAbsolutePath());
+-      socket_rpc::invokeRpcAsync(s_ioService,
++      socket_rpc::invokeRpcAsync(s_ioContext,
+                                  rpcSocket,
+                                  endpoint,
+                                  request,
+--- a/src/cpp/session/SessionServerRpcOverlay.cpp
++++ b/src/cpp/session/SessionServerRpcOverlay.cpp
+@@ -18,7 +18,7 @@
+ #include <shared_core/Error.hpp>
+ #include <shared_core/json/Json.hpp>
+ 
+-#include <boost/asio/io_service.hpp>
++#include <boost/asio/io_context.hpp>
+ 
+ using namespace rstudio::core;
+ 
+@@ -42,7 +42,7 @@ Error invokeServerRpc(
+ }
+ 
+ void invokeServerRpcAsync(
+-   boost::asio::io_service& ioService,
++   boost::asio::io_context& ioContext,
+    const std::string& endpoint,
+    const json::Object& request,
+    const socket_rpc::RpcResultHandler& onResult,
+--- a/src/cpp/session/http/SessionHttpConnectionImpl.hpp
++++ b/src/cpp/session/http/SessionHttpConnectionImpl.hpp
+@@ -20,7 +20,7 @@
+ #include <boost/array.hpp>
+ 
+ #include <boost/utility.hpp>
+-#include <boost/asio/io_service.hpp>
++#include <boost/asio/io_context.hpp>
+ #include <boost/asio/write.hpp>
+ #include <boost/asio/placeholders.hpp>
+ #include <boost/asio/ssl.hpp>
+@@ -61,7 +61,7 @@ public:
+ 
+ 
+ public:
+-   HttpConnectionImpl(boost::asio::io_service& ioService,
++   HttpConnectionImpl(boost::asio::io_context& ioContext,
+                       boost::shared_ptr<boost::asio::ssl::context> sslContext,
+                       const HeadersParsedHandler& headersParsed,
+                       const Handler& handler)
+@@ -70,7 +70,7 @@ public:
+    {
+       if (sslContext)
+       {
+-         sslStream_.reset(new boost::asio::ssl::stream<typename ProtocolType::socket>(ioService, *sslContext));
++         sslStream_.reset(new boost::asio::ssl::stream<typename ProtocolType::socket>(ioContext, *sslContext));
+ 
+          // get socket and store it in a separate shared pointer
+          // the owner is the SSL stream pointer - this ensures we don't double delete
+@@ -78,7 +78,7 @@ public:
+       }
+       else
+       {
+-         socket_.reset(new typename ProtocolType::socket(ioService));
++         socket_.reset(new typename ProtocolType::socket(ioContext));
+       }
+    }
+ 
+--- a/src/cpp/session/http/SessionHttpConnectionListenerImpl.hpp
++++ b/src/cpp/session/http/SessionHttpConnectionListenerImpl.hpp
+@@ -107,7 +107,7 @@ public:
+       acceptNextConnection();
+       
+       // refresh locks
+-      core::FileLock::refreshPeriodically(acceptorService_.ioService());
++      core::FileLock::refreshPeriodically(acceptorService_.ioContext());
+ 
+       // block all signals for launch of listener thread (will cause it
+       // to never receive signals)
+@@ -120,8 +120,8 @@ public:
+       try
+       {
+          using boost::bind;
+-         boost::thread listenerThread(bind(&boost::asio::io_service::run,
+-                                           &(acceptorService_.ioService())));
++         boost::thread listenerThread(bind(&boost::asio::io_context::run,
++                                           &(acceptorService_.ioContext())));
+          listenerThread_ = MOVE_THREAD(listenerThread);
+ 
+          // set started flag
+@@ -153,7 +153,7 @@ public:
+          LOG_ERROR(core::Error(ec, ERROR_LOCATION));
+ 
+       // stop the server
+-      ioService().stop();
++      ioContext().stop();
+ 
+       // join the thread and wait for it complete
+       if (listenerThread_.joinable())
+@@ -210,13 +210,13 @@ private:
+    virtual core::Error cleanup() = 0;
+ 
+ private:
+-   boost::asio::io_service& ioService() { return acceptorService_.ioService(); }
++   boost::asio::io_context& ioContext() { return acceptorService_.ioContext(); }
+ 
+    void acceptNextConnection()
+    {
+       // create the connection
+       ptrNextConnection_.reset( new HttpConnectionImpl<ProtocolType>(
+-            ioService(),
++            ioContext(),
+             sslContext_,
+             boost::bind(
+                  &HttpConnectionListenerImpl<ProtocolType>::onHeadersParsed,
+--- a/src/cpp/session/http/SessionPosixHttpConnectionListener.cpp
++++ b/src/cpp/session/http/SessionPosixHttpConnectionListener.cpp
+@@ -130,8 +130,7 @@ void initializeHttpConnectionListener()
+ 
+                for (const core::system::posix::IpAddress& ip : addrs)
+                {
+-                  boost::asio::ip::address addr = boost::asio::ip::address::from_string(ip.Address);
+-
++                  auto addr = boost::asio::ip::make_address(ip.Address);
+                   if (addr.is_v4())
+                   {
+                      hasIpv4 = true;
+--- a/src/cpp/session/include/session/SessionHttpConnection.hpp
++++ b/src/cpp/session/include/session/SessionHttpConnection.hpp
+@@ -32,7 +32,7 @@
+ 
+    2) It provides an interface for HttpConnection::Handler to respond to
+       requests. Responses are sent synchronously and are threfore disconnected
+-      from the HttpConnectionListener io_service and (most importantly) can
++      from the HttpConnectionListener io_context and (most importantly) can
+       therefore be sent on background threads.
+ */
+ 
+--- a/src/cpp/session/include/session/SessionModuleContext.hpp
++++ b/src/cpp/session/include/session/SessionModuleContext.hpp
+@@ -43,20 +43,6 @@
+ 
+ using namespace boost::placeholders;
+ 
+-namespace rstudio {
+-namespace core {
+-
+-// make_unique is not available in C++11, so we provide
+-// a definition here just in case
+-template <class T, class... Args>
+-std::unique_ptr<T> make_unique(Args&&... args)
+-{
+-   return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+-}
+-
+-} // end namespace core
+-} // end namespace rstudio
+-
+ namespace rstudio {
+ namespace core {
+    class DistributedEvent;
+--- a/src/cpp/session/modules/overlay/SessionOverlay.cpp
++++ b/src/cpp/session/modules/overlay/SessionOverlay.cpp
+@@ -49,7 +49,7 @@ int verifyInstallation()
+    return EXIT_SUCCESS;
+ }
+ 
+-void initMonitorClient(boost::asio::io_service& ioService)
++void initMonitorClient(boost::asio::io_context& ioContext)
+ {
+ }
+ 
+--- a/src/cpp/session/modules/overlay/SessionOverlay.hpp
++++ b/src/cpp/session/modules/overlay/SessionOverlay.hpp
+@@ -17,7 +17,7 @@
+ #define SESSION_OVERLAY_HPP
+ 
+ #include <string>
+-#include <boost/asio/io_service.hpp>
++#include <boost/asio/io_context.hpp>
+ 
+ namespace rstudio {
+ namespace core {
+@@ -39,7 +39,7 @@ void streamLauncherOutput(const std::string& jobId,
+ 
+ int verifyInstallation();
+ 
+-void initMonitorClient(boost::asio::io_service& ioService);
++void initMonitorClient(boost::asio::io_context& ioContext);
+ 
+ core::Error initialize();
+ 
+--- a/src/cpp/session/modules/panmirror/SessionPanmirrorBibliography.cpp
++++ b/src/cpp/session/modules/panmirror/SessionPanmirrorBibliography.cpp
+@@ -300,7 +300,7 @@ BiblioCache s_biblioCache;
+ // global logging helper
+ void logBiblioStatus(const std::string& str)
+ {
+-   str.length(); // silience compiler on unused var
++   (void) str; // silience compiler on unused var
+    // std::cerr << str << std::endl;
+ }
+ 
+--- a/src/cpp/session/modules/rmarkdown/NotebookExec.cpp
++++ b/src/cpp/session/modules/rmarkdown/NotebookExec.cpp
+@@ -24,6 +24,12 @@
+ #include "NotebookWorkingDir.hpp"
+ #include "NotebookConditions.hpp"
+ 
++#include <memory>
++#include <iostream>
++
++#include <memory>
++#include <iostream>
++
+ #include <shared_core/Error.hpp>
+ #include <core/text/CsvParser.hpp>
+ #include <core/FileSerializer.hpp>
+@@ -33,8 +39,6 @@
+ 
+ #include <session/SessionModuleContext.hpp>
+ 
+-#include <iostream>
+-
+ using namespace rstudio::core;
+ using namespace boost::placeholders;
+ 
+@@ -186,7 +190,7 @@ void ChunkExecContext::connect()
+ 
+    // leave an execution lock in this folder so it won't be moved if the notebook
+    // is saved while executing
+-   auto lock = make_unique<ScopedFileLock>(
++   auto lock = boost::make_unique<ScopedFileLock>(
+        FileLock::createDefault(),
+        outputPath_.completePath(kExecutionLock));
+    locks_.push_back(std::move(lock));
+@@ -197,7 +201,7 @@ void ChunkExecContext::connect()
+       initializeOutput();
+ 
+    // capture conditions
+-   auto pConditionCapture = make_unique<ConditionCapture>();
++   auto pConditionCapture = boost::make_unique<ConditionCapture>();
+    pConditionCapture->connect();
+    captures_.push_back(std::move(pConditionCapture));
+    connections_.push_back(events().onCondition.connect(
+@@ -225,7 +229,7 @@ void ChunkExecContext::connect()
+          boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2, 
+                      _3, ChunkOutputPlot, _4)));
+ 
+-   auto pPlotCapture = make_unique<PlotCapture>();
++   auto pPlotCapture = boost::make_unique<PlotCapture>();
+    if (figWidth > 0 || figHeight > 0)
+    {
+       // user specified plot size, use it
+@@ -248,7 +252,7 @@ void ChunkExecContext::connect()
+          boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2, _3, 
+                      ChunkOutputHtml, 0)));
+ 
+-   auto pHtmlCapture = make_unique<HtmlCapture>();
++   auto pHtmlCapture = boost::make_unique<HtmlCapture>();
+    error = pHtmlCapture->connectHtmlCapture(
+             outputPath_,
+             outputPath_.getParent().completePath(kChunkLibDir),
+@@ -281,14 +285,14 @@ void ChunkExecContext::connect()
+    prevCharWidth_ = r::options::getOptionWidth();
+    r::options::setOptionWidth(charWidth_);
+ 
+-   auto pDirCapture = make_unique<DirCapture>();
++   auto pDirCapture = boost::make_unique<DirCapture>();
+    error = pDirCapture->connectDir(docId_, workingDir_);
+    if (error)
+       LOG_ERROR(error);
+    captures_.push_back(std::move(pDirCapture));
+ 
+    // begin capturing errors
+-   auto pErrorCapture = make_unique<ErrorCapture>();
++   auto pErrorCapture = boost::make_unique<ErrorCapture>();
+    pErrorCapture->connect();
+    captures_.push_back(std::move(pErrorCapture));
+ 
+@@ -306,7 +310,7 @@ void ChunkExecContext::connect()
+          boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2, _3, 
+                      ChunkOutputData, 0)));
+ 
+-   auto pDataCapture = make_unique<DataCapture>();
++   auto pDataCapture = boost::make_unique<DataCapture>();
+    error = pDataCapture->connectDataCapture(
+             outputPath_,
+             options_.mergedOptions());
+@@ -620,7 +624,7 @@ void ChunkExecContext::initializeOutput()
+ 
+    // leave an execution lock in this folder so it won't be moved if the notebook
+    // is saved while executing
+-   auto lock = make_unique<ScopedFileLock>(
++   auto lock = boost::make_unique<ScopedFileLock>(
+        FileLock::createDefault(),
+        outputPath.completePath(kExecutionLock));
+    locks_.push_back(std::move(lock));
+--- a/src/cpp/shared_core/Error.cpp
++++ b/src/cpp/shared_core/Error.cpp
+@@ -477,8 +477,10 @@ void Error::setExpected()
+ 
+ void Error::copyOnWrite()
+ {
+-   if ((m_impl != nullptr) && !m_impl.unique())
+-      m_impl.reset(new Impl(impl()));
++   if (m_impl == nullptr || m_impl.use_count() == 1)
++      return;
++
++   m_impl.reset(new Impl(impl()));
+ }
+ 
+ bool Error::isError() const
+--- /dev/null
++++ b/src/cpp/shared_core/include/shared_core/IteratorTraits.hpp
+@@ -0,0 +1,44 @@
++/*
++ * IteratorTraits.hpp
++ *
++ * Copyright (C) 2025 by Posit Software, PBC
++ *
++ * Unless you have received this program directly from Posit Software pursuant to the terms of a commercial license agreement
++ * with Posit, then this program is licensed to you under the following terms:
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
++ * documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
++ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
++ * permit persons to whom the Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
++ * Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
++ * WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
++ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
++ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
++ *
++ */
++
++#ifndef SHARED_CORE_ITERATOR_TRAITS_HPP
++#define SHARED_CORE_ITERATOR_TRAITS_HPP
++
++template <
++    typename IteratorCategory,
++    typename ValueType,
++    typename DifferenceType,
++    typename PointerType,
++    typename ReferenceType
++>
++class IteratorTraits
++{
++public:
++   using iterator_category = IteratorCategory;
++   using value_type        = ValueType;
++   using difference_type   = DifferenceType;
++   using pointer           = PointerType;
++   using reference         = ReferenceType;
++};
++
++#endif /* SHARED_CORE_ITERATOR_TRAITS_HPP */
+--- a/src/cpp/shared_core/include/shared_core/json/Json.hpp
++++ b/src/cpp/shared_core/include/shared_core/json/Json.hpp
+@@ -34,6 +34,7 @@
+ #include <boost/optional.hpp>
+ 
+ #include <shared_core/Error.hpp>
++#include <shared_core/IteratorTraits.hpp>
+ #include <shared_core/Logger.hpp>
+ #include <shared_core/PImpl.hpp>
+ 
+@@ -731,7 +732,7 @@ public:
+    /**
+     * @brief Class which allows iterating over the members of a JSON object.
+     */
+-   class Iterator: public std::iterator<
++   class Iterator: public IteratorTraits<
+       std::bidirectional_iterator_tag,   // iterator_category
+       Member,                            // value_type
+       std::ptrdiff_t,                    // difference_type
+@@ -1219,7 +1220,8 @@ public:
+    /**
+     * @brief Class which allows iterating over the elements of a JSON array.
+     */
+-   class Iterator: public std::iterator<std::bidirectional_iterator_tag,   // iterator_category
++   class Iterator: public IteratorTraits<
++      std::bidirectional_iterator_tag,   // iterator_category
+       Value,                             // value_type
+       std::ptrdiff_t,                    // difference_type
+       const Value*,                      // pointer
+--- a/src/cpp/shared_core/system/encryption/EncryptionVersion.cpp
++++ b/src/cpp/shared_core/system/encryption/EncryptionVersion.cpp
+@@ -398,8 +398,8 @@ Error aesDecrypt(
+ 
+    // Index maths. v2 buffer structure is: [ version byte ][ v2 encrypted data ][ mac ]
+    // Use std::max to prevent index math going negative.
+-   int dataLength = std::max(in_v2_data.size() - ENCRYPTION_VERSION_SIZE_BYTES - MAC_SIZE_BYTES, (size_t)0);
+-   int macIndex = ENCRYPTION_VERSION_SIZE_BYTES + dataLength;
++   auto dataLength = std::max(in_v2_data.size() - ENCRYPTION_VERSION_SIZE_BYTES - MAC_SIZE_BYTES, (size_t)0);
++   auto macIndex = ENCRYPTION_VERSION_SIZE_BYTES + dataLength;
+ 
+    out_decrypted.resize(dataLength);
+ 
+-- 
+2.49.1
+

@@ -12,6 +12,7 @@ QUARTO_COMMIT="06678d55143a7d6de6c7f0232db0c5dcf8392ca6"
 QUARTO_CLI_VER="1.5.49"
 QUARTO_BRANCH="main"
 QUARTO_DATE="20240530"
+WEBSOCKETPP_COMMIT="ee8cf4257e001d939839cff5b1766a835b749cd6"
 
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
@@ -145,6 +146,8 @@ build_r_src_uri() {
 	done
 }
 SRC_URI+="
+	https://github.com/amini-allight/websocketpp/archive/${WEBSOCKETPP_COMMIT}.tar.gz ->
+		websocketpp-${WEBSOCKETPP_COMMIT:0:8}.tar.gz
 	panmirror? (
 		https://github.com/jgenco/jgenco-overlay-files/releases/download/${P_PREBUILT}/${P_PREBUILT}-panmirror-node_modules.tar.xz
 	)
@@ -195,7 +198,7 @@ RDEPEND="
 	>=dev-libs/libfmt-8.1.1:=
 	dev-libs/openssl:=
 	>=dev-libs/mathjax-2.7
-	>=dev-libs/soci-4.0.3[postgres,sqlite]
+	>=dev-libs/soci-4.0.3[sqlite]
 	electron? (
 		dev-libs/expat
 		dev-libs/glib:2
@@ -264,7 +267,6 @@ BDEPEND="
 			>=app-text/quarto-cli-bin-${QUARTO_CLI_VER}
 		)
 	)
-	dev-cpp/websocketpp
 	dev-libs/rapidjson
 	dev-java/aopalliance:1
 	dev-java/injection-api
@@ -287,7 +289,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2024.07.0.267-cmake-bundled-dependencies.patch"
 	"${FILESDIR}/${PN}-2024.07.0.267-resource-path.patch"
 	"${FILESDIR}/${PN}-2024.04.0.735-server-paths.patch"
-	"${FILESDIR}/${PN}-2022.07.0.548-package-build.patch"
+	"${FILESDIR}/${PN}-2024.12.0.467-package-build.patch"
 	"${FILESDIR}/${PN}-2024.07.0.267-pandoc_path_fix.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
 	"${FILESDIR}/${PN}-2023.06.0.421-node_electron_cmake.patch"
@@ -301,6 +303,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2024.07.0.267-restore-qt.patch"
 	"${FILESDIR}/${PN}-2024.07.0.108-boost-1.85.0.patch"
 	"${FILESDIR}/${PN}-2024.12.1.563-gcc_15.patch"
+	"${FILESDIR}/${PN}-2024.07.0.267-boost-1.87.0.patch"
 )
 
 DOCS=(CONTRIBUTING.md COPYING INSTALL NOTICE README.md version/news )
@@ -336,6 +339,8 @@ src_unpack() {
 	else
 		unpack ${P}.tar.gz
 	fi
+
+	unpack websocketpp-${WEBSOCKETPP_COMMIT:0:8}.tar.gz
 
 	if use panmirror;then
 		pushd "${S}/src/gwt/lib" > /dev/null|| die
@@ -412,7 +417,7 @@ src_prepare() {
 		#"/src/gwt/lib/gin/2.1.2/failureaccess-1.0.2.jar:/usr/share/failureaccess/lib/failureaccess.jar"
 		"/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA.jar:/usr/share/validation-api-1.0/lib/validation-api.jar"
 		"/src/gwt/lib/gwt/gwt-rstudio/validation-api-1.0.0.GA-sources.jar:/usr/share/validation-api-1.0/sources/validation-api-src.zip"
-		"/src/cpp/ext/websocketpp/:/usr/include/websocketpp"
+		"/src/cpp/ext/websocketpp/:"
 		"/src/cpp/shared_core/include/shared_core/json/rapidjson/:/usr/include/rapidjson"
 		"/src/cpp/core/spelling/hunspell/:"
 		"/src/cpp/ext/fmt/:"
@@ -449,6 +454,7 @@ src_prepare() {
 			|| die "Failed to link ${local_path} -> ${bundle_path}" )
 	done
 
+	ln -s "${WORKDIR}/websocketpp-${WEBSOCKETPP_COMMIT}/websocketpp" "${S}/src/cpp/ext/websocketpp" || die
 	ln -s "${EPREFIX}/usr/share/mathjax" "${S}/dependencies/mathjax-27" || die
 	#/usr/share/hunspell might not exist if no dictionary is installed so no need to die
 	ln -s "${EPREFIX}/usr/share/hunspell" "${S}/dependencies/dictionaries"
@@ -625,6 +631,7 @@ src_compile() {
 	)
 
 	local EANT_EXTRA_ARGS="${eant_extra_args[@]}"
+	local JAVA_PKG_BSFIX=OFF
 	java-ant-2_src_configure
 	java-pkg-2_src_compile
 	cmake_src_compile
