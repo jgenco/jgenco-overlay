@@ -304,6 +304,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2024.07.0.108-boost-1.85.0.patch"
 	"${FILESDIR}/${PN}-2024.12.1.563-gcc_15.patch"
 	"${FILESDIR}/${PN}-2024.07.0.267-boost-1.87.0.patch"
+	"${FILESDIR}/${PN}-2024.07.0.267-R-4.5.patch"
 )
 
 DOCS=(CONTRIBUTING.md COPYING INSTALL NOTICE README.md version/news )
