@@ -85,7 +85,7 @@ java-pkg-2_src_compile() {
 			java-pkg_filter-compiler ${EANT_FILTER_COMPILER}
 		local antflags="${EANT_BUILD_TARGET:=jar}"
 		if has doc ${IUSE} && [[ -n "${EANT_DOC_TARGET=javadoc}" ]]; then
-			antflags="${antflags} $(use_doc ${EANT_DOC_TARGET})"
+			antflags="${antflags}" # $(use_doc ${EANT_DOC_TARGET})"
 		fi
 		local tasks
 		[[ ${EANT_ANT_TASKS} ]] && tasks="${ANT_TASKS} ${EANT_ANT_TASKS}"
