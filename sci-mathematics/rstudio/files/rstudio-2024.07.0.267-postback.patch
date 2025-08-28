@@ -1,0 +1,61 @@
+--- a/src/cpp/desktop/synctex/rsinverse/RsInverseMain.cpp
++++ b/src/cpp/desktop/synctex/rsinverse/RsInverseMain.cpp
+@@ -34,7 +34,7 @@
+ // NOTE: this is a cut and paste job from SessionConstants.hpp so these
+ // should not be changed unless also changed there
+ #define kLocalUriLocationPrefix           "/rsession-local/"
+-#define kPostbackUriScope                 "postback/"
++#define kPostbackUriScope                 RSTUDIO_BIN_PATH
+ 
+ using namespace rstudio;
+ using namespace rstudio::core;
+--- a/src/cpp/session/SessionPostback.cpp
++++ b/src/cpp/session/SessionPostback.cpp
+@@ -97,7 +97,7 @@ FilePath rPostbackScriptsDir()
+ {
+    // postback scripts should lie in a 'postback' directory,
+    // located in the same folder as the 'rpostback' binary
+-   return rPostbackPath().getParent().completeChildPath("postback");
++   return rPostbackPath().getParent();
+ }
+ 
+ FilePath rPostbackScriptPath(const std::string& scriptName)
+--- a/src/cpp/session/include/session/SessionConstants.hpp
++++ b/src/cpp/session/include/session/SessionConstants.hpp
+@@ -113,7 +113,7 @@
+ // NOTE: literal versions of these are depended upon by the desktop/rsinverse
+ // project so they should be updated there as well if they are changed
+ #define kLocalUriLocationPrefix           "/rsession-local/"
+-#define kPostbackUriScope                 "postback/"
++#define kPostbackUriScope                 RSTUDIO_BIN_PATH
+ 
+ #define kMonitoredPath      "monitored"
+ #define kListsPath          "lists"
+@@ -163,7 +163,7 @@
+ #ifdef _WIN32
+ # define kDefaultPostbackPath       "bin/rpostback.exe"
+ #else
+-# define kDefaultPostbackPath       "bin/rpostback"
++# define kDefaultPostbackPath       RSTUDIO_BIN_PATH"/rpostback"
+ #endif
+ 
+ // json rpc methods we handle (the rest are delegated to the HttpServer)
+--- a/src/cpp/session/postback/CMakeLists.txt
++++ b/src/cpp/session/postback/CMakeLists.txt
+@@ -46,7 +46,7 @@ if (RSTUDIO_SERVER)
+ endif()
+ 
+ # configure postback scripts
+-set(POSTBACK_SCRIPT_DIR ${CMAKE_CURRENT_BINARY_DIR}/postback)
++set(POSTBACK_SCRIPT_DIR ${CMAKE_CURRENT_BINARY_DIR})
+ file(MAKE_DIRECTORY ${POSTBACK_SCRIPT_DIR})
+ configure_file(askpass-passthrough ${POSTBACK_SCRIPT_DIR}/askpass-passthrough)
+ configure_file(rpostback-askpass   ${POSTBACK_SCRIPT_DIR}/rpostback-askpass)
+@@ -68,6 +68,6 @@ if(NOT RSTUDIO_SESSION_WIN32)
+    file(GLOB POSTBACK_SCRIPTS "rpostback-*")
+    set(POSTBACK_SCRIPTS ${POSTBACK_SCRIPTS} "askpass-passthrough")
+    install(PROGRAMS ${POSTBACK_SCRIPTS}
+-           DESTINATION ${RSTUDIO_INSTALL_BIN}/postback)
++           DESTINATION ${RSTUDIO_INSTALL_BIN})
+ endif()
+ 

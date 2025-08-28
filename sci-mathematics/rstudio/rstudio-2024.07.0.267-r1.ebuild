@@ -194,7 +194,7 @@ RDEPEND="
 	)
 	>=dev-cpp/yaml-cpp-0.8.0:=
 	>=dev-lang/R-3.3.0[png]
-	>=dev-libs/boost-1.78:=
+	>=dev-libs/boost-1.85:=
 	>=dev-libs/libfmt-8.1.1:=
 	dev-libs/openssl:=
 	>=dev-libs/mathjax-2.7
@@ -305,6 +305,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2024.12.1.563-gcc_15.patch"
 	"${FILESDIR}/${PN}-2024.07.0.267-boost-1.87.0.patch"
 	"${FILESDIR}/${PN}-2024.07.0.267-R-4.5.patch"
+	"${FILESDIR}/${PN}-2024.07.0.267-postback.patch"
 )
 
 DOCS=(CONTRIBUTING.md COPYING INSTALL NOTICE README.md version/news )
@@ -683,6 +684,7 @@ src_install() {
 		if use server; then
 			dosym -r /usr/share/${PN}/resources/app/bin/rserver /usr/bin/rserver
 		fi
+		mv "${ED}/usr/share/rstudio/resources/app/bin/rpostback"* "${ED}/usr/bin" || die
 		dodoc "${ED}/usr/share/rstudio/"{LICENSE,LICENSES.chromium.html}
 		rm "${ED}/usr/share/rstudio/"{LICENSE,LICENSES.chromium.html} || die
 	elif use qt5 || use qt6 ; then
