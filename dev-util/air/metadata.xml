@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<upstream>
+		<changelog>https://github.com/posit-dev/air/blob/main/CHANGELOG.md</changelog>
+		<doc>https://posit-dev.github.io/air/</doc>
+		<bugs-to>https://github.com/posit-dev/air/issues</bugs-to>
+		<remote-id type="github">posit-dev/air</remote-id>
+	</upstream>
+</pkgmetadata>
