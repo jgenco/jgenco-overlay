@@ -25,17 +25,30 @@ DEPEND="
 	dev-db/sqlite
 	dev-libs/icu
 	net-libs/nodejs
+	sys-apps/ripgrep
 	sys-libs/zlib
 "
 RDEPEND="${DEPEND}"
 #sqlite3:"^5.1.7"
 #kerberos:"^2.2.0"
+
+S="${WORKDIR}/${PN}"
+SYS_ARCH="linux/x64"
 src_unpack() {
-	mkdir -p ${P}/${PN} && pushd ${P}/${PN} > /dev/null || die
-	unpack ${P}-js.zip
-	popd
 	unpack ${PN}-${DEPS_VER}_deps.tar.xz
-	cd "copilot_${DEPS_VER}_deps" || die
+	mkdir -p ${PN} && cd ${PN} || die
+	unpack ${P}-js.zip
+}
+src_prepare() {
+	default
+
+	rm bin/${SYS_ARCH}/rg compiled/${SYS_ARCH}/{node_sqlite3,kerberos}.node \
+		crypt32.node || die "missing file(s)"
+	rmdir {bin,compiled}/${SYS_ARCH} || die "nonempty dir(s)"
+	rm -r bin  compiled || die
+	mkdir -p {bin,compiled}/${SYS_ARCH} || die "can't create binary dirs"
+
+	cd "../copilot_${DEPS_VER}_deps" || die
 	local install_version="$(grep installVersion "${EPREFIX}/usr/$(get_libdir)/node_modules/npm/node_modules/node-gyp/package.json" |sed -E 's/.* ([0-9]+),/\1/')"
 	[[ ${install_version} =~ ^[0-9]+$ ]] || die
 
@@ -47,6 +60,7 @@ src_unpack() {
 	#This tells it the headers where installed
 	echo "${install_version}" > "${WORKDIR}/.cache/node-gyp/${nodejs_version}/installVersion" || die
 }
+
 src_configure() {
 	NODE_GYP="${EPREFIX}/usr/$(get_libdir)/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js"
 	NODE_MODULES="${WORKDIR}/copilot_${DEPS_VER}_deps/node_modules"
@@ -69,12 +83,11 @@ src_compile() {
 	"${NODE_GYP}" build -v || die
 
 	#replace with newly compiled nodes files
-	cd "${S}/${PN}" || die
-	rm -r compiled crypt32.node || die
-	local node_dir="compiled/linux/x64/"
-	mkdir -p ${node_dir}/
-	cp "${NODE_MODULES}/sqlite3/build/Release/node_sqlite3.node" ${node_dir}/node_sqlite3.node || die
-	cp "${NODE_MODULES}/kerberos/build/Release/kerberos.node" ${node_dir}/kerberos.node || die
+	cd "${S}" || die
+	cp "${NODE_MODULES}/sqlite3/build/Release/node_sqlite3.node" \
+		"${NODE_MODULES}/kerberos/build/Release/kerberos.node" \
+		compiled/${SYS_ARCH} || die
+
 }
 src_install() {
 	newbin - ${PN} <<-EOF
@@ -83,6 +96,7 @@ src_install() {
 	EOF
 
 	insinto /usr/share/
-	doins -r ${PN}
-	fperms +x /usr/share/${PN}/compiled/linux/x64/{kerberos,node_sqlite3}.node
+	doins -r "${S}"
+	fperms +x /usr/share/${PN}/compiled/${SYS_ARCH}/{kerberos,node_sqlite3}.node
+	dosym -r /usr/bin/rg /usr/share/${PN}/bin/${SYS_ARCH}/rg
 }
