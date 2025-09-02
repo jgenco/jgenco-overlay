@@ -6,11 +6,11 @@ LLVM_COMPAT=( {18..20} )
 LLVM_OPTIONAL=1
 inherit cmake java-pkg-2 java-ant-2 llvm-r1 multiprocessing npm optfeature pam prefix xdg-utils
 
-P_PREBUILT="${PN}-2025.08.0.318"
-ELECTRON_VERSION="37.2.4"
-DAILY_COMMIT="04518eff505cc50f88a648ddfc913c6c43ed2608"
+P_PREBUILT="${PN}-2025.09.0.369"
+ELECTRON_VERSION="37.2.6"
+DAILY_COMMIT="289ef71aaa88401144aff0369c6cacd061e99e4d"
 QUARTO_COMMIT="0424deb0f3e98d997e1b337c65c511e7ee15de5a"
-QUARTO_CLI_VER="1.7.31"
+QUARTO_CLI_VER="1.7.32"
 QUARTO_BRANCH="release/rstudio-cucumberleaf-sunflower"
 QUARTO_DATE="20250711"
 GWT_VERSION="2.12.2"
@@ -184,7 +184,7 @@ RDEPEND="
 	dev-cpp/gsl-lite
 	>=dev-cpp/yaml-cpp-0.8.0:=
 	>=dev-lang/R-3.3.0[png]
-	dev-libs/boost:=
+	>=dev-libs/boost-1.85:=
 	>=dev-libs/libfmt-8.1.1:=
 	dev-libs/openssl:=
 	>=dev-libs/mathjax-2.7
@@ -261,6 +261,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2024.12.0.467-disable-panmirror.patch"
 	"${FILESDIR}/${PN}-2023.12.1.402-node_path_fix.patch"
 	"${FILESDIR}/${PN}-2025.05.0.496-copilot.patch"
+	"${FILESDIR}/${PN}-2025.09.0.369-postback.patch"
 )
 
 DOCS=(CONTRIBUTING.md COPYING INSTALL NOTICE README.md version/news )
@@ -465,8 +466,8 @@ src_configure() {
 	export RSTUDIO_VERSION_PATCH=$(ver_cut 3 ${my_pv})
 	export RSTUDIO_VERSION_SUFFIX="-${build_type,,}+$(ver_cut 4 ${my_pv})"
 
-	sed -i "3s/RStudio/rstudio/" src/node/desktop/package.json || die
-	sed -i "4s/9999.99.9-dev+1.test9/$(ver_cut 1-3)${RSTUDIO_VERSION_SUFFIX}/" src/node/desktop/package.json || die
+	sed -i "3s/RStudio/rstudio/;4s/99.9.9-dev+999/$(ver_cut 1-3)${RSTUDIO_VERSION_SUFFIX}/"\
+		src/node/desktop/package.json || die
 	CMAKE_BUILD_TYPE=$(usex debug Debug Release) #RelWithDebInfo Release
 	echo "cache=${WORKDIR}/node_cache" > "${S}/src/node/desktop/.npmrc"
 	echo "nodedir=${WORKDIR}/.electron-gyp/${ELECTRON_VERSION}" >> "${S}/src/node/desktop/.npmrc"
@@ -626,6 +627,7 @@ src_install() {
 		if use server; then
 			dosym -r /usr/share/${PN}/resources/app/bin/rserver /usr/bin/rserver
 		fi
+		mv "${ED}/usr/share/rstudio/resources/app/bin/rpostback"* "${ED}/usr/bin" || die
 		dodoc "${ED}/usr/share/rstudio/"{LICENSE,LICENSES.chromium.html}
 		rm "${ED}/usr/share/rstudio/"{LICENSE,LICENSES.chromium.html} || die
 	fi
