@@ -8,7 +8,7 @@ inherit cmake java-pkg-2 java-ant-2 llvm-r1 multiprocessing npm optfeature pam p
 
 P_PREBUILT="${PN}-2025.09.0.369"
 ELECTRON_VERSION="37.2.6"
-DAILY_COMMIT="289ef71aaa88401144aff0369c6cacd061e99e4d"
+#DAILY_COMMIT="289ef71aaa88401144aff0369c6cacd061e99e4d"
 QUARTO_COMMIT="0424deb0f3e98d997e1b337c65c511e7ee15de5a"
 QUARTO_CLI_VER="1.7.32"
 QUARTO_BRANCH="release/rstudio-cucumberleaf-sunflower"
