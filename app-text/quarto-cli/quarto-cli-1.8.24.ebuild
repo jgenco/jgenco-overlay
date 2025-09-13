@@ -137,6 +137,12 @@ src_compile() {
 
 	[[ "${PV}" == "9999" ]] && MY_PV="99.9.9" || MY_PV=${PV}
 
+	einfo "Building quarto-preview..."
+	pushd src/webui/quarto-preview > /dev/null || die
+	rm build.ts && touch build.ts || die
+	npm install &&	npm run build || die "Failed to build quarto-preview"
+	popd
+
 	pushd package/src || die "Failed to move to package/src"
 	./quarto-bld prepare-dist --set-version ${MY_PV} --log-level info || die "Failed to run prepare-dist"
 	popd
