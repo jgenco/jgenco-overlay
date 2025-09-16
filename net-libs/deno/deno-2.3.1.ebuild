@@ -19,7 +19,7 @@ LLVM_COMPAT=( {18..20} )
 PYTHON_COMPAT=( python3_{11..13} )
 
 RUST_MIN_VER="1.85.0"
-RUST_MAX_VER="1.86.0"
+RUST_MAX_VER="1.88.0"
 
 inherit cargo check-reqs llvm-r2 multiprocessing python-any-r1 shell-completion toolchain-funcs
 
@@ -48,7 +48,7 @@ LICENSE+="
 "
 
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 IUSE="v8-prebuilt llvm test"
 RESTRICT="mirror !test? ( test )"
 
