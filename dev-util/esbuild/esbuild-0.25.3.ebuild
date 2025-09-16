@@ -21,7 +21,7 @@ SRC_URI="
 
 LICENSE="MIT BSD-2"
 SLOT="$(ver_cut 1-2)"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 
 DEPEND=""
 RDEPEND="${DEPEND}"
