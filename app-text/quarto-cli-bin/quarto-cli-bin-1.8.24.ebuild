@@ -24,7 +24,7 @@ LICENSE+=" MIT Apache-2.0 BSD" #dev-lang/dart-sass 1.87.0
 LICENSE+=" MIT BSD-2" #dev-util/esbuild 0.25.3
 
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 
 DEPEND="
 	app-arch/unzip
