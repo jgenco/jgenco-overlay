@@ -1,0 +1,51 @@
+Fix for boost-1.89.0 reqs. 1.69.0
+--- a/src/cpp/CMakeLists.txt
++++ b/src/cpp/CMakeLists.txt
+@@ -195,7 +195,6 @@ list(APPEND BOOST_LIBS
+    program_options
+    random
+    regex
+-   system
+    thread
+    url
+ )
+--- a/src/cpp/core/include/core/ExponentialBackoff.hpp
++++ b/src/cpp/core/include/core/ExponentialBackoff.hpp
+@@ -17,6 +17,7 @@
+ #define CORE_EXPONENTIAL_BACKOFF_HPP
+ 
+ #include <boost/asio.hpp>
++#include <boost/asio/deadline_timer.hpp>
+ #include <boost/enable_shared_from_this.hpp>
+ #include <boost/date_time.hpp>
+ #include <boost/function.hpp>
+--- a/src/cpp/core/include/core/FileLock.hpp
++++ b/src/cpp/core/include/core/FileLock.hpp
+@@ -26,6 +26,7 @@
+ #include <boost/shared_ptr.hpp>
+ #include <boost/scoped_ptr.hpp>
+ #include <boost/asio.hpp>
++#include <boost/asio/deadline_timer.hpp>
+ #include <boost/asio/io_context.hpp>
+ 
+ #include <core/Log.hpp>
+--- a/src/cpp/core/system/PosixChildProcess.cpp
++++ b/src/cpp/core/system/PosixChildProcess.cpp
+@@ -34,6 +34,7 @@
+ #include <sys/types.h>
+ 
+ #include <boost/asio.hpp>
++#include <boost/asio/deadline_timer.hpp>
+ #include <boost/bind/bind.hpp>
+ 
+ #include <shared_core/Error.hpp>
+--- a/src/cpp/session/include/session/SessionConsoleProcessSocket.hpp
++++ b/src/cpp/session/include/session/SessionConsoleProcessSocket.hpp
+@@ -24,6 +24,7 @@
+ #include <boost/function.hpp>
+ #include <boost/scoped_ptr.hpp>
+ #include <boost/asio.hpp>
++#include <boost/asio/deadline_timer.hpp>
+ #include <boost/asio/strand.hpp>
+ 
+ #include <shared_core/Error.hpp>
