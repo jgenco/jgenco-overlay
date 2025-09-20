@@ -1,0 +1,94 @@
+--- a/cmake/globals.cmake
++++ b/cmake/globals.cmake
+@@ -349,17 +349,17 @@ else()
+       if (RSTUDIO_SESSION_WIN32)
+          set(RSTUDIO_INSTALL_BIN resources/app/bin/x86)
+       else()
+-         set(RSTUDIO_INSTALL_BIN resources/app/bin)
++         set(RSTUDIO_INSTALL_BIN bin)
+       endif()
+-      set(RSTUDIO_INSTALL_SUPPORTING resources/app)
+-      set(RSTUDIO_INSTALL_ELECTRON .)
++      set(RSTUDIO_INSTALL_ELECTRON ${RSTUDIO_INSTALL_SUPPORTING})
++      set(RSTUDIO_INSTALL_SUPPORTING ${RSTUDIO_INSTALL_SUPPORTING}/resources/app)
+    else()
+       if (RSTUDIO_SESSION_WIN32)
+          set(RSTUDIO_INSTALL_BIN x86)
+       else()
+          set(RSTUDIO_INSTALL_BIN bin)
+       endif()
+-      set(RSTUDIO_INSTALL_SUPPORTING .)
++      set(RSTUDIO_INSTALL_SUPPORTING ${RSTUDIO_INSTALL_SUPPORTING}/resources/app)
+    endif()
+ endif()
+ 
+--- a/src/cpp/server/ServerOptions.cpp
++++ b/src/cpp/server/ServerOptions.cpp
+@@ -152,7 +152,7 @@ ProgramStatus Options::read(int argc,
+    }
+ 
+    // compute the resource and binary paths
+-   FilePath resourcePath = installPath_;
++   FilePath resourcePath = installPath_.completeChildPath("share/rstudio/resources/app/");;
+    FilePath binaryPath = installPath_.completeChildPath("bin");
+ 
+    // detect running in OSX bundle and tweak paths
+--- a/src/cpp/server_core/DatabaseUtils.cpp
++++ b/src/cpp/server_core/DatabaseUtils.cpp
+@@ -467,9 +467,7 @@ Error migrationsDir(const std::string& rootDir, const std::string& migrationEnvV
+          return Success();
+       }
+    }
+-   
+-   *pMigrationsDir = exePath.getParent().getParent().completeChildPath(rootDir);
+-
++   *pMigrationsDir = exePath.getParent().getParent().completeChildPath("share/rstudio/resources/app").completeChildPath(rootDir);
+    return Success();
+ }
+ 
+--- a/src/cpp/session/SessionOptions.cpp
++++ b/src/cpp/session/SessionOptions.cpp
+@@ -107,7 +107,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
+    core::system::unsetenv(kMonitorSharedSecretEnvVar);
+ 
+    // compute the resource path
+-   Error error = core::system::installPath("..", argv[0], &resourcePath_);
++   Error error = core::system::installPath("../share/rstudio/resources/app", argv[0], &resourcePath_);
+    if (error)
+    {
+       LOG_ERROR_MESSAGE("Unable to determine install path: " + error.getSummary());
+--- a/src/cpp/session/include/session/SessionConstants.hpp
++++ b/src/cpp/session/include/session/SessionConstants.hpp
+@@ -151,15 +151,15 @@
+ #define kSessionTmpDir             "rstudio-rsession"
+ 
+ #ifdef QUARTO_ENABLED
+-# define kDefaultPandocPath        "bin/quarto/bin/tools"
++# define kDefaultPandocPath        "../../../../bin"
+ #else
+-# define kDefaultPandocPath        "bin/pandoc"
++# define kDefaultPandocPath        "../../../../bin"
+ #endif
+ 
+-#define kDefaultNodePath           "bin/node"
+-#define kDefaultQuartoPath         "bin/quarto"
+-#define kDefaultCopilotPath        "bin/copilot-language-server-js"
+-#define kDefaultRsclangPath        "bin/rsclang"
++#define kDefaultNodePath           "../../../../bin"
++#define kDefaultQuartoPath         "../../../../bin"
++#define kDefaultCopilotPath        "../../../../bin"
++#define kDefaultRsclangPath        "../../../../bin"
+ 
+ #ifdef _WIN32
+ # define kDefaultPostbackPath       "bin/rpostback.exe"
+--- a/src/node/desktop/src/main/utils.ts
++++ b/src/node/desktop/src/main/utils.ts
+@@ -271,7 +271,7 @@ export function findComponents(): [FilePath, FilePath, FilePath, FilePath] {
+   const binRoot = new FilePath(getAppPath());
+   if (app.isPackaged) {
+     // confPath is intentionally left empty for a package build
+-    sessionPath = binRoot.completePath(`bin/${rsessionExeName()}`);
++    sessionPath = binRoot.completePath(`../../../../bin/${rsessionExeName()}`);
+     return [binRoot, confPath, sessionPath, new FilePath(getAppPath())];
+   }
+ 
