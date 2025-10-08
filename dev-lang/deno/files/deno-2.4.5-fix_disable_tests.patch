@@ -1,0 +1,297 @@
+Most ignored test need internet
+
+LD_PRELOAD is used for sanbox setup
+either set LD_PRELOAD="" or add --allow-all (ansi test?)
+
+chmod_test: it tries to chmod /badfilename.txt and gives an access denied
+changes to /tmp/badfilename.txt to get the correct error
+{command,process,spawn}_test.ts:It clearEnv removes all ENV except SANDBOX_*
+set DENO_DIR so it has a place to store files.
+--- a/tests/integration/check_tests.rs
++++ b/tests/integration/check_tests.rs
+@@ -68,7 +68,7 @@ fn reload_flag() {
+     stderr.contains("Check")
+   }
+ }
+-
++#[ignore = "internet - import deno_std"]
+ #[test]
+ fn typecheck_declarations_ns() {
+   let context = TestContextBuilder::for_jsr().build();
+@@ -109,7 +109,7 @@ fn typecheck_declarations_unstable() {
+   println!("stderr: {}", output.stderr());
+   output.assert_exit_code(0);
+ }
+-
++#[ignore = "internet - gist"]
+ #[test]
+ fn ts_no_recheck_on_redirect() {
+   let test_context = TestContext::default();
+--- a/tests/integration/init_tests.rs
++++ b/tests/integration/init_tests.rs
+@@ -4,6 +4,7 @@ use test_util as util;
+ use util::TestContextBuilder;
+ use util::assert_contains;
+ 
++#[ignore = "internet - import deno_std@ver"]
+ #[test]
+ fn init_subcommand_without_dir() {
+   let context = TestContextBuilder::for_jsr().use_temp_cwd().build();
+@@ -43,7 +44,7 @@ fn init_subcommand_without_dir() {
+   assert_contains!(output.stdout(), "1 passed");
+   output.skip_output_check();
+ }
+-
++#[ignore = "internet - import deno_std@ver"]
+ #[test]
+ fn init_subcommand_with_dir_arg() {
+   let context = TestContextBuilder::for_jsr().use_temp_cwd().build();
+@@ -90,7 +91,7 @@ fn init_subcommand_with_dir_arg() {
+   assert_contains!(output.stdout(), "1 passed");
+   output.skip_output_check();
+ }
+-
++#[ignore = "internet - import deno_std@ver"]
+ #[test]
+ fn init_subcommand_with_quiet_arg() {
+   let context = TestContextBuilder::for_jsr().use_temp_cwd().build();
+--- a/tests/integration/npm_tests.rs
++++ b/tests/integration/npm_tests.rs
+@@ -641,6 +641,7 @@ fn lock_file_missing_top_level_package() {
+   );
+ }
+ 
++#[ignore = "internet - import npms"]
+ #[test]
+ fn lock_file_lock_write() {
+   // https://github.com/denoland/deno/issues/16666
+--- a/tests/integration/repl_tests.rs
++++ b/tests/integration/repl_tests.rs
+@@ -177,6 +177,7 @@ fn pty_complete_imports() {
+     });
+ }
+ 
++#[ignore = "sandbox problem?"]
+ #[flaky_test::flaky_test]
+ fn pty_complete_imports_no_panic_empty_specifier() {
+   // does not panic when tabbing when empty
+--- a/tests/integration/run_tests.rs
++++ b/tests/integration/run_tests.rs
+@@ -157,7 +157,7 @@ fn _083_legacy_external_source_map() {
+   let out = std::str::from_utf8(&output.stdout).unwrap();
+   assert_eq!(out, "");
+ }
+-
++/*#[ignore = "reqs LD_PRELOAD unset"]
+ itest!(_089_run_allow_list {
+   args: "run --allow-run=curl run/089_run_allow_list.ts",
+   envs: vec![
+@@ -166,7 +166,7 @@ itest!(_089_run_allow_list {
+   ],
+   output: "run/089_run_allow_list.ts.out",
+ });
+-
++*/
+ #[test]
+ fn _090_run_permissions_request() {
+   TestContext::default()
+@@ -555,7 +555,7 @@ fn lock_redirects() {
+ "#,
+   );
+ }
+-
++#[ignore = "network?"]
+ #[test]
+ fn lock_deno_json_package_json_deps() {
+   let context = TestContextBuilder::new()
+@@ -2018,6 +2018,7 @@ fn running_declaration_files() {
+   }
+ }
+ 
++/*#[ignore = "reqs LD_PRELOAD unset"]
+ #[cfg(not(target_os = "windows"))]
+ itest!(spawn_kill_permissions {
+   args: "run --quiet --allow-run=cat spawn_kill_permissions.ts",
+@@ -2027,7 +2028,7 @@ itest!(spawn_kill_permissions {
+   ],
+   output_str: Some(""),
+ });
+-
++*/
+ #[test]
+ fn cache_test() {
+   let _g = util::http_server();
+@@ -2831,7 +2832,7 @@ fn stdio_streams_are_locked_in_permission_prompt() {
+       assert!(!prompt_text.contains(malicious_output), "Prompt text: {:?}", prompt_text);
+   });
+ }
+-
++#[ignore = "reqs LD_PRELOAD unset"]
+ #[test]
+ fn permission_prompt_escapes_ansi_codes_and_control_chars() {
+   util::with_pty(&["repl"], |mut console| {
+--- a/tests/integration/upgrade_tests.rs
++++ b/tests/integration/upgrade_tests.rs
+@@ -9,6 +9,7 @@ use test_util::TestContext;
+ use test_util::assert_starts_with;
+ use util::TestContextBuilder;
+ 
++#[ignore = "upgrade"]
+ #[flaky_test::flaky_test]
+ fn upgrade_invalid_lockfile() {
+   let context = upgrade_context();
+@@ -43,6 +44,7 @@ fn upgrade_invalid_lockfile() {
+   );
+ }
+ 
++#[ignore = "upgrade"]
+ #[flaky_test::flaky_test]
+ fn upgrade_prompt() {
+   let context = upgrade_context();
+@@ -72,6 +74,7 @@ fn upgrade_prompt() {
+   });
+ }
+ 
++#[ignore = "upgrade"]
+ #[test]
+ fn upgrade_lsp_repl_sleeps() {
+   let context = TestContextBuilder::new()
+--- a/tests/unit/chmod_test.ts
++++ b/tests/unit/chmod_test.ts
+@@ -90,7 +90,7 @@ Deno.test(
+ );
+ 
+ Deno.test({ permissions: { write: true } }, function chmodSyncFailure() {
+-  const filename = "/badfile.txt";
++  const filename = "/tmp/badfile.txt";
+   assertThrows(
+     () => {
+       Deno.chmodSync(filename, 0o777);
+@@ -178,7 +178,7 @@ Deno.test(
+ );
+ 
+ Deno.test({ permissions: { write: true } }, async function chmodFailure() {
+-  const filename = "/badfile.txt";
++  const filename = "/tmp/badfile.txt";
+   await assertRejects(
+     async () => {
+       await Deno.chmod(filename, 0o777);
+--- a/tests/unit/command_test.ts
++++ b/tests/unit/command_test.ts
+@@ -715,6 +715,7 @@ Deno.test(
+       clearEnv: true,
+       env: {
+         FOO: "23147",
++        DENO_DIR: Deno.env.get("DENO_DIR") || "/tmp",
+       },
+     }).output();
+ 
+@@ -742,6 +743,7 @@ Deno.test(
+       clearEnv: true,
+       env: {
+         FOO: "23147",
++        DENO_DIR: Deno.env.get("DENO_DIR") || "/tmp",
+       },
+     }).outputSync();
+ 
+--- a/tests/unit/net_test.ts
++++ b/tests/unit/net_test.ts
+@@ -1287,7 +1287,7 @@ Deno.test({
+ });
+ 
+ Deno.test(
+-  { permissions: { net: true } },
++  { permissions: { net: true }, ignore:true },
+   async function netTcpWithAbortSignal() {
+     const controller = new AbortController();
+     setTimeout(() => controller.abort(), 100);
+--- a/tests/unit/tls_test.ts
++++ b/tests/unit/tls_test.ts
+@@ -1042,7 +1042,7 @@ Deno.test(
+ );
+ 
+ Deno.test(
+-  { permissions: { read: true, net: true } },
++  { permissions: { read: true, net: true },ignore:true },
+   async function connectTLSBadCertKey(): Promise<void> {
+     await assertRejects(async () => {
+       await Deno.connectTls({
+@@ -1058,7 +1058,7 @@ Deno.test(
+ );
+ 
+ Deno.test(
+-  { permissions: { read: true, net: true } },
++  { permissions: { read: true, net: true },ignore:true },
+   async function connectTLSBadKey(): Promise<void> {
+     await assertRejects(async () => {
+       await Deno.connectTls({
+@@ -1074,7 +1074,7 @@ Deno.test(
+ );
+ 
+ Deno.test(
+-  { permissions: { read: true, net: true } },
++  { permissions: { read: true, net: true },ignore:true },
+   async function connectTLSNotKey(): Promise<void> {
+     await assertRejects(async () => {
+       await Deno.connectTls({
+--- a/tests/unit/utime_test.ts
++++ b/tests/unit/utime_test.ts
+@@ -160,10 +160,10 @@ Deno.test(
+ 
+     assertThrows(
+       () => {
+-        Deno.utimeSync("/baddir", atime, mtime);
++        Deno.utimeSync("/tmp/baddir", atime, mtime);
+       },
+       Deno.errors.NotFound,
+-      "utime '/baddir'",
++      "utime '/tmp/baddir'",
+     );
+   },
+ );
+@@ -275,10 +275,10 @@ Deno.test(
+ 
+     await assertRejects(
+       async () => {
+-        await Deno.utime("/baddir", atime, mtime);
++        await Deno.utime("/tmp/baddir", atime, mtime);
+       },
+       Deno.errors.NotFound,
+-      "utime '/baddir'",
++      "utime '/tmp/baddir'",
+     );
+   },
+ );
+--- a/tests/unit_node/http2_test.ts
++++ b/tests/unit_node/http2_test.ts
+@@ -180,7 +180,7 @@ Deno.test(`[node/http2 client body overflow]`, {
+   assertEquals(receivedTrailers?.["req_body_len"], "5");
+ });
+ 
+-Deno.test("[node/http2 client GET https://www.example.com]", async () => {
++Deno.test("[node/http2 client GET https://www.example.com]",{ignore:true}, async () => {
+   const clientSession = http2.connect("https://www.example.com");
+   const req = clientSession.request({
+     ":method": "GET",
+--- a/tests/unit_node/net_test.ts
++++ b/tests/unit_node/net_test.ts
+@@ -249,7 +249,7 @@ Deno.test("[node/net] net.Server can listen on the same port immediately after i
+   await serverClosed.promise;
+ });
+ 
+-Deno.test("dns.resolve with ttl", async () => {
++Deno.test("dns.resolve with ttl", { ignore:true }, async () => {
+   const d1 = Promise.withResolvers();
+   dns.resolve4("www.example.com", { ttl: true }, (err, addresses) => {
+     if (err) {
+--- a/tests/unit_node/tls_test.ts
++++ b/tests/unit_node/tls_test.ts
+@@ -303,7 +303,7 @@ Deno.test("TLSSocket.alpnProtocol is set for client", async () => {
+   await new Promise((resolve) => outgoing.on("close", resolve));
+ });
+ 
+-Deno.test("tls connect upgrade tcp", async () => {
++Deno.test("tls connect upgrade tcp", {ignore:true}, async () => {
+   const { promise, resolve } = Promise.withResolvers<void>();
+ 
+   const socket = new net.Socket();

@@ -1,0 +1,91 @@
+from https://gitlab.alpinelinux.org/alpine/aports/-/tree/master/community/deno
+--- a/build.rs
++++ b/build.rs
+@@ -699,6 +699,20 @@ fn print_link_flags() {
+       println!("cargo:rustc-link-lib=dylib=msvcprt");
+     }
+   }
++
++  // v8 requires symbols provided by libatomic.so.
++  println!("cargo:rustc-link-lib=dylib=atomic");
++
++  // Link with system-provided zlib.
++  println!("cargo:rustc-link-lib=z");
++
++  // Link with system-provided ICU libraries.
++  println!("cargo:rustc-link-lib=icui18n");
++  println!("cargo:rustc-link-lib=icuuc");
++  println!("cargo:rustc-link-lib=icudata");
++
++  // Link with system-provided simdutf library.
++  // println!("cargo:rustc-link-lib=dylib=simdutf"); // -DSIMDUTF_CXX_STANDARD=20
+ }
+ 
+ fn print_prebuilt_src_binding_path() {
+--- a/src/binding.cc
++++ b/src/binding.cc
+@@ -3781,8 +3781,8 @@ void v8__CompiledWasmModule__DELETE(v8::CompiledWasmModule* self) {
+ extern "C" {
+ 
+ size_t icu_get_default_locale(char* output, size_t output_len) {
+-  const icu_74::Locale& default_locale = icu::Locale::getDefault();
+-  icu_74::CheckedArrayByteSink sink(output, static_cast<uint32_t>(output_len));
++  const icu::Locale& default_locale = icu::Locale::getDefault();
++  icu::CheckedArrayByteSink sink(output, static_cast<uint32_t>(output_len));
+   UErrorCode status = U_ZERO_ERROR;
+   default_locale.toLanguageTag(sink, status);
+   assert(status == U_ZERO_ERROR);
+--- a/src/icu.rs
++++ b/src/icu.rs
+@@ -5,7 +5,7 @@ use std::ffi::CString;
+ unsafe extern "C" {
+   fn icu_get_default_locale(output: *mut char, output_len: usize) -> usize;
+   fn icu_set_default_locale(locale: *const char);
+-  fn udata_setCommonData_74(this: *const u8, error_code: *mut i32);
++  fn udata_setCommonData(this: *const u8, error_code: *mut i32);
+ }
+ 
+ /// This function bypasses the normal ICU data loading process and allows you to force ICU's system
+@@ -42,10 +42,10 @@ unsafe extern "C" {
+ /// functionality for application data.
+ // TODO(ry) Map error code to something useful.
+ #[inline(always)]
+-pub fn set_common_data_74(data: &'static [u8]) -> Result<(), i32> {
++pub fn set_common_data(data: &'static [u8]) -> Result<(), i32> {
+   let mut error_code = 0i32;
+   unsafe {
+-    udata_setCommonData_74(data.as_ptr(), &mut error_code);
++    udata_setCommonData(data.as_ptr(), &mut error_code);
+   }
+   if error_code == 0 {
+     Ok(())
+--- a/third_party/icu/config.gni
++++ b/third_party/icu/config.gni
+@@ -29,7 +29,7 @@ if (defined(is_fuchsia_tree) && is_fuchsia_tree) {
+     icu_fuchsia_override_data_dir = ""
+ 
+     # If set, the ":icudata" target will copy the ICU data to $root_build_dir.
+-    icu_copy_icudata_to_root_build_dir = true
++    icu_copy_icudata_to_root_build_dir = false
+ 
+     # Fuchsia sometimes requires extra compilation flags for ICU to adapt it to
+     # its current toolchain. Since it takes a while for ICU to roll through
+--- a/v8/BUILD.gn
++++ b/v8/BUILD.gn
+@@ -486,7 +486,7 @@ declare_args() {
+   # this breaks locally building V8 with ICU support when the file
+   # isn't present, which some embedders rely on. This option controls
+   # the explicit dependency and allows the build to complete.
+-  v8_depend_on_icu_data_file = icu_use_data_file
++  v8_depend_on_icu_data_file = false
+ 
+   # Some fuzzers depend on fuzzing functionality linked into the v8 library.
+   # For binary size reasons this functionality is not always available.
+@@ -4963,6 +4963,7 @@ v8_header_set("v8_internal_headers") {
+     ":v8_abseil",
+     ":v8_heap_base_headers",
+     ":v8_libbase",
++    "//third_party/simdutf:simdutf",
+   ]
+ }
+ 

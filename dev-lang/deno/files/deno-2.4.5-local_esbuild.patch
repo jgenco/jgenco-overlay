@@ -1,0 +1,127 @@
+--- a/cli/tools/bundle/esbuild.rs
++++ b/cli/tools/bundle/esbuild.rs
+@@ -17,6 +17,49 @@ use crate::npm::CliNpmCache;
+ use crate::npm::CliNpmCacheHttpClient;
+ use crate::npm::CliNpmRegistryInfoProvider;
+ use crate::sys::CliSys;
++use std::process::Command;
++
++pub struct PathVersion {
++  pub path: PathBuf,
++  pub version: String,
++}
++
++fn local_esbuild() -> Result<PathVersion, String> {
++  let esbuild_parts: Vec<&str> = ESBUILD_VERSION.split(".").collect();
++  let path = PathBuf::new()
++    .join("/usr/bin")
++    .join(format!("esbuild-{}.{}", esbuild_parts[0], esbuild_parts[1]));
++  if path.exists() {
++    let output = Command::new(&path).arg("--version").output();
++    if output.is_err() {
++      return Err("command failed".to_string());
++    };
++    let output = output.unwrap().stdout;
++
++    let local_version = str::from_utf8(&output).unwrap().trim();
++    let local_parts: Vec<&str> = local_version.split(".").collect();
++    if local_parts.len() != 3 {
++      return Err("Output Error".to_string());
++    }
++    if esbuild_parts.len() != 3 {
++      return Err("ESBUILD_VERSION error".to_string());
++    }
++    if esbuild_parts[0] == local_parts[0] && esbuild_parts[1] == local_parts[1]
++    {
++      let path_ver = PathVersion {
++        path: path,
++        version: String::from(local_version),
++      };
++      return Ok(path_ver);
++    } else {
++      return Err(format!(
++        "Version Mismatch:{} != {}",
++        ESBUILD_VERSION, local_version
++      ));
++    }
++  }
++  return Err(format!("path {} not found", path.display()));
++}
+ 
+ pub const ESBUILD_VERSION: &str = "0.25.5";
+ 
+@@ -43,7 +86,23 @@ pub async fn ensure_esbuild(
+   workspace_link_packages: &Arc<WorkspaceNpmLinkPackages>,
+   tarball_cache: &Arc<TarballCache<CliNpmCacheHttpClient, CliSys>>,
+   npm_cache: &CliNpmCache,
+-) -> Result<PathBuf, AnyError> {
++) -> Result<PathVersion, AnyError> {
++  let eb = local_esbuild();
++  match eb {
++    Ok(v) => {
++      //println!("path:{}", v.path.display());
++      //println!("ver :{}", v.version);
++      return Ok(v);
++    }
++    //Err(e) => println!("{}", e),
++    _ => (),
++  }
++
++  let mut path_ver = PathVersion {
++    path: PathBuf::new(),
++    version: ESBUILD_VERSION.to_string(),
++  };
++
+   let target = esbuild_platform();
+   let mut esbuild_path = deno_dir
+     .dl_folder_path()
+@@ -54,7 +113,8 @@ pub async fn ensure_esbuild(
+   }
+ 
+   if esbuild_path.exists() {
+-    return Ok(esbuild_path);
++    path_ver.path = esbuild_path;
++    return Ok(path_ver);
+   }
+ 
+   let pkg_name = format!("@esbuild/{}", target);
+@@ -114,7 +174,8 @@ pub async fn ensure_esbuild(
+         format!("failed to remove directory {}", package_folder.display())
+       })?;
+     }
+-    Ok(esbuild_path)
++    path_ver.path = esbuild_path;
++    Ok(path_ver)
+   } else {
+     anyhow::bail!(
+       "could not get fetch esbuild binary; download it manually and copy it to {}",
+--- a/cli/tools/bundle/mod.rs
++++ b/cli/tools/bundle/mod.rs
+@@ -1,6 +1,7 @@
+ // Copyright 2018-2025 the Deno authors. MIT license.
+ 
+ mod esbuild;
++use esbuild::PathVersion;
+ mod externals;
+ mod transform;
+ 
+@@ -124,8 +125,8 @@ pub async fn bundle(
+   let _ = plugin_handler.prepare_module_load(&roots).await;
+ 
+   let esbuild = EsbuildService::new(
+-    esbuild_path,
+-    esbuild::ESBUILD_VERSION,
++    esbuild_path.path,
++    esbuild_path.version.as_str(),
+     plugin_handler.clone(),
+     Default::default(),
+   )
+@@ -1110,7 +1111,7 @@ fn resolve_roots(
+ /// and ready to use and then return path to it.
+ async fn ensure_esbuild_downloaded(
+   factory: &CliFactory,
+-) -> Result<PathBuf, AnyError> {
++) -> Result<PathVersion, AnyError> {
+   let installer_factory = factory.npm_installer_factory()?;
+   let deno_dir = factory.deno_dir()?;
+   let npmrc = factory.npmrc()?;
