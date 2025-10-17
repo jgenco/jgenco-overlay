@@ -118,6 +118,11 @@ src_unpack() {
 }
 
 src_prepare() {
+	# rust-bin and rust[-system-llvm]? >= 1.87 has a problem with llvm
+	# https://github.com/rust-lang/rust/issues/142752
+	# changin lto to thin for all rust>=1.87
+	ver_test ${RUST_SLOT} -ge "1.87.0" &&
+		sed -i 's/lto = true/lto = "thin"/' Cargo.toml || die
 	#v8 crate begin
 	eapply -d "$(find_crate ^v8- p)" -- \
 		"${FILESDIR}/v8-0.42.0-disable-auto-ccache.patch" \
