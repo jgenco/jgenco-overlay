@@ -263,6 +263,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2025.05.0.496-copilot.patch"
 	"${FILESDIR}/${PN}-2025.09.0.369-postback.patch"
 	"${FILESDIR}/${PN}-2025.09.0.387-boost-1.89.0.patch"
+	"${FILESDIR}/${PN}-clang.patch"
 )
 
 DOCS=(CONTRIBUTING.md COPYING INSTALL NOTICE README.md version/news )

@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
-LLVM_COMPAT=( {18..21} )
+LLVM_COMPAT=( {18..20} )
 LLVM_OPTIONAL=1
 inherit cmake java-pkg-2 java-ant-2 llvm-r1 multiprocessing npm optfeature pam prefix xdg-utils
 
@@ -269,6 +269,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-9999-copilot.patch"
 	"${FILESDIR}/${PN}-9999-postback.patch"
 	"${FILESDIR}/${PN}-2025.09.0.387-boost-1.89.0.patch"
+	"${FILESDIR}/${PN}-clang.patch"
 )
 
 DOCS=(CONTRIBUTING.md COPYING INSTALL NOTICE README.md version/news )

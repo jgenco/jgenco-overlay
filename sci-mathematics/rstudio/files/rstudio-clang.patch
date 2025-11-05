@@ -1,0 +1,47 @@
+* clang + -O + _FORTIFY_SOURCES errors 
+  https://www.boost.org/doc/libs/latest/libs/bind/doc/html/bind.html#bind.purpose.with_function_objects
+  "Some compilers have trouble..."
+* clang-21: checks for valid enum values and boost uses -1 to check for signed vars and errors
+  casting to int first
+https://github.com/nodejs/node-addon-api/commit/a8afb2d73c368a23ab9ed157b67e1cf8587d39c4
+--- a/src/cpp/core/system/PosixChildProcess.cpp
++++ b/src/cpp/core/system/PosixChildProcess.cpp
+@@ -119,7 +119,7 @@ Error readPipe(int pipeFd, std::string* pOutput, bool *pEOF = nullptr)
+    const std::size_t kBufferSize = 512;
+    char buffer[kBufferSize];
+    std::size_t bytesRead = posix::posixCall<std::size_t>(
+-                     boost::bind(::read, pipeFd, buffer, kBufferSize));
++                     boost::bind(boost::type<ssize_t>(),::read, pipeFd, buffer, kBufferSize));
+    while (true)
+    {
+       // check for error
+@@ -155,7 +155,7 @@ Error readPipe(int pipeFd, std::string* pOutput, bool *pEOF = nullptr)
+ 
+       // read more bytes
+       bytesRead = posix::posixCall<std::size_t>(
+-                        boost::bind(::read, pipeFd, buffer, kBufferSize));
++                        boost::bind(boost::type<ssize_t>(),::read, pipeFd, buffer, kBufferSize));
+    }
+ 
+    // keep compiler happy
+--- a/src/cpp/core/system/file_monitor/LinuxFileMonitor.cpp
++++ b/src/cpp/core/system/file_monitor/LinuxFileMonitor.cpp
+@@ -573,6 +573,7 @@ void run(const boost::function<void()>& checkForInput)
+             // read
+             int len = posix::posixCall<int>(
+                boost::bind(
++                  boost::type<ssize_t>(),
+                   ::read,
+                   pContext->fd,
+                   eventBuffer,
+--- a/src/cpp/session/include/session/SessionInvalidScope.hpp
++++ b/src/cpp/session/include/session/SessionInvalidScope.hpp
+@@ -46,7 +46,7 @@ inline void writeInvalidScope(const core::r_util::SessionContext& context,
+ {
+    core::FilePath filePath = invalidSessionContextFile(context);
+    core::Error error = core::writeStringToFile(filePath,
+-         boost::lexical_cast<std::string>(scopeState));
++         boost::lexical_cast<std::string>((int)scopeState));
+    if (!error)
+    {
+       // chmod on the file so the server can read it

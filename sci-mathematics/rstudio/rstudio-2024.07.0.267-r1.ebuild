@@ -308,6 +308,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2024.07.0.267-postback.patch"
 	"${FILESDIR}/${PN}-2025.09.0.387-boost-1.89.0.patch"
 	"${FILESDIR}/${PN}_cmake4.patch"
+	"${FILESDIR}/${PN}-clang.patch"
 )
 
 DOCS=(CONTRIBUTING.md COPYING INSTALL NOTICE README.md version/news )
