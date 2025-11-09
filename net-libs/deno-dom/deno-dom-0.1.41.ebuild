@@ -96,7 +96,7 @@ DEPEND=""
 RDEPEND="${DEPEND}"
 BDEPEND="
 	test? (
-		net-libs/deno
+		dev-lang/deno
 	)
 "
 

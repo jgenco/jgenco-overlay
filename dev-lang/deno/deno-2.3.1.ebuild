@@ -56,6 +56,7 @@ RESTRICT="mirror !test? ( test )"
 
 DEPEND="${PYTHON_DEPS}"
 BDEPEND="
+	!dev-lang/deno-bin
 	dev-build/gn
 	dev-build/ninja
 	sys-libs/zlib
