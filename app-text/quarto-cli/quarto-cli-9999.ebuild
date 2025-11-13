@@ -58,7 +58,7 @@ DEPEND="
 	dev-libs/libxml2
 	dev-util/esbuild:${ESBUILD_DEP_SLOT}
 	dev-vcs/git
-	>=dev-lang/deno-2.3 <dev-lang/deno-2.4
+	>=dev-lang/deno-2.4 <dev-lang/deno-2.5
 	~net-libs/deno-dom-0.1.41
 	sys-apps/which
 	x11-misc/xdg-utils
