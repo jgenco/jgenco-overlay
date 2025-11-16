@@ -2,10 +2,13 @@
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
+PYTHON_COMPAT=( python3_{12..14} )
 
-#grep -o '${pkg}:"[0-9.^]\+"' main.js
+inherit python-any-r1
+
+#grep -Eo '${pkg}"?:"[0-9.^]+' main.js
 #kerberos@2.2.0; sqlite3@5.1.7
-#@vscode/policy-watcher@1.3.2 - unknown version just guessing
+#@vscode/policy-watcher@1.3.2
 DEPS_VER="1.387.0"
 
 DESCRIPTION="GitHub Copilot Language Server"
@@ -30,6 +33,7 @@ DEPEND="
 	sys-apps/ripgrep
 	sys-libs/zlib
 "
+BDEPEND="${PYTHON_DEPS}"
 RDEPEND="${DEPEND}"
 
 SYS_ARCH="linux/x64"
@@ -57,6 +61,8 @@ src_prepare() {
 	rm bin/${SYS_ARCH}/rg crypt32{,-arm64}.node || die "missing files(s)"
 	rmdir {bin,compiled}/${SYS_ARCH} || die "nonempty dir(s)"
 	rm -r bin  compiled || die
+	rm policy-templates/{darwin,win32} -r || die
+	rmdir policy-templates || die "Not empty"
 	mkdir -p {bin,compiled}/${SYS_ARCH} || die "can't create binary dirs"
 
 	cd "../copilot_${DEPS_VER}_deps" || die
@@ -85,7 +91,7 @@ src_configure() {
 		cd "${NODE_MODULES}/${pkg}" || die
 		local conf_opts=""
 		[[ ${pkg} == sqlite3 ]] && conf_opts="-sqlite=${EPREFIX}/usr/include"
-		"${NODE_GYP}" configure ${conf_opts} || die
+		"${NODE_GYP}" configure -v ${conf_opts} || die
 	done
 }
 
