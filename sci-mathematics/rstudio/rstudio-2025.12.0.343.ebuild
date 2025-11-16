@@ -2,18 +2,18 @@
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
-LLVM_COMPAT=( {18..20} )
+LLVM_COMPAT=( {18..21} )
 LLVM_OPTIONAL=1
 inherit cmake java-pkg-2 java-ant-2 llvm-r1 multiprocessing npm optfeature pam prefix xdg-utils
 
-P_PREBUILT="${PN}-2025.12.0.276"
-ELECTRON_VERSION="38.4.0"
-DAILY_COMMIT="0e3281223da4bf284e1af1591c3a81d20a49108c"
-QUARTO_COMMIT="605bae6c373ab3813332a15e32a02ec3266a09b8"
-QUARTO_CLI_VER="1.8.25"
+P_PREBUILT="${PN}-2025.12.0.334"
+DAILY_COMMIT="fbe047ba309d3143cd9de3804d9ccf9cabae68f1"
+ELECTRON_VERSION="38.7.0"
+QUARTO_COMMIT="9838c73c205dc308bd755fa90fc34b9ed9362633"
 QUARTO_BRANCH="main"
-QUARTO_DATE="20251024"
-GWT_VERSION="2.12.2"
+QUARTO_DATE="20251106"
+QUARTO_CLI_VER="1.8.25"
+GWT_VERSION="2.12.2-apple-blossom"
 WEBSOCKETPP_COMMIT="ee8cf4257e001d939839cff5b1766a835b749cd6"
 RAPIDJSON_COMMIT="24b5e7a8b27f42fa16b96fc70aade9106cf7102f"
 
@@ -561,7 +561,7 @@ src_compile() {
 		einfo "Rebuilding ${folder}"
 		pushd ${folder}> /dev/null || die
 		HOME="${WORKDIR}" XDG_CACHE_HOME="${WORKDIR}/.cache" \
-			"${EPREFIX}/usr/$(get_libdir)/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js" rebuild \
+			"${EPREFIX}/usr/$(get_libdir)/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js" rebuild -v \
 			|| die "Failed to rebuild ${folder}"
 		popd
 	done
