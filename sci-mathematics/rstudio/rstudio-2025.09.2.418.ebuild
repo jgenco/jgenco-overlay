@@ -2,17 +2,17 @@
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
-LLVM_COMPAT=( {18..20} )
+LLVM_COMPAT=( {18..21} )
 LLVM_OPTIONAL=1
 inherit cmake java-pkg-2 java-ant-2 llvm-r1 multiprocessing npm optfeature pam prefix xdg-utils
 
-P_PREBUILT="${PN}-2025.09.0.369"
-ELECTRON_VERSION="37.2.6"
+P_PREBUILT="${PN}-2025.09.0.418"
 #DAILY_COMMIT="289ef71aaa88401144aff0369c6cacd061e99e4d"
+ELECTRON_VERSION="37.6.1"
 QUARTO_COMMIT="0424deb0f3e98d997e1b337c65c511e7ee15de5a"
-QUARTO_CLI_VER="1.7.32"
 QUARTO_BRANCH="release/rstudio-cucumberleaf-sunflower"
 QUARTO_DATE="20250711"
+QUARTO_CLI_VER="1.7.32"
 GWT_VERSION="2.12.2"
 WEBSOCKETPP_COMMIT="ee8cf4257e001d939839cff5b1766a835b749cd6"
 
@@ -249,6 +249,7 @@ BDEPEND="
 	>=virtual/jdk-17:=
 "
 PATCHES=(
+	"${FILESDIR}/${PN}_cmake4.patch"
 	"${FILESDIR}/${PN}-2025.09.0.387-cmake-bundled-dependencies.patch"
 	"${FILESDIR}/${PN}-2025.09.0.387-resource-path.patch"
 	"${FILESDIR}/${PN}-2024.04.0.735-server-paths.patch"
@@ -543,7 +544,7 @@ src_compile() {
 		einfo "Rebuilding ${folder}"
 		pushd ${folder}> /dev/null || die
 		HOME="${WORKDIR}" XDG_CACHE_HOME="${WORKDIR}/.cache" \
-			"${EPREFIX}/usr/$(get_libdir)/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js" rebuild \
+			"${EPREFIX}/usr/$(get_libdir)/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js" rebuild -v \
 			|| die "Failed to rebuild ${folder}"
 		popd
 	done
