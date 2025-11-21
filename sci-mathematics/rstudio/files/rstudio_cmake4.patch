@@ -5,7 +5,7 @@
  #
  
 -cmake_minimum_required(VERSION 3.6.3)
-+cmake_minimum_required(VERSION 3.6.3..3.10)
++cmake_minimum_required(VERSION 3.6.3...3.10)
  
  # initialize
  include(cmake/init.cmake)
@@ -16,7 +16,7 @@
  
  # set minimum version
 -cmake_minimum_required(VERSION 3.6.3)
-+cmake_minimum_required(VERSION 3.6.3..3.10)
++cmake_minimum_required(VERSION 3.6.3...3.10)
  
  # don't add gwt for special 32-bit binary builds on windows (since
  # we've already got it from the 64-bit build), for development mode
@@ -27,7 +27,7 @@
  
  # set minimum version
 -cmake_minimum_required(VERSION 3.6.3)
-+cmake_minimum_required(VERSION 3.6.3..3.10)
++cmake_minimum_required(VERSION 3.6.3...3.10)
  
  # initialize
  include("${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/init.cmake")
@@ -38,7 +38,7 @@
  #
  
 -cmake_minimum_required(VERSION 3.6.3)
-+cmake_minimum_required(VERSION 3.6.3..3.10)
++cmake_minimum_required(VERSION 3.6.3...3.10)
  project (RSTUDIO_GWT)
  
  # define output dirs
@@ -49,7 +49,7 @@
  
  # set minimum version
 -cmake_minimum_required(VERSION 3.6.3)
-+cmake_minimum_required(VERSION 3.6.3..3.10)
++cmake_minimum_required(VERSION 3.6.3...3.10)
  
  # don't add electron for development mode (since faster to work
  # iteratively using "npm start" and so forth)
@@ -60,7 +60,7 @@
  #
  
 -cmake_minimum_required(VERSION 3.6.3)
-+cmake_minimum_required(VERSION 3.6.3..3.10)
++cmake_minimum_required(VERSION 3.6.3...3.10)
  project(ELECTRON_DESKTOP)
  
  if (LINUX)

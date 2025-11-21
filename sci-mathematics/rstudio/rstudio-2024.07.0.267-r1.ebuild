@@ -477,14 +477,14 @@ src_prepare() {
 		popd
 	fi
 
-	use electron && ( sed -i "s/VERSION 3.5)/VERSION 3.5..3.10)/" src/node/desktop/node_modules/nan/CMakeLists.txt || die )
+	use electron && ( sed -i "s/VERSION 3.5)/VERSION 3.5...3.10)/" src/node/desktop/node_modules/nan/CMakeLists.txt || die )
 
 	#fix path rstudio bin path from "${EPREFIX}/usr/rstudio" to "${EPREFIX}/usr/bin/rstudio"
 	#NOTE: the actual bin is "${EPREFIX}/usr/share/rstudio/rstudio" but we symlink in src_install
 	sed -i "s#/rstudio#/bin/rstudio#" src/node/desktop/resources/freedesktop/rstudio.desktop.in || \
 		die "Failed to set proper path for rstudio"
 
-	sed -i "s/VERSION 3.6.3)/VERSION 3.6.3..3.10)/" src/cpp/desktop/CMakeLists.txt || die
+	sed -i "s/VERSION 3.6.3)/VERSION 3.6.3...3.10)/" src/cpp/desktop/CMakeLists.txt || die
 
 	cmake_src_prepare
 	java-pkg-2_src_prepare
