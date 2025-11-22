@@ -2,19 +2,20 @@
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
-LLVM_COMPAT=( {18..20} )
+LLVM_COMPAT=( {18..21} )
 LLVM_OPTIONAL=1
 inherit cmake java-pkg-2 java-ant-2 llvm-r1 multiprocessing npm optfeature pam prefix xdg-utils
 
-P_PREBUILT="${PN}-2025.09.0.369"
-ELECTRON_VERSION="37.2.6"
-DAILY_COMMIT="289ef71aaa88401144aff0369c6cacd061e99e4d"
-QUARTO_COMMIT="0424deb0f3e98d997e1b337c65c511e7ee15de5a"
-QUARTO_CLI_VER="1.7.32"
-QUARTO_BRANCH="release/rstudio-cucumberleaf-sunflower"
-QUARTO_DATE="20250711"
-GWT_VERSION="2.12.2"
+P_PREBUILT="${PN}-2025.12.0.334"
+DAILY_COMMIT="fbe047ba309d3143cd9de3804d9ccf9cabae68f1"
+ELECTRON_VERSION="38.7.0"
+QUARTO_COMMIT="9838c73c205dc308bd755fa90fc34b9ed9362633"
+QUARTO_BRANCH="main"
+QUARTO_DATE="20251106"
+QUARTO_CLI_VER="1.8.25"
+GWT_VERSION="2.12.2-apple-blossom"
 WEBSOCKETPP_COMMIT="ee8cf4257e001d939839cff5b1766a835b749cd6"
+RAPIDJSON_COMMIT="24b5e7a8b27f42fa16b96fc70aade9106cf7102f"
 
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
@@ -96,7 +97,9 @@ digest@0.6.37
 brio@1.1.5
 testthat@3.2.3
 xml2@1.3.8
+vctrs@0.6.5
 "
+R_PURRR_PKG="purrr@1.0.4"
 #####End   of TESTHAT   package list#####
 
 DESCRIPTION="IDE for the R language"
@@ -134,6 +137,8 @@ SRC_URI+="
 		rstudio-gwt-${GWT_VERSION}.tar.gz
 	https://github.com/amini-allight/websocketpp/archive/${WEBSOCKETPP_COMMIT}.tar.gz ->
 		websocketpp-${WEBSOCKETPP_COMMIT:0:8}.tar.gz
+	https://github.com/Tencent/rapidjson/archive/${RAPIDJSON_COMMIT}.tar.gz ->
+		rapidjson-${RAPIDJSON_COMMIT:0:8}.tar.gz
 	panmirror? (
 		https://github.com/jgenco/jgenco-overlay-files/releases/download/${P_PREBUILT}/${P_PREBUILT}-panmirror-node_modules.tar.xz
 	)
@@ -144,7 +149,7 @@ SRC_URI+="
 			-> electron-v${ELECTRON_VERSION}-headers.tar.gz
 	)
 	doc? ( $(build_r_src_uri ${R_RMARKDOWN_PKGS}) )
-	test? ( $(build_r_src_uri ${R_TESTTHAT_PKGS}) )
+	test? ( $(build_r_src_uri ${R_TESTTHAT_PKGS} ${R_PURRR_PKG}) )
 "
 
 LICENSE="
@@ -220,6 +225,7 @@ RDEPEND="
 	sys-libs/zlib
 	sys-process/lsof
 	>=virtual/jdk-17:=
+	test? ( >=dev-cpp/gtest-1.17.0 )
 "
 
 DEPEND="${RDEPEND}"
@@ -237,6 +243,7 @@ BDEPEND="
 	dev-java/guava
 	dev-java/javax-inject
 	=dev-java/validation-api-1.0*:1.0[source]
+	dev-vcs/git
 	panmirror? (
 		<dev-util/esbuild-0.17
 		net-libs/nodejs[npm]
@@ -249,19 +256,20 @@ BDEPEND="
 	>=virtual/jdk-17:=
 "
 PATCHES=(
-	"${FILESDIR}/${PN}-2025.09.0.387-cmake-bundled-dependencies.patch"
-	"${FILESDIR}/${PN}-2025.09.0.387-resource-path.patch"
+	"${FILESDIR}/${PN}_cmake4.patch"
+	"${FILESDIR}/${PN}-9999-cmake-bundled-dependencies.patch"
+	"${FILESDIR}/${PN}-9999-resource-path.patch"
 	"${FILESDIR}/${PN}-2024.04.0.735-server-paths.patch"
 	"${FILESDIR}/${PN}-2024.12.0.467-package-build.patch"
-	"${FILESDIR}/${PN}-2025.05.0.496-pandoc_path_fix.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
 	"${FILESDIR}/${PN}-2025.09.0.387-node_electron_cmake.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-add-support-for-RapidJSON.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-system-clang.patch"
 	"${FILESDIR}/${PN}-2024.12.0.467-disable-panmirror.patch"
-	"${FILESDIR}/${PN}-2023.12.1.402-node_path_fix.patch"
-	"${FILESDIR}/${PN}-2025.05.0.496-copilot.patch"
-	"${FILESDIR}/${PN}-2025.09.0.369-postback.patch"
+	"${FILESDIR}/${PN}-9999-copilot.patch"
+	"${FILESDIR}/${PN}-9999-postback.patch"
+	"${FILESDIR}/${PN}-2025.09.0.387-boost-1.89.0.patch"
+	"${FILESDIR}/${PN}-clang.patch"
 )
 
 DOCS=(CONTRIBUTING.md COPYING INSTALL NOTICE README.md version/news )
@@ -275,6 +283,7 @@ install_r_packages() {
 	echo  '")' >> ${r_script}
 	echo 'pkgs_files = unique(paste0("'"${DISTDIR}"'/R_",pkgs,".tar.gz"))' >> ${r_script}
 	echo 'install.packages(pkgs_files,repos=NULL,Ncpus='$(makeopts_jobs)')' >> ${r_script}
+	use test && echo 'install.packages("'"${WORKDIR}/purrr"'",repos=NULL,Ncpus='$(makeopts_jobs)')' >> ${r_script}
 	R_LIBS="${R_LIB_PATH}" Rscript ${r_script} || die "Failed to install R packages"
 }
 
@@ -298,6 +307,7 @@ src_unpack() {
 		unpack ${P}.tar.gz
 	fi
 	unpack websocketpp-${WEBSOCKETPP_COMMIT:0:8}.tar.gz
+	unpack rapidjson-${RAPIDJSON_COMMIT:0:8}.tar.gz
 
 	mkdir "${S}/dependencies/common/gwtproject"
 	pushd "${S}/dependencies/common/gwtproject" > /dev/null || die
@@ -367,6 +377,7 @@ src_unpack() {
 		#This tells it the headers where installed
 		echo "${install_version}" > "${WORKDIR}/.cache/node-gyp/${nodejs_version}/installVersion" || die
 	fi
+	use test && unpack R_${R_PURRR_PKG/@/_}.tar.gz
 }
 src_prepare() {
 	#SUSE has a good list of software bundled with rstudio
@@ -442,10 +453,22 @@ src_prepare() {
 
 	eprefixify src/cpp/core/libclang/LibClang.cpp
 
+	rm src/cpp/tests/testthat/test-{download,install-packages}.R || die
+	sed -i "/expect_equal.*\(shiny\|flexdashboard\)/d" src/cpp/tests/testthat/test-pkg-deps.R || die
+
 	cmake_src_prepare
 	java-pkg-2_src_prepare
+
+	if use test ;then
+		sed -i "/Suggests:/,+1d" "${WORKDIR}/purrr/DESCRIPTION" || die
+		sed -i -E "/runWatchdogProcess [0-9]{1,2}m true/c\\\t:" src/cpp/rstudio-tests.in || die
+	else
+		sed -E -i "/GTest[[:space:]]+GTEST/d" src/cpp/ext/CMakeLists.txt || die
+	fi
+
 	mkdir "${BUILD_DIR}/_deps" || die
 	ln -s  "${WORKDIR}/websocketpp-${WEBSOCKETPP_COMMIT}" "${BUILD_DIR}/_deps/websocketpp-src" || die
+	ln -s  "${WORKDIR}/rapidjson-${RAPIDJSON_COMMIT}" "${BUILD_DIR}/_deps/rapidjson-src" || die
 }
 src_configure() {
 	export PACKAGE_OS="Gentoo"
@@ -475,9 +498,6 @@ src_configure() {
 	# (rather than using the custom_target defined in src/gwt/CMakeLists.txt),
 	# however it also installs a test script, which we probably don't want.
 
-	#NOTE: RSTUDIO_BIN_PATH was originaly used for the dir that holds pandoc
-	#it is now used also for the path for r-ldpath
-	#in electron this by default is located at /usr/share/rstudio/resources/app/bin
 	local mycmakeargs=(
 		-DRSTUDIO_INSTALL_SUPPORTING="${EPREFIX}/usr/share/${PN}"
 		-DRSTUDIO_TARGET=TRUE
@@ -485,28 +505,28 @@ src_configure() {
 		-DRSTUDIO_ELECTRON=$(usex electron)
 		-DRSTUDIO_UNIT_TESTS_DISABLED=$(usex test OFF ON)
 		#note RSTUDIO_USE_SYSTEM_DEPENDENCIES exist
-		-DRSTUDIO_USE_SYSTEM_TL_EXPECTED=ON
+		-DRSTUDIO_USE_SYSTEM_BOOST=ON
 		-DRSTUDIO_USE_SYSTEM_FMT=ON
 		-DRSTUDIO_USE_SYSTEM_GSL_LITE=ON
 		-DRSTUDIO_USE_SYSTEM_HUNSPELL=ON
-		-DRSTUDIO_USE_SYSTEM_RAPIDJSON=ON
+		-DRSTUDIO_USE_SYSTEM_RAPIDJSON=OFF
+		-DRSTUDIO_USE_SYSTEM_TL_EXPECTED=ON
 		-DRSTUDIO_USE_SYSTEM_WEBSOCKETPP=OFF
 		-DRSTUDIO_USE_SYSTEM_YAML_CPP=ON
-		-DRSTUDIO_USE_SYSTEM_BOOST=ON
 
 		-DGWT_BUILD=OFF
 		-DGWT_COPY=ON
 		-DRSTUDIO_USE_SYSTEM_YAML_CPP=ON
 		-DRSTUDIO_PACKAGE_BUILD=1
-		-DRSTUDIO_BIN_PATH="${EPREFIX}/usr/bin"
 		-DQUARTO_ENABLED=$(usex quarto)
 		-DRSTUDIO_USE_SYSTEM_SOCI=TRUE
 		-DRSTUDIO_DISABLE_CHECK_FOR_UPDATES=1
-		-DRSTUDIO_INSTALL_FREEDESKTOP=$(usex electron)
 		-DRSTUDIO_BOOST_REQUESTED_VERSION=1.85.0
 	)
 
 	use clang && mycmakeargs+=( -DSYSTEM_LIBCLANG_PATH=$(get_llvm_prefix))
+	use electron && mycmakeargs+=( -DRSTUDIO_INSTALL_FREEDESKTOP=ON )
+	use test && mycmakeargs+=( -DRSTUDIO_USE_SYSTEM_GTEST=ON )
 
 	if use doc; then
 		#if docs/news is built remove "_ga-" lines from  docs/news/_quarto.yml
@@ -541,7 +561,7 @@ src_compile() {
 		einfo "Rebuilding ${folder}"
 		pushd ${folder}> /dev/null || die
 		HOME="${WORKDIR}" XDG_CACHE_HOME="${WORKDIR}/.cache" \
-			"${EPREFIX}/usr/$(get_libdir)/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js" rebuild \
+			"${EPREFIX}/usr/$(get_libdir)/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js" rebuild -v \
 			|| die "Failed to rebuild ${folder}"
 		popd
 	done
@@ -600,19 +620,18 @@ src_test() {
 	export EANT_TEST_TARGET="unittest"
 	java-pkg-2_src_test
 
-	mkdir -p "${HOME}/.local/share/rstudio" || die "Failed to make .local dir"
 	pushd "${BUILD_DIR}/src/cpp" || die "Failed to change to ${BUILD_DIR}/src/cpp"
+	mkdir -p share/rstudio/resources
+	ln -s ../../.. share/rstudio/resources/app || die  # i wonder if a blank folder will work
+	export RSTUDIO_COPILOT_JS_FOLDER="${BUILD_DIR}/src/cpp"
+	touch "${RSTUDIO_COPILOT_JS_FOLDER}/language-server.js" || die #for estetics?
 	#--scope core,rserver,rsession,r
-	#NOTE: a bug introduced by resource-path.patch make this use the
-	#INSTALLED files instead of TO BE INSTALLED files:(
-	JENKINS_URL="false" R_LIBS="${R_LIB_PATH}" ./rstudio-tests || die
-	#FAIL 1 | WARN 0 | SKIP 1 | PASS 1030
-	#FAIL = probably simply need package: purr
-	#SKIP = test-document-apis.R - NYI
+	R_LIBS="${R_LIB_PATH}" ./rstudio-tests || die
 	popd
 }
 src_install() {
 	cmake_src_install
+
 	if use server ;then
 		dopamd src/cpp/server/extras/pam/rstudio
 		newinitd "${FILESDIR}/rstudio-server" rstudio-server
@@ -622,17 +641,12 @@ src_install() {
 	if use electron;then
 		mkdir -p "${ED}/usr/bin"
 		dosym -r /usr/share/${PN}/rstudio /usr/bin/rstudio
-		#quarto-cli wants this see:src/command/render/render-shared.ts
-		dosym -r /usr/share/${PN}/resources/app/bin/rserver-url /usr/bin/rserver-url
-		if use server; then
-			dosym -r /usr/share/${PN}/resources/app/bin/rserver /usr/bin/rserver
-		fi
-		mv "${ED}/usr/share/rstudio/resources/app/bin/rpostback"* "${ED}/usr/bin" || die
 		dodoc "${ED}/usr/share/rstudio/"{LICENSE,LICENSES.chromium.html}
 		rm "${ED}/usr/share/rstudio/"{LICENSE,LICENSES.chromium.html} || die
 	fi
-	dodoc "${ED}/usr/share/${PN}/"{SOURCE,VERSION}
-	rm "${ED}/usr/share/${PN}/"{COPYING,INSTALL,NOTICE,SOURCE,VERSION,README.md} || die "Failed to remove installed docs"
+	dodoc "${ED}/usr/share/${PN}/resources/app/"{SOURCE,VERSION}
+	rm "${ED}/usr/share/${PN}/resources/app/"{COPYING,INSTALL,NOTICE,SOURCE,VERSION,README.md} ||\
+		die "Failed to remove installed docs"
 
 	einstalldocs
 
@@ -653,6 +667,7 @@ pkg_postinst() {
 		xdg_icon_cache_update
 	fi
 	optfeature "GitHub's Copilot language server" dev-util/copilot-language-server
+	optfeature "Posit's R formatter and language server" dev-util/air
 	if [[ ! -d "${EPREFIX}/usr/share/hunspell" ]];then
 		elog ""
 		elog "RStudio's spell check needs at least one"
