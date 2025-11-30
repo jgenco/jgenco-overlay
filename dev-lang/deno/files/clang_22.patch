@@ -1,0 +1,29 @@
+'https://gitlab.com/Matt.Jolly/chromium-patches/-/tree/M148/llvm/lt-23?ref_type=heads'
+https://github.com/ungoogled-software/ungoogled-chromium-archlinux/blob/master/chromium-148-revert-clang-fsanitize-return-flag-2.patch
+see chromium build
+this is only needed for <clang-23
+--- a/build/config/compiler/BUILD.gn
++++ b/build/config/compiler/BUILD.gn
+@@ -625,13 +625,6 @@ config("compiler") {
+       ]
+     }
+ 
+-    # The performance improvement does not seem worth the risk. See
+-    # https://crbug.com/484082200 for background and https://crrev.com/c/7593035
+-    # for discussion.
+-    if (!is_wasm) {
+-      cflags += [ "-fno-lifetime-dse" ]
+-    }
+-
+     # TODO(hans): Remove this once Clang generates better optimized debug info
+     # by default. https://crbug.com/765793
+     cflags += [
+@@ -1897,7 +1890,7 @@ config("sanitize_c_array_bounds") {
+       # sanitizer) is enabled, they then do expensive debug like operations. We
+       # want to suppress this behaviour since we want to keep performance costs
+       # as low as possible while having these checks.
+-      "-fsanitize-ignore-for-ubsan-feature=array-bounds",
++      # "-fsanitize-ignore-for-ubsan-feature=array-bounds",
+ 
+       # Because we've enabled array-bounds sanitizing we also want to suppress
+       # the related warning about "unsafe-buffer-usage-in-static-sized-array",

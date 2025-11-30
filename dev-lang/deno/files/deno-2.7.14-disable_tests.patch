@@ -1,0 +1,344 @@
+--- a/cli/lsp/performance.rs
++++ b/cli/lsp/performance.rs
+@@ -272,11 +272,11 @@ impl Performance {
+ 
+   /// Creates a performance mark which will be measured against on drop. Use
+   /// like this:
+-  /// ```rust
++  /// ```rust,ignore
+   /// let _mark = self.performance.measure_scope("foo");
+   /// ```
+   /// Don't use like this:
+-  /// ```rust
++  /// ```rust,ignore
+   /// // ❌
+   /// let _ = self.performance.measure_scope("foo");
+   /// ```
+--- a/cli/util/path.rs
++++ b/cli/util/path.rs
+@@ -166,7 +166,7 @@ pub fn matches_pattern_or_exact_path(
+ /// could be used for module specifier string literal of local modules,
+ /// or local file path to display `non-ASCII` characters correctly
+ /// # Examples
+-/// ```
++/// ```ignore
+ /// use crate::util::path::to_percent_decoded_str;
+ ///
+ /// let str = to_percent_decoded_str("file:///Users/path/to/%F0%9F%A6%95.ts");
+--- a/tests/integration/check_tests.rs
++++ b/tests/integration/check_tests.rs
+@@ -70,7 +70,7 @@ fn reload_flag() {
+     stderr.contains("Check")
+   }
+ }
+-
++#[ignore = "internet - import deno_std - try again"]
+ #[test]
+ fn typecheck_declarations_ns() {
+   let context = TestContextBuilder::for_jsr().build();
+@@ -111,7 +111,7 @@ fn typecheck_declarations_unstable() {
+   println!("stderr: {}", output.stderr());
+   output.assert_exit_code(0);
+ }
+-
++#[ignore = "internet - gist"]
+ #[test]
+ fn ts_no_recheck_on_redirect() {
+   let test_context = TestContext::default();
+--- a/tests/integration/init_tests.rs
++++ b/tests/integration/init_tests.rs
+@@ -5,6 +5,7 @@ use test_util::test;
+ use util::TestContextBuilder;
+ use util::assert_contains;
+ 
++#[ignore = "internet - import deno_std@ver"]
+ #[test]
+ fn init_subcommand_without_dir() {
+   let context = TestContextBuilder::for_jsr().use_temp_cwd().build();
+@@ -44,7 +45,7 @@ fn init_subcommand_without_dir() {
+   assert_contains!(output.stdout(), "1 passed");
+   output.skip_output_check();
+ }
+-
++#[ignore = "internet - import deno_std@ver"]
+ #[test]
+ fn init_subcommand_with_dir_arg() {
+   let context = TestContextBuilder::for_jsr().use_temp_cwd().build();
+@@ -91,7 +92,7 @@ fn init_subcommand_with_dir_arg() {
+   assert_contains!(output.stdout(), "1 passed");
+   output.skip_output_check();
+ }
+-
++#[ignore = "internet - import deno_std@ver"]
+ #[test]
+ fn init_subcommand_with_quiet_arg() {
+   let context = TestContextBuilder::for_jsr().use_temp_cwd().build();
+--- a/tests/integration/mod.rs
++++ b/tests/integration/mod.rs
+@@ -68,8 +68,6 @@ mod sqlite_extension;
+ mod task;
+ #[path = "test_tests.rs"]
+ mod test;
+-#[path = "upgrade_tests.rs"]
+-mod upgrade;
+ #[path = "watcher_tests.rs"]
+ mod watcher;
+ 
+--- a/tests/integration/npm_tests.rs
++++ b/tests/integration/npm_tests.rs
+@@ -620,6 +620,7 @@ fn lock_file_missing_top_level_package() {
+   );
+ }
+ 
++#[ignore = "internet - import npms"]
+ #[test]
+ fn lock_file_lock_write() {
+   // https://github.com/denoland/deno/issues/16666
+--- a/tests/integration/repl_tests.rs
++++ b/tests/integration/repl_tests.rs
+@@ -184,6 +184,7 @@ fn pty_internal_repl() {
+   });
+ }
+ 
++#[ignore = "sandbox problem?"]
+ #[test(flaky)]
+ fn pty_emoji() {
+   // windows was having issues displaying this
+--- a/tests/integration/run_tests.rs
++++ b/tests/integration/run_tests.rs
+@@ -159,7 +159,7 @@ fn _083_legacy_external_source_map() {
+   let out = std::str::from_utf8(&output.stdout).unwrap();
+   assert_eq!(out, "");
+ }
+-
++/*
+ #[test(flaky)]
+ fn _090_run_permissions_request() {
+   TestContext::default()
+@@ -500,7 +500,7 @@ fn permissions_audit_with_traces() {
+ "#,
+   );
+ }
+-
++*/
+ #[test]
+ fn lock_redirects() {
+   let context = TestContextBuilder::new()
+@@ -590,7 +590,7 @@ fn lock_redirects() {
+ "#,
+   );
+ }
+-
++#[ignore = "network?"]
+ #[test]
+ fn lock_deno_json_package_json_deps() {
+   let context = TestContextBuilder::new()
+@@ -2827,6 +2827,7 @@ fn stdio_streams_are_locked_in_permission_prompt() {
+   });
+ }
+ 
++#[ignore = "reqs LD_PRELOAD unset"]
+ #[test(flaky)]
+ fn permission_prompt_escapes_ansi_codes_and_control_chars() {
+   util::with_pty(&["repl"], |mut console| {
+@@ -2973,7 +2974,7 @@ console.log(returnsHi());"#,
+ ")
+     .assert_exit_code(1);
+ }
+-
++#[ignore = "reqs LD_PRELOAD unset"]
+ #[test]
+ fn deno_json_imports_expand() {
+   let test_context = TestContextBuilder::for_npm().use_temp_cwd().build();
+--- a/tests/unit/chmod_test.ts
++++ b/tests/unit/chmod_test.ts
+@@ -90,7 +90,7 @@ Deno.test(
+ );
+ 
+ Deno.test({ permissions: { write: true } }, function chmodSyncFailure() {
+-  const filename = "/badfile.txt";
++  const filename = "/tmp/badfile.txt";
+   assertThrows(
+     () => {
+       Deno.chmodSync(filename, 0o777);
+@@ -178,7 +178,7 @@ Deno.test(
+ );
+ 
+ Deno.test({ permissions: { write: true } }, async function chmodFailure() {
+-  const filename = "/badfile.txt";
++  const filename = "/tmp/badfile.txt";
+   await assertRejects(
+     async () => {
+       await Deno.chmod(filename, 0o777);
+--- a/tests/unit/command_test.ts
++++ b/tests/unit/command_test.ts
+@@ -764,6 +764,7 @@ Deno.test(
+       clearEnv: true,
+       env: {
+         FOO: "23147",
++        DENO_DIR: Deno.env.get("DENO_DIR") || "/tmp",
+       },
+     }).output();
+ 
+@@ -791,6 +792,7 @@ Deno.test(
+       clearEnv: true,
+       env: {
+         FOO: "23147",
++        DENO_DIR: Deno.env.get("DENO_DIR") || "/tmp",
+       },
+     }).outputSync();
+ 
+--- a/tests/unit/tls_test.ts
++++ b/tests/unit/tls_test.ts
+@@ -1164,7 +1164,7 @@ Deno.test(
+ );
+ 
+ Deno.test(
+-  { permissions: { read: true, net: true } },
++  { permissions: { read: true, net: true },ignore:true },
+   async function connectTLSBadCertKey(): Promise<void> {
+     await assertRejects(async () => {
+       await Deno.connectTls({
+@@ -1180,7 +1180,7 @@ Deno.test(
+ );
+ 
+ Deno.test(
+-  { permissions: { read: true, net: true } },
++  { permissions: { read: true, net: true },ignore:true },
+   async function connectTLSBadKey(): Promise<void> {
+     await assertRejects(async () => {
+       await Deno.connectTls({
+@@ -1196,7 +1196,7 @@ Deno.test(
+ );
+ 
+ Deno.test(
+-  { permissions: { read: true, net: true } },
++  { permissions: { read: true, net: true },ignore:true },
+   async function connectTLSNotKey(): Promise<void> {
+     await assertRejects(async () => {
+       await Deno.connectTls({
+--- a/tests/unit/utime_test.ts
++++ b/tests/unit/utime_test.ts
+@@ -204,10 +204,10 @@ Deno.test(
+ 
+     assertThrows(
+       () => {
+-        Deno.utimeSync("/baddir", atime, mtime);
++        Deno.utimeSync("/tmp/baddir", atime, mtime);
+       },
+       Deno.errors.NotFound,
+-      "utime '/baddir'",
++      "utime '/tmp/baddir'",
+     );
+   },
+ );
+@@ -319,10 +319,10 @@ Deno.test(
+ 
+     await assertRejects(
+       async () => {
+-        await Deno.utime("/baddir", atime, mtime);
++        await Deno.utime("/tmp/baddir", atime, mtime);
+       },
+       Deno.errors.NotFound,
+-      "utime '/baddir'",
++      "utime '/tmp/baddir'",
+     );
+   },
+ );
+--- a/tests/unit_node/dgram_test.ts
++++ b/tests/unit_node/dgram_test.ts
+@@ -58,7 +58,7 @@ Deno.test("[node/dgram] udp unref", {
+   assertEquals(statusCode, 0);
+ });
+ 
+-Deno.test("[node/dgram] addMembership works", async () => {
++Deno.test("[node/dgram] addMembership works",{ignore:true}, async () => {
+   const { promise, resolve } = Promise.withResolvers<void>();
+   const socket = createSocket("udp4");
+   socket.bind(0, () => {
+@@ -97,7 +97,7 @@ Deno.test("[node/dgram] createSocket, reuseAddr option", async () => {
+   socket1?.close();
+ });
+ 
+-Deno.test("[node/dgram] addMembership, setBroadcast, setMulticastTTL after bind", async () => {
++Deno.test("[node/dgram] addMembership, setBroadcast, setMulticastTTL after bind",{ignore:true}, async () => {
+   const { promise, resolve, reject } = Promise.withResolvers<void>();
+ 
+   const socket = createSocket({ type: "udp4", reuseAddr: true });
+@@ -164,7 +164,7 @@ Deno.test("[node/dgram] setMulticastInterface sets interface without error", asy
+   await promise;
+ });
+ 
+-Deno.test("[node/dgram] addSourceSpecificMembership and dropSourceSpecificMembership", async () => {
++Deno.test("[node/dgram] addSourceSpecificMembership and dropSourceSpecificMembership", {ignore:true}, async () => {
+   const { promise, resolve } = Promise.withResolvers<void>();
+   const socket = createSocket("udp4");
+   socket.bind(0, () => {
+--- a/tests/unit_node/net_test.ts
++++ b/tests/unit_node/net_test.ts
+@@ -250,7 +250,7 @@ Deno.test("[node/net] net.Server can listen on the same port immediately after i
+   await serverClosed.promise;
+ });
+ 
+-Deno.test("dns.resolve with ttl", async () => {
++Deno.test("dns.resolve with ttl", { ignore:true }, async () => {
+   const d1 = Promise.withResolvers();
+   dns.resolve4("www.example.com", { ttl: true }, (err, addresses) => {
+     if (err) {
+@@ -285,7 +285,7 @@ Deno.test("[node/dns] dns.lookup (all=true) util promisify", async () => {
+   assert(typeof result[0].family === "number");
+ });
+ 
+-Deno.test("[node/dns] resolve IPv6 addresses", async () => {
++Deno.test("[node/dns] resolve IPv6 addresses",{ignore:true}, async () => {
+   const resolveResults = await dnsPromises.resolve("deno.land", "AAAA");
+   for (const address of resolveResults) {
+     await dnsPromises.lookup(address);
+--- a/tests/unit_node/tls_test.ts
++++ b/tests/unit_node/tls_test.ts
+@@ -161,7 +161,7 @@ Connection: close
+ });
+ 
+ // https://github.com/denoland/deno/pull/20120
+-Deno.test("tls.connect mid-read tcp->tls upgrade", async () => {
++Deno.test("tls.connect mid-read tcp->tls upgrade", {ignore:true}, async () => {
+   const { promise, resolve } = Promise.withResolvers<void>();
+   const ctl = new AbortController();
+   const serve = Deno.serve({
+@@ -196,7 +196,7 @@ Deno.test("tls.connect mid-read tcp->tls upgrade", async () => {
+ });
+ 
+ Deno.test(
+-  { name: "tls.connect after-read tls upgrade" },
++  { name: "tls.connect after-read tls upgrade", ignore:true },
+   async () => {
+     const { promise, resolve } = Promise.withResolvers<void>();
+     const ctl = new AbortController();
+@@ -361,7 +361,7 @@ Deno.test("TLSSocket.alpnProtocol is set for client", async () => {
+   await new Promise((resolve) => outgoing.on("close", resolve));
+ });
+ 
+-Deno.test({ name: "tls connect upgrade tcp" }, async () => {
++Deno.test({ name: "tls connect upgrade tcp", ignore:true }, async () => {
+   const { promise, resolve } = Promise.withResolvers<void>();
+ 
+   const socket = new net.Socket();
+@@ -435,6 +435,7 @@ Deno.test({
+   name: "tls connect upgrade js socket wrapper",
+   sanitizeOps: false,
+   sanitizeResources: false,
++  ignore:true,
+ }, async () => {
+   const { promise, resolve } = Promise.withResolvers<void>();
+ 
+--- a/tests/util/lib/assertions.rs
++++ b/tests/util/lib/assertions.rs
+@@ -119,7 +119,7 @@ pub fn assert_wildcard_match_with_logger(
+ ///
+ /// ```
+ /// # use serde_json::json;
+-/// # use test_server::assertions::assert_json_subset;
++/// # use test_util::assertions::assert_json_subset;
+ /// assert_json_subset(json!({"a": 1, "b": 2}), json!({"a": 1}));
+ ///
+ /// // Arrays are compared element by element

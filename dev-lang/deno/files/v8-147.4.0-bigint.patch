@@ -1,0 +1,10 @@
+--- a/v8/src/bigint/bigint.h
++++ b/v8/src/bigint/bigint.h
+@@ -11,6 +11,7 @@
+ #include <cstring>
+ #include <iostream>
+ #include <utility>
++#include <memory>
+ 
+ namespace v8 {
+ namespace bigint {

@@ -1,0 +1,49 @@
+rename 145.0.0
+--- a/build.rs
++++ b/build.rs
+@@ -246,7 +246,7 @@ fn build_v8(is_asan: bool) {
+     download_ninja_gn_binaries();
+   }
+ 
+-  download_rust_toolchain();
++  //download_rust_toolchain();
+ 
+   // `#[cfg(...)]` attributes don't work as expected from build.rs -- they refer to the configuration
+   // of the host system which the build.rs script will be running on. In short, `cfg!(target_<os/arch>)`
+--- a/build/rust/rust_bindgen_generator.gni
++++ b/build/rust/rust_bindgen_generator.gni
+@@ -26,14 +26,14 @@ if (!use_chromium_rust_toolchain &&
+ 
+ # On Windows, the libclang.dll is beside the bindgen.exe, otherwise it is in
+ # ../lib.
+-_libclang_path = rust_bindgen_root
++_libclang_path = clang_base_path
+ if (!use_chromium_rust_toolchain &&
+     (host_cpu == "ppc64" || host_cpu == "s390x")) {
+   _libclang_path = rust_sysroot_absolute + "/lib64"
+ } else if (host_os == "win") {
+   _libclang_path += "/bin"
+ } else {
+-  _libclang_path += "/lib"
++  _libclang_path += "/lib64"
+ }
+ 
+ # Template to build Rust/C bindings with bindgen.
+@@ -190,7 +190,7 @@ template("rust_bindgen_generator") {
+       # point to.
+       args += [
+         "--ld-library-path",
+-        rebase_path(clang_base_path + "/lib", root_build_dir),
++        rebase_path(_libclang_path, root_build_dir),
+       ]
+     }
+ 
+@@ -234,7 +234,7 @@ template("rust_bindgen_generator") {
+     # make it behave consistently with our other command line flags and allows
+     # system headers to be found.
+     clang_resource_dir =
+-        rebase_path(clang_base_path + "/lib/clang/" + clang_version,
++        rebase_path(_libclang_path,
+                     root_build_dir)
+     args += [
+       "-resource-dir",
