@@ -1,0 +1,107 @@
+From 527982b10801e88565712d0c827924e7b82f1a5b Mon Sep 17 00:00:00 2001
+From: Tobias Schmitz <tobiasschmitz2001@gmail.com>
+Date: Tue, 11 Nov 2025 13:36:32 +0100
+Subject: [PATCH] Remove ability to compile test suite with
+ `--no-default-features`
+
+--- a/tests/Cargo.toml
++++ b/tests/Cargo.toml
+@@ -11,34 +11,18 @@ name = "tests"
+ path = "src/tests.rs"
+ harness = false
+ 
+-[features]
+-# Allow just compiling the parser when only testing typst-syntax. To do so,
+-# pass '--no-default-features' to 'cargo test'.
+-default = [
+-    # "typst-syntax" intentionally not present
+-    "typst",
+-    "typst-assets",
+-    "typst-dev-assets",
+-    "typst-html",
+-    "typst-library",
+-    "typst-pdf",
+-    "typst-render",
+-    "typst-svg",
+-    "typst-svg",
+-]
+-
+ [dependencies]
+ typst-syntax = { workspace = true }
+ # Mark other Typst crates as optional so we can use '--no-default-features'
+ # to decrease compile times for parser testing.
+-typst = { workspace = true, optional = true }
+-typst-assets = { workspace = true, features = ["fonts"], optional = true }
+-typst-dev-assets = { workspace = true, optional = true }
+-typst-html = { workspace = true, optional = true }
+-typst-library = { workspace = true, optional = true }
+-typst-pdf = { workspace = true, optional = true }
+-typst-render = { workspace = true, optional = true }
+-typst-svg = { workspace = true, optional = true }
++typst = { workspace = true }
++typst-assets = { workspace = true, features = ["fonts"] }
++typst-dev-assets = { workspace = true }
++typst-html = { workspace = true }
++typst-library = { workspace = true }
++typst-pdf = { workspace = true }
++typst-render = { workspace = true }
++typst-svg = { workspace = true }
+ bitflags = { workspace = true }
+ clap = { workspace = true }
+ comemo = { workspace = true }
+--- a/tests/src/collect.rs
++++ b/tests/src/collect.rs
+@@ -456,14 +456,8 @@ impl<'a> Parser<'a> {
+         })
+     }
+ 
+-    #[cfg(not(feature = "default"))]
+-    fn parse_range_external(&mut self, _file: FileId) -> Option<Range<usize>> {
+-        panic!("external file ranges are not expected when testing `typst_syntax`");
+-    }
+-
+     /// Parse a range in an external file, optionally abbreviated as just a position
+     /// if the range is empty.
+-    #[cfg(feature = "default")]
+     fn parse_range_external(&mut self, file: FileId) -> Option<Range<usize>> {
+         use typst::foundations::Bytes;
+ 
+--- a/tests/src/tests.rs
++++ b/tests/src/tests.rs
+@@ -1,16 +1,10 @@
+ //! Typst's test runner.
+ 
+-#![cfg_attr(not(feature = "default"), allow(dead_code, unused_imports))]
+-
+ mod args;
+ mod collect;
+-mod logger;
+-
+-#[cfg(feature = "default")]
+ mod custom;
+-#[cfg(feature = "default")]
++mod logger;
+ mod run;
+-#[cfg(feature = "default")]
+ mod world;
+ 
+ use std::path::{Path, PathBuf};
+@@ -102,17 +96,12 @@ fn test() {
+     }
+ 
+     let parser_dirs = ARGS.parser_compare.clone().map(create_syntax_store);
+-    #[cfg(not(feature = "default"))]
+-    let parser_dirs = parser_dirs.or_else(|| Some(create_syntax_store(None)));
+ 
+     let runner = |test: &Test| {
+         if let Some((live_path, ref_path)) = &parser_dirs {
+             run_parser_test(test, live_path, ref_path)
+         } else {
+-            #[cfg(feature = "default")]
+-            return run::run(test);
+-            #[cfg(not(feature = "default"))]
+-            unreachable!();
++            run::run(test)
+         }
+     };
+ 
