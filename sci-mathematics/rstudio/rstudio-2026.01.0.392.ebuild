@@ -6,12 +6,12 @@ LLVM_COMPAT=( {18..21} )
 LLVM_OPTIONAL=1
 inherit cmake java-pkg-2 java-ant-2 llvm-r1 multiprocessing npm optfeature pam prefix xdg-utils
 
-P_PREBUILT="${PN}-2025.12.0.334"
-DAILY_COMMIT="fbe047ba309d3143cd9de3804d9ccf9cabae68f1"
-ELECTRON_VERSION="38.7.0"
-QUARTO_COMMIT="9838c73c205dc308bd755fa90fc34b9ed9362633"
-QUARTO_BRANCH="main"
-QUARTO_DATE="20251106"
+P_PREBUILT="${PN}-2026.02.0.66"
+#DAILY_COMMIT="fbe047ba309d3143cd9de3804d9ccf9cabae68f1"
+ELECTRON_VERSION="38.7.2"
+QUARTO_COMMIT="591b3520eafbb4da7b26b9f31aac6948801f19d8"
+QUARTO_BRANCH="release/rstudio-apple-blossom"
+QUARTO_DATE="20251126"
 QUARTO_CLI_VER="1.8.25"
 GWT_VERSION="2.12.2-apple-blossom"
 WEBSOCKETPP_COMMIT="ee8cf4257e001d939839cff5b1766a835b749cd6"
@@ -168,23 +168,12 @@ REQUIRED_USE="!server? ( electron ) clang? ( ${LLVM_REQUIRED_USE} )"
 RESTRICT="mirror !test? ( test )"
 
 RDEPEND="
-	server? (
-		acct-user/rstudio-server
-		acct-group/rstudio-server
-		sys-libs/pam
-	)
 	|| (
 		app-text/pandoc-cli
 		<app-text/pandoc-3
 		app-text/pandoc-bin
 	)
 	app-text/hunspell:=
-	quarto? (
-		|| (
-			>=app-text/quarto-cli-${QUARTO_CLI_VER}
-			>=app-text/quarto-cli-bin-${QUARTO_CLI_VER}
-		)
-	)
 	dev-cpp/expected
 	dev-cpp/gsl-lite
 	>=dev-cpp/yaml-cpp-0.8.0:=
@@ -194,6 +183,14 @@ RDEPEND="
 	dev-libs/openssl:=
 	>=dev-libs/mathjax-2.7
 	>=dev-libs/soci-4.0.3[sqlite]
+	sys-apps/util-linux
+	sys-apps/which
+	virtual/zlib
+	sys-process/lsof
+	>=virtual/jdk-17:=
+	clang? ( $(llvm_gen_dep '
+		llvm-core/clang:${LLVM_SLOT}
+	') )
 	electron? (
 		dev-libs/expat
 		dev-libs/glib:2
@@ -217,25 +214,22 @@ RDEPEND="
 		x11-libs/libxkbcommon
 		x11-libs/pango
 	)
-	clang? ( $(llvm_gen_dep '
-		llvm-core/clang:${LLVM_SLOT}
-	') )
-	sys-apps/util-linux
-	sys-apps/which
-	sys-libs/zlib
-	sys-process/lsof
-	>=virtual/jdk-17:=
-	test? ( >=dev-cpp/gtest-1.17.0 )
-"
-
-DEPEND="${RDEPEND}"
-BDEPEND="
-	doc? (
+	quarto? (
 		|| (
 			>=app-text/quarto-cli-${QUARTO_CLI_VER}
 			>=app-text/quarto-cli-bin-${QUARTO_CLI_VER}
 		)
 	)
+	server? (
+		acct-user/rstudio-server
+		acct-group/rstudio-server
+		sys-libs/pam
+	)
+	test? ( >=dev-cpp/gtest-1.17.0 )
+"
+
+DEPEND="${RDEPEND}"
+BDEPEND="
 	dev-libs/rapidjson
 	dev-java/aopalliance:1
 	dev-java/injection-api
@@ -253,12 +247,18 @@ BDEPEND="
 		app-arch/unzip
 		net-libs/nodejs[npm]
 	)
+	doc? (
+		|| (
+			>=app-text/quarto-cli-${QUARTO_CLI_VER}
+			>=app-text/quarto-cli-bin-${QUARTO_CLI_VER}
+		)
+	)
 	>=virtual/jdk-17:=
 "
 PATCHES=(
 	"${FILESDIR}/${PN}_cmake4.patch"
-	"${FILESDIR}/${PN}-9999-cmake-bundled-dependencies.patch"
-	"${FILESDIR}/${PN}-9999-resource-path.patch"
+	"${FILESDIR}/${PN}-2026.01.0.392-cmake-bundled-dependencies.patch"
+	"${FILESDIR}/${PN}-2026.01.0.392-resource-path.patch"
 	"${FILESDIR}/${PN}-2024.04.0.735-server-paths.patch"
 	"${FILESDIR}/${PN}-2024.12.0.467-package-build.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
@@ -266,8 +266,8 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2022.12.0.353-add-support-for-RapidJSON.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-system-clang.patch"
 	"${FILESDIR}/${PN}-2024.12.0.467-disable-panmirror.patch"
-	"${FILESDIR}/${PN}-9999-copilot.patch"
-	"${FILESDIR}/${PN}-9999-postback.patch"
+	"${FILESDIR}/${PN}-2026.01.0.392-copilot.patch"
+	"${FILESDIR}/${PN}-2026.01.0.392-postback.patch"
 	"${FILESDIR}/${PN}-2025.09.0.387-boost-1.89.0.patch"
 	"${FILESDIR}/${PN}-clang.patch"
 )
