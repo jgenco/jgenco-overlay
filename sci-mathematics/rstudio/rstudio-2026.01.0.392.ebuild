@@ -182,7 +182,7 @@ RDEPEND="
 	>=dev-libs/libfmt-8.1.1:=
 	dev-libs/openssl:=
 	>=dev-libs/mathjax-2.7
-	>=dev-libs/soci-4.0.3[sqlite]
+	>=dev-db/soci-4.0.3[sqlite]
 	sys-apps/util-linux
 	sys-apps/which
 	virtual/zlib

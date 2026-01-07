@@ -198,7 +198,7 @@ RDEPEND="
 	>=dev-libs/libfmt-8.1.1:=
 	dev-libs/openssl:=
 	>=dev-libs/mathjax-2.7
-	>=dev-libs/soci-4.0.3[sqlite]
+	>=dev-db/soci-4.0.3[sqlite]
 	electron? (
 		dev-libs/expat
 		dev-libs/glib:2
