@@ -1,4 +1,4 @@
-# Copyright 2024 Gentoo Authors
+# Copyright 2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -6,7 +6,7 @@ EAPI=8
 DESCRIPTION="Open-source scientific and technical publishing system built on Pandoc."
 HOMEPAGE="https://quarto.org/"
 
-QUARTO_CLI_VENDOR="${PN}-1.8.19"
+QUARTO_CLI_VENDOR="${PN}-1.9.17"
 ESBUILD_VER_ORIG="0.15.18"
 
 inherit shell-completion prefix
@@ -19,7 +19,7 @@ else
 	SRC_URI="https://github.com/quarto-dev/quarto-cli/archive/refs/tags/v${PV}.tar.gz   -> ${P}.tar.gz "
 fi
 
-PANDOC_VER="3.6.3"
+PANDOC_VER="3.8.3"
 SRC_URI+="
 	https://github.com/jgenco/jgenco-overlay-files/releases/download/${QUARTO_CLI_VENDOR}/${QUARTO_CLI_VENDOR}-deno_vendor.tar.xz
 	!system-pandoc? (
@@ -45,7 +45,7 @@ PATCHES="
 ESBUILD_DEP_SLOT="0.25"
 DEPEND="
 	app-arch/unzip
-	~app-text/typst-0.13.0[embed-fonts]
+	~app-text/typst-0.14.2[embed-fonts]
 	system-pandoc? ( || (
 		(
 			>=dev-haskell/pandoc-3.1
@@ -100,8 +100,8 @@ src_prepare() {
 		sed -i "s/${ESBUILD_VER_ORIG}/$(esbuild --version)/g" esbuild/{install.js,lib/main.js} || die
 	popd
 	pushd "${WORKDIR}/deno_cache/npm/registry.npmjs.org/" > /dev/null || die
-		cp "${EPREFIX}/usr/bin/esbuild-${ESBUILD_DEP_SLOT}" "@esbuild/linux-x64/0.20.2/bin/esbuild" || die
-		sed -i "s/0.20.2/$(esbuild-${ESBUILD_DEP_SLOT} --version)/g" esbuild/0.20.2/lib/main.js || die
+		cp "${EPREFIX}/usr/bin/esbuild-${ESBUILD_DEP_SLOT}" "@esbuild/linux-x64/0.27.1/bin/esbuild" || die
+		sed -i "s/0.27.1/$(esbuild-${ESBUILD_DEP_SLOT} --version)/g" esbuild/0.27.1/lib/main.js || die
 	popd
 
 	DENO_DIR="src/resources/deno_std/cache" deno cache --allow-import --unstable-ffi --lock \
