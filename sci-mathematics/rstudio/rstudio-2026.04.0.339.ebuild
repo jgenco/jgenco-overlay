@@ -6,12 +6,12 @@ LLVM_COMPAT=( {18..21} )
 LLVM_OPTIONAL=1
 inherit cmake java-pkg-2 java-ant-2 llvm-r1 multiprocessing npm optfeature pam prefix xdg-utils
 
-P_PREBUILT="${PN}-2026.04.0.267"
-DAILY_COMMIT="35fe7156201d8bdad9b18ca12d6b690124f00a5a"
-ELECTRON_VERSION="39.5.1"
-QUARTO_COMMIT="a78ac6ad152649c01326b7d6267867062d42bc7d"
+P_PREBUILT="${PN}-2026.04.0.339"
+DAILY_COMMIT="6cdc121edbd5efe9c1e40bb29a33053891668a6f"
+ELECTRON_VERSION="39.7.0"
+QUARTO_COMMIT="9bbc2722355d6ef798204f781711f0551abeb9bb"
 QUARTO_BRANCH="main"
-QUARTO_DATE="20260209"
+QUARTO_DATE="20260218"
 QUARTO_CLI_VER="1.8.26"
 GWT_VERSION="2.12.2-apple-blossom"
 RAPIDJSON_COMMIT="24b5e7a8b27f42fa16b96fc70aade9106cf7102f"
@@ -259,7 +259,7 @@ BDEPEND="
 PATCHES=(
 	"${FILESDIR}/${PN}_cmake4.patch"
 	"${FILESDIR}/${PN}-9999-cmake-bundled-dependencies.patch"
-	"${FILESDIR}/${PN}-2026.01.0.392-resource-path.patch"
+	"${FILESDIR}/${PN}-9999-resource-path.patch"
 	"${FILESDIR}/${PN}-2024.04.0.735-server-paths.patch"
 	"${FILESDIR}/${PN}-2024.12.0.467-package-build.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
