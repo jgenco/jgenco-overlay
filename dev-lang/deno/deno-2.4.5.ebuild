@@ -62,11 +62,11 @@ RESTRICT="mirror !test? ( test )"
 REQUIRED_USE="v8-prebuilt? ( !sys-libraries )"
 
 DEPEND="${PYTHON_DEPS}"
+RDEPEND="!dev-lang/deno-bin"
 BDEPEND="
 	dev-build/gn
 	dev-build/ninja
-	!dev-lang/deno-bin
-	sys-libs/zlib
+	virtual/zlib
 
 	$(llvm_gen_dep '
 		llvm-core/clang:${LLVM_SLOT}
@@ -81,7 +81,7 @@ BDEPEND="
 		dev-libs/icu:=
 		dev-libs/libffi
 		media-libs/lcms
-		sys-libs/zlib
+		virtual/zlib
 	)
 
 	test? (

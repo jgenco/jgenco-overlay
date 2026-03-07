@@ -55,11 +55,11 @@ RESTRICT="mirror !test? ( test )"
 #REQUIRED_USE="!v8-prebuilt? ( ${LLVM_REQUIRED_USE} )"
 
 DEPEND="${PYTHON_DEPS}"
+RDEPEND="!dev-lang/deno-bin"
 BDEPEND="
-	!dev-lang/deno-bin
 	dev-build/gn
 	dev-build/ninja
-	sys-libs/zlib
+	virtual/zlib
 
 	$(llvm_gen_dep '
 		llvm-core/clang:${LLVM_SLOT}
