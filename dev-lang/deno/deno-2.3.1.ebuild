@@ -230,6 +230,9 @@ src_compile() {
 	#also add for gcc?
 	export RUSTY_V8_SRC_BINDING_PATH=$(usex v8-prebuilt "${DISTDIR}/librusty_v8_${V8_VER}_release_amd64.binding.rs" "")
 
+	#help bindgen/clang-sys to find the correct clang/llvm
+	export LLVM_CONFIG_PATH="$(get_llvm_prefix)/bin/llvm-config"
+
 	#export SCCACHE=
 	#export CCACHE=
 	export GN="${EPREFIX}/usr/bin/gn"
