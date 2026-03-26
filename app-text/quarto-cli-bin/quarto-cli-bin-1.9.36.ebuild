@@ -19,10 +19,13 @@ LICENSE+="
 LICENSE+=" MIT Apache-2.0 Apache-2.0 Apache-2.0-with-LLVM-exceptions Boost-1.0 MIT Unicode-DFS-2016" #deno-dom 0.1.35
 LICENSE+="
 	Apache-2.0 BSD-2 BSD Boost-1.0 CC0-1.0 ISC MIT MPL-2.0 UoI-NCSA
-	Unicode-3.0 ZLIB OFL-1.1 GFL BitstreamVera
-" #app-text/typst 0.13.0
+	Unicode-3.0 ZLIB
+	OFL-1.1 GFL BitstreamVera
+" #app-text/typst 0.14.2
 LICENSE+=" MIT Apache-2.0 BSD" #dev-lang/dart-sass 1.87.0
 LICENSE+=" MIT BSD-2" #dev-util/esbuild 0.25.3
+LICENSE+=" Apache-2.0 BSD-2 BSD MIT MPL-2.0 Unicode-3.0 ZLIB
+	|| ( 0BSD CC0-1.0 )" #app-text/typst-gather 0.1.2
 
 SLOT="0"
 KEYWORDS="~amd64"
@@ -46,6 +49,7 @@ QA_PREBUILT="
 	opt/quarto-cli/bin/tools/${ARCH_FOLDER}/deno
 	opt/quarto-cli/bin/tools/${ARCH_FOLDER}/esbuild
 	opt/quarto-cli/bin/tools/${ARCH_FOLDER}/typst
+	opt/quarto-cli/bin/tools/${ARCH_FOLDER}/typst-gather
 	opt/quarto-cli/bin/tools/${ARCH_FOLDER}/dart-sass/src/dart
 "
 src_prepare() {
