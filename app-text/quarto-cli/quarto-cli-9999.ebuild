@@ -46,6 +46,7 @@ ESBUILD_DEP_SLOT="0.25"
 DEPEND="
 	app-arch/unzip
 	~app-text/typst-0.14.2[embed-fonts]
+	~app-text/typst-gather-0.1.2
 	system-pandoc? ( || (
 		(
 			>=dev-haskell/pandoc-3.1
@@ -112,6 +113,8 @@ src_prepare() {
 	#Setup links
 	#ln -s "${DENO_CACHE}" package/src/x86_64 || die
 	cp -a  "${WORKDIR}/node_modules" "${S}/src/webui/quarto-preview/node_modules" || die
+	#disable typst-gather
+	sed -i "s/buildArch === config.arch/false/" package/src/common/prepare-dist.ts || die
 	default
 	eprefixify src/command/render/render-shared.ts quarto package/scripts/common/quarto
 }
