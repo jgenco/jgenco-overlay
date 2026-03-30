@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<upstream>
+		<bugs-to>https://github.com/quarto-dev/typst-gather/issues</bugs-to>
+		<remote-id type="github">quarto-dev/typst-gather</remote-id>
+	</upstream>
+</pkgmetadata>
