@@ -10,12 +10,13 @@
 * replace rstudio-hunspell -> HUNSPELL_LIBRARIES
 * use find_library instead of find_package for hunspell
 * remove a bunch of hunspell lines
+* libgit2package -> libgit2::libgit2package
 
 #Needs fixed
 * use older fmt version for now
 --- a/src/cpp/core/CMakeLists.txt
 +++ b/src/cpp/core/CMakeLists.txt
-@@ -332,16 +332,14 @@ define_source_file_names(rstudio-core)
+@@ -334,16 +334,14 @@ define_source_file_names(rstudio-core)
  target_link_libraries(rstudio-core
     rstudio-shared-core
     rstudio-dtl
@@ -36,7 +37,7 @@
  )
  
  if(WIN32)
-@@ -378,12 +376,12 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
+@@ -380,12 +378,12 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
        rstudio-core
        rstudio-core-synctex
        rstudio-dtl
@@ -63,7 +64,7 @@
              set(${_NAME}_ENABLED TRUE)
              break()
           endif()
-@@ -105,18 +105,15 @@ function(fetch)
+@@ -145,18 +145,15 @@ function(fetch)
  
        if(${_PREFIX}_ENABLED)
           if(RSTUDIO_USE_SYSTEM_DEPENDENCIES OR RSTUDIO_USE_SYSTEM_${_PREFIX})
@@ -84,7 +85,7 @@
                 SOURCE_SUBDIR  "${_SOURCE_SUBDIR}"
                 EXCLUDE_FROM_ALL)
           endif()
-@@ -164,7 +161,7 @@ dependency(DTL
+@@ -204,7 +201,7 @@ dependency(DTL
  # fmt
  dependency(FMT
     COMMENT    "{fmt} is an open-source formatting library providing a fast and safe alternative to C stdio and C++ iostreams."
@@ -93,7 +94,7 @@
     REPOSITORY "https://github.com/fmtlib/fmt"
     REVISION   "123913715afeb8a437e6388b4473fcc4753e1c9a" # pragma: allowlist secret
  )
-@@ -222,7 +219,7 @@ dependency(RAPIDJSON
+@@ -286,7 +283,7 @@ dependency(RAPIDJSON
  # tl-expected
  dependency(TL_EXPECTED
     COMMENT    "Single header implementation of std::expected with functional-style extensions."
@@ -102,7 +103,7 @@
     REPOSITORY "https://github.com/TartanLlama/expected"
     REVISION   "292eff8bd8ee230a7df1d6a1c00c4ea0eb2f0362" # pragma: allowlist secret
  )
-@@ -233,7 +230,7 @@ set(EXPECTED_BUILD_TESTS OFF)
+@@ -297,7 +294,7 @@ set(EXPECTED_BUILD_TESTS OFF)
  # utfcpp
  dependency(UTFCPP
     COMMENT    "UTF8-CPP: UTF-8 with C++ in a Portable Way"
@@ -111,7 +112,7 @@
     REPOSITORY "https://github.com/nemtrif/utfcpp"
     REVISION   "f9319195dfddf369f68f18e7c0039b3f351797fd" # pragma: allowlist secret
     CUSTOM     TRUE
-@@ -243,7 +240,7 @@ dependency(UTFCPP
+@@ -307,7 +304,7 @@ dependency(UTFCPP
  # websocketpp
  dependency(WEBSOCKETPP
     COMMENT    "WebSocket++ is a header only C++ library that implements RFC6455 The WebSocket Protocol."
@@ -120,13 +121,14 @@
     REPOSITORY "https://github.com/amini-allight/websocketpp"
     REVISION   "ee8cf4257e001d939839cff5b1766a835b749cd6" # pragma: allowlist secret
     CUSTOM     TRUE
-@@ -275,14 +272,13 @@ dependency(ZLIB
- )
+@@ -375,15 +372,14 @@ if(EXISTS "${_LIBGIT2_GIT2_H}")
+ endif()
  
  fetch(
 -   dtl          DTL
     fmt          FMT
     gsl-lite     GSL_LITE
+    libgit2      LIBGIT2
 -   gtest        GTEST
 +   GTest        GTEST
     hunspell     HUNSPELL
@@ -135,9 +137,9 @@
 -   utfcpp       UTFCPP
 +   utf8cpp       UTFCPP
     websocketpp  WEBSOCKETPP
-    yaml-cpp     YAML_CPP
-    zlib         ZLIB)
-@@ -290,23 +286,12 @@ fetch(
+    yaml-cpp     YAML_CPP)
+ 
+@@ -406,23 +402,12 @@ restore_global_settings()
  
  # Create dtl target.
  add_library(rstudio-dtl INTERFACE EXCLUDE_FROM_ALL)
@@ -176,7 +178,16 @@
  
   
     # skip quarto if not enabled
-@@ -749,12 +746,6 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
+@@ -571,7 +568,7 @@ set(SESSION_LIBRARIES
+    rstudio-monitor
+    rstudio-r
+    rstudio-session-workers
+-   libgit2package
++   libgit2::libgit2package
+    ${SESSION_SYSTEM_LIBRARIES}
+    ${CMAKE_DL_LIBS})
+ 
+@@ -757,12 +754,6 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
     install(DIRECTORY "${RSTUDIO_DEPENDENCIES_MATHJAX_DIR}"
             DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
  
@@ -189,7 +200,7 @@
     # install quarto (or pandoc if quarto disabled)
     if(QUARTO_ENABLED)
        # install some quarto folders into Resources, as needed
-@@ -765,16 +756,8 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
+@@ -773,16 +764,8 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
                 PATTERN ".gitignore"
                 EXCLUDE)
        else()
