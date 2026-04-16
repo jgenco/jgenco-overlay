@@ -28,7 +28,7 @@ LICENSE+=" Apache-2.0 BSD-2 BSD MIT MPL-2.0 Unicode-3.0 ZLIB
 	|| ( 0BSD CC0-1.0 )" #app-text/typst-gather 0.1.2
 
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 
 DEPEND="
 	app-arch/unzip
