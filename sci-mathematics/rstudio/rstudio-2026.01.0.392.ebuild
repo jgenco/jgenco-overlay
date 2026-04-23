@@ -177,7 +177,7 @@ RDEPEND="
 	dev-cpp/expected
 	dev-cpp/gsl-lite
 	>=dev-cpp/yaml-cpp-0.8.0:=
-	>=dev-lang/R-3.3.0[png]
+	<dev-lang/R-4.6.0[png]
 	>=dev-libs/boost-1.85:=
 	>=dev-libs/libfmt-8.1.1:=
 	dev-libs/openssl:=
