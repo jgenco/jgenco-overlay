@@ -6,11 +6,11 @@ LLVM_COMPAT=( {18..21} )
 LLVM_OPTIONAL=1
 inherit cmake java-pkg-2 java-ant-2 llvm-r1 multiprocessing npm optfeature pam prefix xdg-utils
 
-P_PREBUILT="${PN}-2026.05.0.17"
-DAILY_COMMIT="13a43f8ff7b969b307464e126258a059f1680c9a"
-ELECTRON_VERSION="39.8.5"
+P_PREBUILT="${PN}-2026.04.0.496"
+#DAILY_COMMIT="57f8932a2d8c5a4a8c0d30ad918ec77f9f2dacaa"
+ELECTRON_VERSION="39.8.7"
 QUARTO_COMMIT="8c1669f3095c5afee6bcd98a659d51a43300bda9"
-QUARTO_BRANCH="main"
+QUARTO_BRANCH="release/rstudio-globemaster-allium"
 QUARTO_DATE="20260401"
 QUARTO_CLI_VER="1.9.36"
 GWT_VERSION="2.12.2-apple-blossom"
