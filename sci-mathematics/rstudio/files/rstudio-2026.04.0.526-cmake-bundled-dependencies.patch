@@ -14,6 +14,29 @@
 
 #Needs fixed
 * use older fmt version for now
+--- a/src/cpp/conf/rdesktop-dev.conf
++++ b/src/cpp/conf/rdesktop-dev.conf
+@@ -46,3 +46,8 @@ external-copilot-path=${RSTUDIO_DEPENDENCIES_COPILOT_DIR}
+ external-libclang-path=${RSTUDIO_DEPENDENCIES_DIR}/common/libclang
+ external-winpty-path=${WINPTY_ROOT}
+ external-node-path=${RSTUDIO_NODE_PATH}
++
++# enable copilot
++copilot-enabled=0
++posit-assistant-enabled=0
++
+--- a/src/cpp/conf/rsession-dev.conf
++++ b/src/cpp/conf/rsession-dev.conf
+@@ -44,7 +44,8 @@ external-libclang-path=${RSTUDIO_DEPENDENCIES_DIR}/common/libclang
+ external-node-path=${RSTUDIO_NODE_PATH}
+ 
+ # enable copilot
+-copilot-enabled=1
++copilot-enabled=0
++posit-assistant-enabled=0
+ 
+ # enable trust dialogs
+ project-trust-dialogs=1
 --- a/src/cpp/core/CMakeLists.txt
 +++ b/src/cpp/core/CMakeLists.txt
 @@ -334,16 +334,14 @@ define_source_file_names(rstudio-core)
@@ -37,6 +60,15 @@
  )
  
  if(WIN32)
+@@ -365,7 +363,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
+    include_directories(${GTEST_SOURCE_DIR}/include)
+    
+    # Add Google Test if not already added
+-   if(NOT TARGET gtest)
++   if(NOT TARGET gtest AND NOT RSTUDIO_USE_SYSTEM_GTEST)
+       add_subdirectory(${GTEST_SOURCE_DIR} gtest-build EXCLUDE_FROM_ALL)
+    endif()
+ 
 @@ -380,12 +378,12 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
        rstudio-core
        rstudio-core-synctex
@@ -164,6 +196,39 @@
  endif()
  
  
+--- a/src/cpp/server/CMakeLists.txt
++++ b/src/cpp/server/CMakeLists.txt
+@@ -285,7 +285,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
+   include_directories(${GTEST_SOURCE_DIR}/include)
+   
+   # Add Google Test if not already added
+-  if(NOT TARGET gtest)
++  if(NOT TARGET gtest AND NOT RSTUDIO_USE_SYSTEM_GTEST)
+      add_subdirectory(${GTEST_SOURCE_DIR} gtest-build EXCLUDE_FROM_ALL)
+   endif()
+ 
+--- a/src/cpp/server/url-ports/CMakeLists.txt
++++ b/src/cpp/server/url-ports/CMakeLists.txt
+@@ -53,7 +53,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
+    include_directories(${GTEST_SOURCE_DIR}/include)
+    
+    # Add Google Test if not already added
+-   if(NOT TARGET gtest)
++   if(NOT TARGET gtest AND NOT RSTUDIO_USE_SYSTEM_GTEST)
+       add_subdirectory(${GTEST_SOURCE_DIR} gtest-build EXCLUDE_FROM_ALL)
+    endif()
+ 
+--- a/src/cpp/server_core/CMakeLists.txt
++++ b/src/cpp/server_core/CMakeLists.txt
+@@ -70,7 +70,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
+    include_directories(${GTEST_SOURCE_DIR}/include)
+    
+    # Add Google Test if not already added
+-   if(NOT TARGET gtest)
++   if(NOT TARGET gtest AND NOT RSTUDIO_USE_SYSTEM_GTEST)
+       add_subdirectory(${GTEST_SOURCE_DIR} gtest-build EXCLUDE_FROM_ALL)
+    endif()
+ 
 --- a/src/cpp/session/CMakeLists.txt
 +++ b/src/cpp/session/CMakeLists.txt
 @@ -78,10 +78,7 @@ endif()
@@ -178,7 +243,16 @@
  
   
     # skip quarto if not enabled
-@@ -571,7 +568,7 @@ set(SESSION_LIBRARIES
+@@ -422,7 +419,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
+   include_directories(${GTEST_SOURCE_DIR}/include)
+    
+   # Add Google Test if not already added
+-  if(NOT TARGET gtest)
++  if(NOT TARGET gtest AND NOT RSTUDIO_USE_SYSTEM_GTEST)
+     add_subdirectory(${GTEST_SOURCE_DIR} gtest-build EXCLUDE_FROM_ALL)
+   endif()
+   
+@@ -572,7 +569,7 @@ set(SESSION_LIBRARIES
     rstudio-monitor
     rstudio-r
     rstudio-session-workers
@@ -187,7 +261,7 @@
     ${SESSION_SYSTEM_LIBRARIES}
     ${CMAKE_DL_LIBS})
  
-@@ -757,12 +754,6 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
+@@ -758,12 +755,6 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
     install(DIRECTORY "${RSTUDIO_DEPENDENCIES_MATHJAX_DIR}"
             DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
  
@@ -200,7 +274,7 @@
     # install quarto (or pandoc if quarto disabled)
     if(QUARTO_ENABLED)
        # install some quarto folders into Resources, as needed
-@@ -773,16 +764,8 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
+@@ -774,16 +765,8 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
                 PATTERN ".gitignore"
                 EXCLUDE)
        else()
@@ -227,3 +301,11 @@
     rstudio-rapidjson)
  
  # Define executable for running unit tests
+@@ -102,7 +101,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
+    include_directories(${GTEST_SOURCE_DIR}/include)
+    
+    # Add Google Test if not already added
+-   if(NOT TARGET gtest)
++   if(NOT TARGET gtest AND NOT RSTUDIO_USE_SYSTEM_GTEST)
+       add_subdirectory(${GTEST_SOURCE_DIR} gtest-build EXCLUDE_FROM_ALL)
+    endif()
