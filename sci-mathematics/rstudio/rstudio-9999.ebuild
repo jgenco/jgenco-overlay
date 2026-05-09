@@ -6,11 +6,11 @@ LLVM_COMPAT=( {18..21} )
 LLVM_OPTIONAL=1
 inherit cmake java-pkg-2 java-ant-2 llvm-r1 multiprocessing npm optfeature pam prefix xdg-utils
 
-P_PREBUILT="${PN}-2026.05.0.17"
-DAILY_COMMIT="13a43f8ff7b969b307464e126258a059f1680c9a"
-ELECTRON_VERSION="39.8.5"
+P_PREBUILT="${PN}-2026.04.0.496"
+#DAILY_COMMIT="57f8932a2d8c5a4a8c0d30ad918ec77f9f2dacaa"
+ELECTRON_VERSION="39.8.7"
 QUARTO_COMMIT="8c1669f3095c5afee6bcd98a659d51a43300bda9"
-QUARTO_BRANCH="main"
+QUARTO_BRANCH="release/rstudio-globemaster-allium"
 QUARTO_DATE="20260401"
 QUARTO_CLI_VER="1.9.36"
 GWT_VERSION="2.12.2-apple-blossom"
@@ -19,86 +19,76 @@ RAPIDJSON_COMMIT="24b5e7a8b27f42fa16b96fc70aade9106cf7102f"
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
 R_RMARKDOWN_PKGS="
-rlang@1.1.6
-glue@1.8.0
-cli@3.6.5
-lifecycle@1.0.4
+rlang@1.2.0
 fastmap@1.2.0
-digest@0.6.37
-base64enc@0.1-3
-vctrs@0.6.5
-utf8@1.2.5
-lattice@0.22-7
-xfun@0.52
-rappdirs@0.3.3
+digest@0.6.39
+base64enc@0.1-6
+cli@3.6.6
+xfun@0.57
+rappdirs@0.3.4
 R6@2.6.1
-htmltools@0.5.8.1
-fs@1.6.6
+htmltools@0.5.9
+fs@2.1.0
 cachem@1.1.0
-pkgconfig@2.0.3
-pillar@1.10.2
-magrittr@2.0.3
-fansi@1.0.6
-viridisLite@0.4.2
+lifecycle@1.0.5
+glue@1.8.1
+viridisLite@0.4.3
 RColorBrewer@1.1-3
 labeling@0.4.3
 farver@2.1.2
-Matrix@1.7-3
-nlme@3.1-168
-yaml@2.3.10
-highr@0.11
-evaluate@1.0.3
+cpp11@0.5.5
+yaml@2.3.12
+highr@0.12
+evaluate@1.0.5
 sass@0.4.10
 mime@0.13
 memoise@2.0.1
 jsonlite@2.0.0
 jquerylib@0.1.4
 withr@3.0.2
-tibble@3.2.1
+vctrs@0.7.3
 scales@1.4.0
-mgcv@1.9-3
-MASS@7.3-65
-isoband@0.2.7
+S7@0.2.2
+isoband@0.3.0
 gtable@0.3.6
-tinytex@0.57
-knitr@1.50
+tinytex@0.59
+knitr@1.51
 fontawesome@0.5.3
-bslib@0.9.0
-rmarkdown@2.29
-ggplot2@3.5.2
+bslib@0.10.0
+rmarkdown@2.31
+ggplot2@4.0.3
 "
 #####End   of RMARKDOWN package list#####
 #####Start of TESTHAT   package list#####
 #also includes xml2
 R_TESTTHAT_PKGS="
 R6@2.6.1
-ps@1.9.1
-cli@3.6.5
-processx@3.8.6
+ps@1.9.3
+cli@3.6.6
+processx@3.9.0
 crayon@1.5.3
 desc@1.4.3
 callr@3.7.6
-rlang@1.1.6
-glue@1.8.0
+rlang@1.2.0
+glue@1.8.1
 diffobj@0.3.6
+rprojroot@2.1.1
+pkgbuild@1.4.8
+lifecycle@1.0.5
+fs@2.1.0
 withr@3.0.2
-rprojroot@2.0.4
-pkgbuild@1.4.7
-lifecycle@1.0.4
-fs@1.6.6
-waldo@0.6.1
+waldo@0.6.2
 praise@1.0.0
-pkgload@1.4.0
-magrittr@2.0.3
+pkgload@1.5.2
+magrittr@2.0.5
 jsonlite@2.0.0
-evaluate@1.0.3
-digest@0.6.37
+evaluate@1.0.5
 brio@1.1.5
-testthat@3.2.3
-xml2@1.3.8
-vctrs@0.6.5
+testthat@3.3.2
+xml2@1.5.2
+vctrs@0.7.3
 "
-R_PURRR_PKG="purrr@1.0.4"
+R_PURRR_PKG="purrr@1.2.2"
 #####End   of TESTHAT   package list#####
 
 DESCRIPTION="IDE for the R language"
@@ -259,8 +249,8 @@ BDEPEND="
 "
 PATCHES=(
 	"${FILESDIR}/${PN}_cmake4.patch"
-	"${FILESDIR}/${PN}-9999-cmake-bundled-dependencies.patch"
-	"${FILESDIR}/${PN}-9999-resource-path.patch"
+	"${FILESDIR}/${PN}-2026.04.0.526-cmake-bundled-dependencies.patch"
+	"${FILESDIR}/${PN}-2026.04.0.526-resource-path.patch"
 	"${FILESDIR}/${PN}-2024.04.0.735-server-paths.patch"
 	"${FILESDIR}/${PN}-2024.12.0.467-package-build.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
@@ -460,7 +450,7 @@ src_prepare() {
 	java-pkg-2_src_prepare
 
 	if use test ;then
-		sed -i "/Suggests:/,+1d" "${WORKDIR}/purrr/DESCRIPTION" || die
+		sed -i "/Suggests:/,+2d" "${WORKDIR}/purrr/DESCRIPTION" || die
 		sed -i -E "/runWatchdogProcess [0-9]{1,2}m true/c\\\t:" src/cpp/rstudio-tests.in || die
 	else
 		sed -E -i "/GTest[[:space:]]+GTEST/d" src/cpp/ext/CMakeLists.txt || die
@@ -533,8 +523,8 @@ src_configure() {
 		#if docs/news is built remove "_ga-" lines from  docs/news/_quarto.yml
 		sed -i "/_ga-\S\+-tag.html/d" docs/user/rstudio/_quarto.yml \
 			|| die "Failed to remove google_analytics include"
-		echo -e "buildType: ${build_type}\nversion: ${my_pv}" > docs/user/rstudio/_variables.yml ||
-			die "Failed to create _variables.yml"
+		echo -e "buildType: ${build_type}\nversion: ${my_pv}\nrevision: \"\"" \
+		 > docs/user/rstudio/_variables.yml || die "Failed to create _variables.yml"
 		#Quarto-Cli likes a certain version of pandoc this trys both
 		quarto check 2> quarto-check.first || export QUARTO_PANDOC="${EPREFIX}/usr/bin/pandoc-bin"
 		quarto check 2> quarto-check.second || die "Quarto Cli failed check"
