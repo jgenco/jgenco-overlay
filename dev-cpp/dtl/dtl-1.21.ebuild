@@ -9,7 +9,7 @@ SRC_URI="https://github.com/cubicdaiya/dtl/archive/refs/tags/v${PV}.tar.gz -> ${
 
 LICENSE="BSD"
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 RESTRICT="test"
 
 #uses scons for installing/testing
