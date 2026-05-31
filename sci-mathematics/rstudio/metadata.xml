@@ -10,6 +10,7 @@
 		<flag name="panmirror">Builds Panmirror, RStudio's WYSIWYM editor</flag>
 		<flag name="quarto">Adds <pkg>app-text/quarto-cli</pkg> support</flag>
 		<flag name="electron">Enables Electron GUI</flag>
+		<flag name="qt">Uses old QT Client but updated for QT6 - NOT supported by upstream</flag>
 		<flag name="qt5">Build QT5 Client</flag>
 		<flag name="qt6">Build QT6 Client - Experimental - NOT supported by ustream</flag>
 		<flag name="doc">Builds User Guide - requires building R pkgs rmarkdown and ggplot2 and quarto installed</flag>
