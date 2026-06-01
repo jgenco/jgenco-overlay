@@ -14,7 +14,7 @@ EAPI=8
 LLVM_COMPAT=( {18,20} )
 LLVM_OPTIONAL=1
 
-PYTHON_COMPAT=( python3_{12..13} )
+PYTHON_COMPAT=( python3_{12..14} )
 
 inherit check-reqs llvm-r1 ninja-utils python-any-r1
 
