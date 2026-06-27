@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<upstream>
+		<doc>https://docs.deno.com/runtime/</doc>
+		<remote-id type="github">denoland/deno</remote-id>
+	</upstream>
+</pkgmetadata>
