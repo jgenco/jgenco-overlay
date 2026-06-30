@@ -1,0 +1,311 @@
+* remove remote fetch code and use SOURCE in src/cpp/ext/${foo}
+* use "older" version of `expected` b/c https://github.com/TartanLlama/expected/issues/153
+
+#needs investigaed - perhaps learn some cmake
+* detected PLATFORM correctly
+* rm tl::expected & expected -> tl-expected
+* rm gsl::gsl-lite-v1
+* replace fmt::fmt -> fmt
+* replace yaml-cpp:yaml-cpp -> yaml-cpp
+* replace rstudio-hunspell -> HUNSPELL_LIBRARIES
+* use find_library instead of find_package for hunspell
+* remove a bunch of hunspell lines
+* libgit2package -> libgit2::libgit2package
+
+#Needs fixed
+* use older fmt version for now
+--- a/src/cpp/conf/rdesktop-dev.conf
++++ b/src/cpp/conf/rdesktop-dev.conf
+@@ -45,3 +45,8 @@ external-quarto-path=${RSTUDIO_DEPENDENCIES_QUARTO_DIR}
+ external-copilot-path=${RSTUDIO_DEPENDENCIES_COPILOT_DIR}
+ external-libclang-path=${RSTUDIO_DEPENDENCIES_DIR}/common/libclang
+ external-node-path=${RSTUDIO_NODE_PATH}
++
++# enable copilot
++copilot-enabled=0
++posit-assistant-enabled=0
++
+--- a/src/cpp/conf/rsession-dev.conf
++++ b/src/cpp/conf/rsession-dev.conf
+@@ -44,7 +44,8 @@ external-libclang-path=${RSTUDIO_DEPENDENCIES_DIR}/common/libclang
+ external-node-path=${RSTUDIO_NODE_PATH}
+ 
+ # enable copilot
+-copilot-enabled=1
++copilot-enabled=0
++posit-assistant-enabled=0
+ 
+ # enable trust dialogs
+ project-trust-dialogs=1
+--- a/src/cpp/core/CMakeLists.txt
++++ b/src/cpp/core/CMakeLists.txt
+@@ -334,16 +334,14 @@ define_source_file_names(rstudio-core)
+ target_link_libraries(rstudio-core
+    rstudio-shared-core
+    rstudio-dtl
+-   rstudio-hunspell
+-   rstudio-utfcpp
++   ${HUNSPELL_LIBRARIES}
++   utf8cpp::utf8cpp
+    rstudio-websocketpp
+    ${Boost_LIBRARIES}
+    ${SOCI_LIBRARIES}
+    ${CORE_SYSTEM_LIBRARIES}
+-   fmt::fmt
+-   gsl::gsl-lite-v1
+-   tl::expected
+-   yaml-cpp::yaml-cpp
++   fmt
++   yaml-cpp
+ )
+ 
+ if(WIN32)
+@@ -365,7 +363,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
+    include_directories(${GTEST_SOURCE_DIR}/include)
+    
+    # Add Google Test if not already added
+-   if(NOT TARGET gtest)
++   if(NOT TARGET gtest AND NOT RSTUDIO_USE_SYSTEM_GTEST)
+       add_subdirectory(${GTEST_SOURCE_DIR} gtest-build EXCLUDE_FROM_ALL)
+    endif()
+ 
+@@ -380,12 +378,12 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
+       rstudio-core
+       rstudio-core-synctex
+       rstudio-dtl
+-      rstudio-hunspell
+-      rstudio-utfcpp
++      ${HUNSPELL_LIBRARIES}
++      utf8cpp::utf8cpp
+       ${Boost_LIBRARIES}
+       ${SOCI_LIBRARIES}
+       ${CORE_SYSTEM_LIBRARIES}
+-      gtest
++      GTest::gtest_main
+    )
+ 
+    if(NOT WIN32)
+--- a/src/cpp/ext/CMakeLists.txt
++++ b/src/cpp/ext/CMakeLists.txt
+@@ -73,7 +73,7 @@ function(dependency)
+ 
+    if(_PLATFORMS)
+       foreach(_PLATFORM IN LISTS _PLATFORMS)
+-         if(_PLATFORM)
++         if(${_PLATFORM})
+             set(${_NAME}_ENABLED TRUE)
+             break()
+          endif()
+@@ -162,18 +162,15 @@ function(fetch)
+ 
+       if(${_PREFIX}_ENABLED)
+          if(RSTUDIO_USE_SYSTEM_DEPENDENCIES OR RSTUDIO_USE_SYSTEM_${_PREFIX})
+-            if(CMAKE_VERSION VERSION_GREATER "3.24")
++            if(NOT ${_PREFIX} STREQUAL "HUNSPELL")
+                find_package("${_NAME}" "${${_PREFIX}_VERSION}" REQUIRED GLOBAL)
+             else()
+-               find_package("${_NAME}" "${${_PREFIX}_VERSION}" REQUIRED)
++               find_library(HUNSPELL_LIBRARIES NAMES hunspell hunspell-1.7 REQUIRED)
+             endif()
+          else()
+             set(${_PREFIX}_FETCHED TRUE)
+ 
+             FetchContent_Declare("${_NAME}"
+-               GIT_REPOSITORY "${${_PREFIX}_REPOSITORY}"
+-               GIT_TAG        "${${_PREFIX}_REVISION}"
+-               GIT_SHALLOW    ON
+                SOURCE_SUBDIR  "${_SOURCE_SUBDIR}"
+                EXCLUDE_FROM_ALL)
+          endif()
+@@ -223,7 +220,7 @@ dependency(DTL
+ dependency(FMT
+    DEPNAME    "{fmt}"
+    COMMENT    "{fmt} is an open-source formatting library providing a fast and safe alternative to C stdio and C++ iostreams."
+-   VERSION    "11.1.4"
++   VERSION    "11.0.2"
+    REPOSITORY "https://github.com/fmtlib/fmt"
+    REVISION   "123913715afeb8a437e6388b4473fcc4753e1c9a" # pragma: allowlist secret
+ )
+@@ -340,7 +337,7 @@ dependency(RAPIDJSON
+ dependency(TL_EXPECTED
+    DEPNAME    "tl::expected"
+    COMMENT    "Single header implementation of std::expected with functional-style extensions."
+-   VERSION    "1.1.0"
++   VERSION    "1.0.0"
+    REPOSITORY "https://github.com/TartanLlama/expected"
+    REVISION   "292eff8bd8ee230a7df1d6a1c00c4ea0eb2f0362" # pragma: allowlist secret
+ )
+@@ -352,7 +349,7 @@ set(EXPECTED_BUILD_TESTS OFF)
+ dependency(UTFCPP
+    DEPNAME    "UTF8-CPP"
+    COMMENT    "UTF8-CPP: UTF-8 with C++ in a Portable Way"
+-   VERSION    "4.0.8"
++   VERSION    "4.0.6"
+    REPOSITORY "https://github.com/nemtrif/utfcpp"
+    REVISION   "f9319195dfddf369f68f18e7c0039b3f351797fd" # pragma: allowlist secret
+    CUSTOM     TRUE
+@@ -363,7 +360,7 @@ dependency(UTFCPP
+ dependency(WEBSOCKETPP
+    DEPNAME    "WebSocket++"
+    COMMENT    "WebSocket++ is a header only C++ library that implements RFC6455 The WebSocket Protocol."
+-   VERSION    "0.8.3"
++   VERSION    "0.8.2"
+    REPOSITORY "https://github.com/amini-allight/websocketpp"
+    REVISION   "ee8cf4257e001d939839cff5b1766a835b749cd6" # pragma: allowlist secret
+    CUSTOM     TRUE
+@@ -433,15 +430,14 @@ if(EXISTS "${_LIBGIT2_GIT2_H}")
+ endif()
+ 
+ fetch(
+-   dtl                   DTL
+    fmt                   FMT
+    gsl-lite              GSL_LITE
+    libgit2               LIBGIT2
+-   gtest                 GTEST
++   GTest                 GTEST
+    hunspell              HUNSPELL
+-   rapidjson             RAPIDJSON
++   RapidJSON             RAPIDJSON
+    tl-expected           TL_EXPECTED
+-   utfcpp                UTFCPP
++   utf8cpp               UTFCPP
+    websocketpp           WEBSOCKETPP
+    yaml-cpp              YAML_CPP)
+ 
+@@ -480,23 +476,12 @@ endif()
+ 
+ # Create dtl target.
+ add_library(rstudio-dtl INTERFACE EXCLUDE_FROM_ALL)
+-target_include_directories(rstudio-dtl INTERFACE "${DTL_SOURCE_DIR}")
+-
+-
+-# Create hunspell target.
+-file(GLOB HUNSPELL_HEADER_FILES "${HUNSPELL_SOURCE_DIR}/src/hunspell/*.h*")
+-file(GLOB HUNSPELL_SOURCE_FILES "${HUNSPELL_SOURCE_DIR}/src/hunspell/*.c*")
+-add_library(rstudio-hunspell STATIC ${HUNSPELL_SOURCE_FILES} ${HUNSPELL_HEADER_FILES})
+-set_target_properties(rstudio-hunspell PROPERTIES LINKER_LANGUAGE CXX)
+-target_include_directories(rstudio-hunspell SYSTEM AFTER INTERFACE "${HUNSPELL_SOURCE_DIR}/src")
+-target_compile_definitions(rstudio-hunspell PUBLIC HUNSPELL_STATIC=1)
++target_include_directories(rstudio-dtl INTERFACE "${CMAKE_INSTALL_PREFIX}/include")
+ 
+ if(WIN32)
+    target_include_directories(rstudio-hunspell SYSTEM AFTER PRIVATE "${HUNSPELL_PREFIX_DIR}/msvc")
+    target_compile_options(rstudio-hunspell PRIVATE /wd4244 /wd4267)
+    target_compile_options(rstudio-hunspell INTERFACE /wd4996)
+-else()
+-   target_compile_options(rstudio-hunspell PRIVATE -Wno-deprecated-declarations -Wno-sign-compare -Wno-unused-but-set-variable)
+ endif()
+ 
+ 
+--- a/src/cpp/server/CMakeLists.txt
++++ b/src/cpp/server/CMakeLists.txt
+@@ -286,7 +286,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
+   include_directories(${GTEST_SOURCE_DIR}/include)
+   
+   # Add Google Test if not already added
+-  if(NOT TARGET gtest)
++  if(NOT TARGET gtest AND NOT RSTUDIO_USE_SYSTEM_GTEST)
+      add_subdirectory(${GTEST_SOURCE_DIR} gtest-build EXCLUDE_FROM_ALL)
+   endif()
+ 
+--- a/src/cpp/server/url-ports/CMakeLists.txt
++++ b/src/cpp/server/url-ports/CMakeLists.txt
+@@ -53,7 +53,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
+    include_directories(${GTEST_SOURCE_DIR}/include)
+    
+    # Add Google Test if not already added
+-   if(NOT TARGET gtest)
++   if(NOT TARGET gtest AND NOT RSTUDIO_USE_SYSTEM_GTEST)
+       add_subdirectory(${GTEST_SOURCE_DIR} gtest-build EXCLUDE_FROM_ALL)
+    endif()
+ 
+--- a/src/cpp/server_core/CMakeLists.txt
++++ b/src/cpp/server_core/CMakeLists.txt
+@@ -70,7 +70,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
+    include_directories(${GTEST_SOURCE_DIR}/include)
+    
+    # Add Google Test if not already added
+-   if(NOT TARGET gtest)
++   if(NOT TARGET gtest AND NOT RSTUDIO_USE_SYSTEM_GTEST)
+       add_subdirectory(${GTEST_SOURCE_DIR} gtest-build EXCLUDE_FROM_ALL)
+    endif()
+ 
+--- a/src/cpp/session/CMakeLists.txt
++++ b/src/cpp/session/CMakeLists.txt
+@@ -78,10 +78,7 @@ endif()
+ 
+ # validate our dependencies exist
+ foreach(VAR RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR
+-            RSTUDIO_DEPENDENCIES_MATHJAX_DIR
+-            RSTUDIO_DEPENDENCIES_PANDOC_DIR
+-            RSTUDIO_DEPENDENCIES_QUARTO_DIR
+-            RSTUDIO_DEPENDENCIES_COPILOT_DIR)
++            RSTUDIO_DEPENDENCIES_MATHJAX_DIR)
+ 
+  
+    # skip quarto if not enabled
+@@ -422,7 +419,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
+   include_directories(${GTEST_SOURCE_DIR}/include)
+    
+   # Add Google Test if not already added
+-  if(NOT TARGET gtest)
++  if(NOT TARGET gtest AND NOT RSTUDIO_USE_SYSTEM_GTEST)
+     add_subdirectory(${GTEST_SOURCE_DIR} gtest-build EXCLUDE_FROM_ALL)
+   endif()
+   
+@@ -572,7 +569,7 @@ set(SESSION_LIBRARIES
+    rstudio-monitor
+    rstudio-r
+    rstudio-session-workers
+-   libgit2package
++   libgit2::libgit2package
+    ${SESSION_SYSTEM_LIBRARIES}
+    ${CMAKE_DL_LIBS})
+ 
+@@ -770,10 +767,6 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
+       set(_RSTUDIO_INSTALLED_NODE_SRC
+           "${RSTUDIO_DEPENDENCIES_DIR}/common/node/${RSTUDIO_INSTALLED_NODE_VERSION}-arm64-installed")
+    endif()
+-   install(
+-      DIRECTORY "${_RSTUDIO_INSTALLED_NODE_SRC}/"
+-      DESTINATION "${RSTUDIO_INSTALL_BIN}/node"
+-      USE_SOURCE_PERMISSIONS)
+    unset(_RSTUDIO_INSTALLED_NODE_SRC)
+ 
+    # install quarto (or pandoc if quarto disabled)
+@@ -786,16 +779,8 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
+                PATTERN ".gitignore"
+                EXCLUDE)
+       else()
+-         install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}"
+-               DESTINATION "${RSTUDIO_INSTALL_BIN}"
+-               USE_SOURCE_PERMISSIONS
+-               PATTERN ".gitignore"
+-               EXCLUDE)
+       endif()
+    else()
+-      install(DIRECTORY "${RSTUDIO_DEPENDENCIES_PANDOC_DIR}/"
+-              DESTINATION "${RSTUDIO_INSTALL_BIN}/pandoc"
+-              USE_SOURCE_PERMISSIONS)
+    endif()
+ 
+    # install Copilot Language Server
+--- a/src/cpp/shared_core/CMakeLists.txt
++++ b/src/cpp/shared_core/CMakeLists.txt
+@@ -92,7 +92,6 @@ define_source_file_names(rstudio-shared-core)
+ target_link_libraries(rstudio-shared-core
+    ${Boost_LIBRARIES}
+    ${SHARED_CORE_SYSTEM_LIBS}
+-   gsl::gsl-lite-v1
+    rstudio-rapidjson)
+ 
+ # Define executable for running unit tests
+@@ -102,7 +101,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
+    include_directories(${GTEST_SOURCE_DIR}/include)
+    
+    # Add Google Test if not already added
+-   if(NOT TARGET gtest)
++   if(NOT TARGET gtest AND NOT RSTUDIO_USE_SYSTEM_GTEST)
+       add_subdirectory(${GTEST_SOURCE_DIR} gtest-build EXCLUDE_FROM_ALL)
+    endif()
+ 
