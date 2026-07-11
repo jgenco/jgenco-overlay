@@ -2,19 +2,20 @@
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
-LLVM_COMPAT=( {18..21} )
+LLVM_COMPAT=( {18..22} )
 LLVM_OPTIONAL=1
-inherit cmake java-pkg-2 java-ant-2 llvm-r1 multiprocessing npm optfeature pam prefix xdg-utils
+inherit cmake java-pkg-2 java-ant-2 llvm-r2 multiprocessing npm optfeature pam
+inherit qmake-utils prefix xdg-utils
 
-P_PREBUILT="${PN}-2026.04.0.496"
-#DAILY_COMMIT="57f8932a2d8c5a4a8c0d30ad918ec77f9f2dacaa"
-ELECTRON_VERSION="39.8.7"
-QUARTO_COMMIT="8c1669f3095c5afee6bcd98a659d51a43300bda9"
-QUARTO_BRANCH="release/rstudio-globemaster-allium"
-QUARTO_DATE="20260401"
-QUARTO_CLI_VER="1.9.36"
+P_PREBUILT="${PN}-2026.06.0.242"
+#DAILY_COMMIT="d1dc28bb95f3e35b4c9d1d7536cb1da6de4d7aa7"
+ELECTRON_VERSION="41.7.2"
+QUARTO_COMMIT="4dd070eaef675d7b72c663afeb21eec062bcfaa2"
+QUARTO_BRANCH="release/rstudio-blue-plumbago"
+QUARTO_DATE="20260603"
+QUARTO_CLI_VER="1.9.38"
 GWT_VERSION="2.12.2-apple-blossom"
-RAPIDJSON_COMMIT="24b5e7a8b27f42fa16b96fc70aade9106cf7102f"
+QT6_HASH="470ed93c9810d1304b6eeac57b56eb12bcaeca40"
 
 #####Start of RMARKDOWN package list#####
 #also includes ggplot2
@@ -124,8 +125,6 @@ build_r_src_uri() {
 SRC_URI+="
 	https://rstudio-buildtools.s3.us-east-1.amazonaws.com/gwt/gwt-${GWT_VERSION}.tar.gz ->
 		rstudio-gwt-${GWT_VERSION}.tar.gz
-	https://github.com/Tencent/rapidjson/archive/${RAPIDJSON_COMMIT}.tar.gz ->
-		rapidjson-${RAPIDJSON_COMMIT:0:8}.tar.gz
 	panmirror? (
 		https://github.com/jgenco/jgenco-overlay-files/releases/download/${P_PREBUILT}/${P_PREBUILT}-panmirror-node_modules.tar.xz
 	)
@@ -137,6 +136,9 @@ SRC_URI+="
 	)
 	doc? ( $(build_r_src_uri ${R_RMARKDOWN_PKGS}) )
 	test? ( $(build_r_src_uri ${R_TESTTHAT_PKGS} ${R_PURRR_PKG}) )
+	!electron? (
+		qt? ( https://github.com/jgenco/rstudio-qt-old/archive/${QT6_HASH}.tar.gz -> rstudio-qt6-${QT6_HASH:0:8}.tar.gz )
+	)
 "
 
 LICENSE="
@@ -150,8 +152,8 @@ LICENSE="
 SLOT="0"
 KEYWORDS=""
 
-IUSE="clang debug doc +electron panmirror quarto server test"
-REQUIRED_USE="!server? ( electron ) clang? ( ${LLVM_REQUIRED_USE} )"
+IUSE="clang debug doc +electron panmirror qt quarto server test"
+REQUIRED_USE="!server? ( ^^ ( electron qt ) ) clang? ( ${LLVM_REQUIRED_USE} )"
 RESTRICT="mirror !test? ( test )"
 
 RDEPEND="
@@ -167,18 +169,18 @@ RDEPEND="
 	>=dev-lang/R-3.3.0[png]
 	>=dev-libs/boost-1.85:=
 	>=dev-libs/libfmt-8.1.1:=
-	dev-libs/openssl:=
-	>=dev-libs/mathjax-2.7
-	>=dev-db/soci-4.0.3[sqlite]
-	dev-cpp/websocketpp
-	dev-libs/utfcpp
 	dev-libs/libgit2
+	>=dev-libs/mathjax-2.7
+	dev-libs/openssl:=
+	dev-libs/utfcpp
+	>=dev-libs/rapidjson-1.1.0_p20250205
+	dev-db/soci[sqlite]
+	dev-cpp/websocketpp
 	sys-apps/util-linux
 	sys-apps/which
-	virtual/zlib
 	sys-process/lsof
 	>=virtual/jdk-17:=
-
+	virtual/zlib
 	clang? ( $(llvm_gen_dep '
 		llvm-core/clang:${LLVM_SLOT}
 	') )
@@ -204,6 +206,14 @@ RDEPEND="
 		x11-libs/libxcb
 		x11-libs/libxkbcommon
 		x11-libs/pango
+	)
+	!electron? (
+		qt? (
+			dev-qt/qtbase:6
+			dev-qt/qtwebchannel:6
+			dev-qt/qtwebengine:6
+			dev-qt/qtsvg:6
+		)
 	)
 	quarto? (
 		|| (
@@ -249,7 +259,7 @@ BDEPEND="
 "
 PATCHES=(
 	"${FILESDIR}/${PN}_cmake4.patch"
-	"${FILESDIR}/${PN}-2026.04.0.526-cmake-bundled-dependencies.patch"
+	"${FILESDIR}/${PN}-2026.06.0.242-cmake-bundled-dependencies.patch"
 	"${FILESDIR}/${PN}-2026.04.0.526-resource-path.patch"
 	"${FILESDIR}/${PN}-2024.04.0.735-server-paths.patch"
 	"${FILESDIR}/${PN}-2024.12.0.467-package-build.patch"
@@ -285,7 +295,7 @@ pkg_setup() {
 	usr/share/${PN}/chrome_crashpad_handler
 	usr/share/${PN}/lib*
 	"
-	use clang && llvm-r1_pkg_setup
+	use clang && llvm-r2_pkg_setup
 	java-pkg-2_pkg_setup
 }
 
@@ -297,7 +307,6 @@ src_unpack() {
 	else
 		unpack ${P}.tar.gz
 	fi
-	unpack rapidjson-${RAPIDJSON_COMMIT:0:8}.tar.gz
 
 	mkdir "${S}/dependencies/common/gwtproject"
 	pushd "${S}/dependencies/common/gwtproject" > /dev/null || die
@@ -357,7 +366,11 @@ src_unpack() {
 		echo "${install_version}" > "${ELECTRON_VERSION}/installVersion" ||die
 
 		popd > /dev/null
+	elif use qt; then
+		unpack rstudio-qt6-${QT6_HASH:0:8}.tar.gz
+
 	fi
+
 	if use panmirror || use electron ;then
 		#prepare node headers
 		local nodejs_version=$(node -v) || die "Node version not found"
@@ -429,6 +442,9 @@ src_prepare() {
 		#this allows the checking SHASUM256.txt file - easier way?
 		sed -i "s/ElectronDownloadCacheMode.Bypass/ElectronDownloadCacheMode.ReadOnly/" \
 			src/node/desktop-build-x86_64/node_modules/@electron/get/dist/cjs/index.js || die
+	elif use qt;then
+		cp -a "${WORKDIR}/rstudio-qt-old-${QT6_HASH}/src/cpp/desktop" "${S}/src/cpp/desktop" || die
+		PATCHES+=( "${WORKDIR}/rstudio-qt-old-${QT6_HASH}/patches/rstudio-2024.07.0.267-restore-qt.patch")
 	fi
 	sed "s/NO_DEFAULT_PATH//" -i src/node/CMakeNodeTools.txt || die
 
@@ -446,6 +462,8 @@ src_prepare() {
 	rm src/cpp/tests/testthat/test-{download,install-packages}.R || die
 	sed -i "/expect_equal.*\(shiny\|flexdashboard\)/d" src/cpp/tests/testthat/test-pkg-deps.R || die
 
+	sed "s/default = TRUE/default = FALSE/" src/cpp/session/modules/SessionAir.R -i || die
+
 	cmake_src_prepare
 	java-pkg-2_src_prepare
 
@@ -457,7 +475,6 @@ src_prepare() {
 	fi
 
 	mkdir "${BUILD_DIR}/_deps" || die
-	ln -s  "${WORKDIR}/rapidjson-${RAPIDJSON_COMMIT}" "${BUILD_DIR}/_deps/rapidjson-src" || die
 }
 src_configure() {
 	export PACKAGE_OS="Gentoo"
@@ -487,11 +504,20 @@ src_configure() {
 	# (rather than using the custom_target defined in src/gwt/CMakeLists.txt),
 	# however it also installs a test script, which we probably don't want.
 
+	local rstudio_server=$(usex server TRUE FALSE)
+	local rstudio_desktop=FALSE
+	local rstudio_electron=FALSE
+	if use electron; then
+		rstudio_electron=TRUE
+	elif use qt; then
+		rstudio_desktop=TRUE
+	fi
+
 	local mycmakeargs=(
 		-DRSTUDIO_INSTALL_SUPPORTING="${EPREFIX}/usr/share/${PN}"
 		-DRSTUDIO_TARGET=TRUE
-		-DRSTUDIO_SERVER=$(usex server)
-		-DRSTUDIO_ELECTRON=$(usex electron)
+		-DRSTUDIO_SERVER=${rstudio_server}
+		-DRSTUDIO_ELECTRON=${rstudio_electron}
 		-DRSTUDIO_UNIT_TESTS_DISABLED=$(usex test OFF ON)
 		#note RSTUDIO_USE_SYSTEM_DEPENDENCIES exist
 		-DRSTUDIO_USE_SYSTEM_BOOST=ON
@@ -499,7 +525,7 @@ src_configure() {
 		-DRSTUDIO_USE_SYSTEM_LIBGIT2=ON
 		-DRSTUDIO_USE_SYSTEM_GSL_LITE=ON
 		-DRSTUDIO_USE_SYSTEM_HUNSPELL=ON
-		-DRSTUDIO_USE_SYSTEM_RAPIDJSON=OFF
+		-DRSTUDIO_USE_SYSTEM_RAPIDJSON=ON
 		-DRSTUDIO_USE_SYSTEM_TL_EXPECTED=ON
 		-DRSTUDIO_USE_SYSTEM_UTFCPP=ON
 		-DRSTUDIO_USE_SYSTEM_WEBSOCKETPP=ON
@@ -516,7 +542,13 @@ src_configure() {
 	)
 
 	use clang && mycmakeargs+=( -DSYSTEM_LIBCLANG_PATH=$(get_llvm_prefix))
-	use electron && mycmakeargs+=( -DRSTUDIO_INSTALL_FREEDESKTOP=ON )
+	if use electron; then
+		mycmakeargs+=( -DRSTUDIO_INSTALL_FREEDESKTOP="ON" )
+	elif use qt ; then
+		mycmakeargs+=( -DRSTUDIO_DESKTOP=${rstudio_desktop}
+			-DQT_QMAKE_EXECUTABLE="$(qt6_get_bindir)/qmake"
+			-DRSTUDIO_INSTALL_FREEDESKTOP="ON" )
+	fi
 	use test && mycmakeargs+=( -DRSTUDIO_USE_SYSTEM_GTEST=ON )
 
 	if use doc; then
@@ -565,7 +597,7 @@ src_compile() {
 	export ANT_OPTS="-Duser.home=${T} -Djava.util.prefs.userRoot=${T}"
 
 	local gwt_main_module="RStudio"
-	if use electron; then
+	if use electron || use qt; then
 		if ! use server;then
 			gwt_main_module="RStudioDesktop"
 		fi
@@ -651,13 +683,15 @@ pkg_preinst() {
 }
 
 pkg_postinst() {
-	if use electron ;then
+	if use electron || use qt;then
 		xdg_desktop_database_update
 		xdg_mimeinfo_database_update
 		xdg_icon_cache_update
 	fi
-	optfeature "GitHub's Copilot language server" dev-util/copilot-language-server
 	optfeature "Posit's R formatter and language server" dev-util/air
+	if ! use electron && use qt;then
+		elog "RStudio built with QT is NOT supported by upstream"
+	fi
 	if [[ ! -d "${EPREFIX}/usr/share/hunspell" ]];then
 		elog ""
 		elog "RStudio's spell check needs at least one"
