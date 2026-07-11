@@ -174,7 +174,7 @@ RDEPEND="
 	>=dev-libs/libfmt-8.1.1:=
 	dev-libs/openssl:=
 	>=dev-libs/mathjax-2.7
-	>=dev-db/soci-4.0.3[sqlite]
+	<dev-db/soci-4.1.3[sqlite]
 	dev-cpp/websocketpp
 	dev-libs/utfcpp
 	dev-libs/libgit2
