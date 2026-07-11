@@ -6,7 +6,7 @@ EAPI=8
 DESCRIPTION="Open-source scientific and technical publishing system built on Pandoc."
 HOMEPAGE="https://quarto.org/"
 
-QUARTO_CLI_VENDOR="${PN}-1.9.17"
+QUARTO_CLI_VENDOR="${PN}-1.10.11"
 ESBUILD_VER_ORIG="0.15.18"
 
 inherit shell-completion prefix
@@ -38,7 +38,7 @@ KEYWORDS=""
 IUSE="system-pandoc"
 RESTRICT="mirror test"
 PATCHES="
-	${FILESDIR}/quarto-cli-1.8.4-pathfixes.patch
+	${FILESDIR}/quarto-cli-1.10.11-pathfixes.patch
 	${FILESDIR}/quarto-cli-1.3.340-configuration.patch
 	${FILESDIR}/quarto-cli-1.8.4-check.patch
 "
@@ -46,7 +46,7 @@ ESBUILD_DEP_SLOT="0.25"
 DEPEND="
 	app-arch/unzip
 	~app-text/typst-0.14.2[embed-fonts]
-	~app-text/typst-gather-0.1.2
+	~app-text/typst-gather-0.2.3
 	system-pandoc? ( || (
 		(
 			>=dev-haskell/pandoc-3.1
@@ -59,7 +59,10 @@ DEPEND="
 	dev-libs/libxml2
 	dev-util/esbuild:${ESBUILD_DEP_SLOT}
 	dev-vcs/git
-	>=dev-lang/deno-2.4 <dev-lang/deno-2.5
+	|| (
+		~dev-lang/deno-2.7.14
+		~dev-lang/deno-bin-2.7.14
+	)
 	~net-libs/deno-dom-0.1.41
 	sys-apps/which
 	x11-misc/xdg-utils
