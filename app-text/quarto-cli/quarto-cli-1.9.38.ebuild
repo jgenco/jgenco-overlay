@@ -38,7 +38,7 @@ KEYWORDS="amd64"
 IUSE="system-pandoc"
 RESTRICT="mirror test"
 PATCHES="
-	${FILESDIR}/quarto-cli-1.8.4-pathfixes.patch
+	${FILESDIR}/quarto-cli-1.10.11-pathfixes.patch
 	${FILESDIR}/quarto-cli-1.3.340-configuration.patch
 	${FILESDIR}/quarto-cli-1.8.4-check.patch
 "
