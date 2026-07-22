@@ -133,6 +133,7 @@ SRC_URI+="
 		https://github.com/electron/electron/releases/download/v${ELECTRON_VERSION}/electron-v${ELECTRON_VERSION}-linux-x64.zip
 		https://www.electronjs.org/headers/v${ELECTRON_VERSION}/node-v${ELECTRON_VERSION}-headers.tar.gz
 			-> electron-v${ELECTRON_VERSION}-headers.tar.gz
+		https://registry.npmjs.org/yauzl/-/yauzl-3.4.0.tgz
 	)
 	doc? ( $(build_r_src_uri ${R_RMARKDOWN_PKGS}) )
 	test? ( $(build_r_src_uri ${R_TESTTHAT_PKGS} ${R_PURRR_PKG}) )
@@ -271,6 +272,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2026.01.0.392-copilot.patch"
 	"${FILESDIR}/${PN}-2026.01.0.392-postback.patch"
 	"${FILESDIR}/${PN}-clang.patch"
+	"${FILESDIR}/${PN}-2026.06.0.242-yauzl.patch"
 )
 
 DOCS=(CONTRIBUTING.md COPYING INSTALL NOTICE README.md version/news )
@@ -341,6 +343,7 @@ src_unpack() {
 		mkdir "${S}/src/node/desktop-build-x86_64"
 		pushd "${S}/src/node/desktop-build-x86_64" > /dev/null|| die
 		unpack ${P_PREBUILT}-electron-node_modules.tar.xz
+		tar xaf "${DISTDIR}/yauzl-3.4.0.tgz" --strip-components=1 -C node_modules/yauzl || die
 		sed -i "s/npm ci && //" ../desktop/package.json || die
 		popd > /dev/null
 
