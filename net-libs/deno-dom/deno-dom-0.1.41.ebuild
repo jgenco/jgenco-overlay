@@ -82,8 +82,8 @@ DESCRIPTION="Deno-DOM Plugin"
 HOMEPAGE="https://deno.land/x/deno_dom"
 
 SRC_URI="${CARGO_CRATE_URIS}
-	https://github.com/b-fuze/deno-dom/archive/refs/tags/v${MY_PV}.tar.gz -> deno-dom-${MY_PV}.tgz
-	test? ( $(deno_build_src_uri) )"
+	https://github.com/b-fuze/deno-dom/archive/refs/tags/v${MY_PV}.tar.gz -> deno-dom-${MY_PV}.tgz"
+	#test? ( $(deno_build_src_uri) )"
 S=${WORKDIR}/${PN}-${MY_PV}
 LICENSE="MIT Apache-2.0 Apache-2.0-with-LLVM-exceptions Boost-1.0 MIT Unicode-DFS-2016 ZLIB"
 
