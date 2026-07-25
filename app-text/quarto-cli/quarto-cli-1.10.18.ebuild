@@ -3,7 +3,7 @@
 
 EAPI=8
 
-DESCRIPTION="Open-source scientific and technical publishing system built on Pandoc."
+DESCRIPTION="Open-source scientific and technical publishing system built on Pandoc"
 HOMEPAGE="https://quarto.org/"
 
 QUARTO_CLI_VENDOR="${PN}-1.10.11"
@@ -19,7 +19,7 @@ else
 	SRC_URI="https://github.com/quarto-dev/quarto-cli/archive/refs/tags/v${PV}.tar.gz   -> ${P}.tar.gz "
 fi
 
-PANDOC_VER="3.8.3"
+PANDOC_VER="3.10"
 SRC_URI+="
 	https://github.com/jgenco/jgenco-overlay-files/releases/download/${QUARTO_CLI_VENDOR}/${QUARTO_CLI_VENDOR}-deno_vendor.tar.xz
 	!system-pandoc? (
@@ -42,10 +42,10 @@ PATCHES="
 	${FILESDIR}/quarto-cli-1.3.340-configuration.patch
 	${FILESDIR}/quarto-cli-1.8.4-check.patch
 "
-ESBUILD_DEP_SLOT="0.25"
+ESBUILD_DEP_SLOT="0.28"
 DEPEND="
 	app-arch/unzip
-	~app-text/typst-0.14.2[embed-fonts]
+	~app-text/typst-0.15.1[embed-fonts]
 	~app-text/typst-gather-0.2.3
 	system-pandoc? ( || (
 		(
@@ -54,7 +54,7 @@ DEPEND="
 		)
 		>=app-text/pandoc-bin-${PANDOC_VER}
 	) )
-	~dev-lang/dart-sass-1.87.0
+	~dev-lang/dart-sass-1.101.0
 	>=dev-lang/R-4.1.0
 	dev-libs/libxml2
 	dev-util/esbuild:${ESBUILD_DEP_SLOT}
