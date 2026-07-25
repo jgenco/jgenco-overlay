@@ -3,7 +3,7 @@
 
 EAPI=8
 
-DESCRIPTION="Open-source scientific and technical publishing system built on Pandoc."
+DESCRIPTION="Open-source scientific and technical publishing system built on Pandoc"
 HOMEPAGE="https://quarto.org/"
 SRC_URI="https://github.com/quarto-dev/quarto-cli/releases/download/v${PV}/quarto-${PV}-linux-amd64.tar.gz -> ${P}-linux-amd64.tar.gz"
 
