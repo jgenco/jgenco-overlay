@@ -7,12 +7,12 @@ LLVM_OPTIONAL=1
 inherit cmake java-pkg-2 java-ant-2 llvm-r2 multiprocessing npm optfeature pam
 inherit qmake-utils prefix xdg-utils
 
-P_PREBUILT="${PN}-2026.06.0.242"
-#DAILY_COMMIT="d1dc28bb95f3e35b4c9d1d7536cb1da6de4d7aa7"
-ELECTRON_VERSION="41.7.2"
-QUARTO_COMMIT="4dd070eaef675d7b72c663afeb21eec062bcfaa2"
-QUARTO_BRANCH="release/rstudio-blue-plumbago"
-QUARTO_DATE="20260603"
+P_PREBUILT="${PN}-2026.07.1.147"
+#DAILY_COMMIT="49299327da3b03a79e7aa615c2388bcd05a1261a"
+ELECTRON_VERSION="41.9.0"
+QUARTO_COMMIT="418291e7a8a9c221255cc332437cebf215612c6d"
+QUARTO_BRANCH="release/rstudio-pacific-dogwood"
+QUARTO_DATE="20260706"
 QUARTO_CLI_VER="1.9.38"
 GWT_VERSION="2.12.2-apple-blossom"
 QT6_HASH="470ed93c9810d1304b6eeac57b56eb12bcaeca40"
@@ -133,6 +133,7 @@ SRC_URI+="
 		https://github.com/electron/electron/releases/download/v${ELECTRON_VERSION}/electron-v${ELECTRON_VERSION}-linux-x64.zip
 		https://www.electronjs.org/headers/v${ELECTRON_VERSION}/node-v${ELECTRON_VERSION}-headers.tar.gz
 			-> electron-v${ELECTRON_VERSION}-headers.tar.gz
+		https://registry.npmjs.org/yauzl/-/yauzl-3.4.0.tgz
 	)
 	doc? ( $(build_r_src_uri ${R_RMARKDOWN_PKGS}) )
 	test? ( $(build_r_src_uri ${R_TESTTHAT_PKGS} ${R_PURRR_PKG}) )
@@ -152,7 +153,7 @@ LICENSE="
 SLOT="0"
 KEYWORDS=""
 
-IUSE="clang debug doc +electron panmirror qt quarto server test"
+IUSE="ai clang debug doc +electron panmirror qt quarto server test"
 REQUIRED_USE="!server? ( ^^ ( electron qt ) ) clang? ( ${LLVM_REQUIRED_USE} )"
 RESTRICT="mirror !test? ( test )"
 
@@ -271,6 +272,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2026.01.0.392-copilot.patch"
 	"${FILESDIR}/${PN}-2026.01.0.392-postback.patch"
 	"${FILESDIR}/${PN}-clang.patch"
+	"${FILESDIR}/${PN}-2026.06.0.242-yauzl.patch"
 )
 
 DOCS=(CONTRIBUTING.md COPYING INSTALL NOTICE README.md version/news )
@@ -341,6 +343,7 @@ src_unpack() {
 		mkdir "${S}/src/node/desktop-build-x86_64"
 		pushd "${S}/src/node/desktop-build-x86_64" > /dev/null|| die
 		unpack ${P_PREBUILT}-electron-node_modules.tar.xz
+		tar xaf "${DISTDIR}/yauzl-3.4.0.tgz" --strip-components=1 -C node_modules/yauzl || die
 		sed -i "s/npm ci && //" ../desktop/package.json || die
 		popd > /dev/null
 
@@ -495,7 +498,7 @@ src_configure() {
 	export RSTUDIO_VERSION_PATCH=$(ver_cut 3 ${my_pv})
 	export RSTUDIO_VERSION_SUFFIX="-${build_type,,}+$(ver_cut 4 ${my_pv})"
 
-	sed -i "3s/RStudio/rstudio/;4s/99.9.9-dev+999/$(ver_cut 1-3)${RSTUDIO_VERSION_SUFFIX}/"\
+	sed -i "3s/RStudio/rstudio/;4s/99.9.9/$(ver_cut 1-3)${RSTUDIO_VERSION_SUFFIX}/"\
 		src/node/desktop/package.json || die
 	CMAKE_BUILD_TYPE=$(usex debug Debug Release) #RelWithDebInfo Release
 	echo "cache=${WORKDIR}/node_cache" > "${S}/src/node/desktop/.npmrc"
@@ -518,6 +521,7 @@ src_configure() {
 		-DRSTUDIO_TARGET=TRUE
 		-DRSTUDIO_SERVER=${rstudio_server}
 		-DRSTUDIO_ELECTRON=${rstudio_electron}
+		-DRSTUDIO_ENABLE_AI_FEATURES=$(usex ai)
 		-DRSTUDIO_UNIT_TESTS_DISABLED=$(usex test OFF ON)
 		#note RSTUDIO_USE_SYSTEM_DEPENDENCIES exist
 		-DRSTUDIO_USE_SYSTEM_BOOST=ON
