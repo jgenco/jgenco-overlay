@@ -1,0 +1,11 @@
+--- a/src/node/desktop/package.json
++++ b/src/node/desktop/package.json
+@@ -100,5 +100,8 @@
+     "electron@42.7.1": true,
+     "msgpackr-extract@3.0.3": true,
+     "unix-dgram@2.0.6": true
++  },
++  "resolutions": {
++    "yauzl": "^3.3.1"
+   }
+ }

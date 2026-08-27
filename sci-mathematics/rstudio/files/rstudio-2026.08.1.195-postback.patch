@@ -1,0 +1,41 @@
+--- a/src/cpp/session/SessionPostback.cpp
++++ b/src/cpp/session/SessionPostback.cpp
+@@ -98,7 +98,7 @@ FilePath rPostbackScriptsDir()
+    // postback scripts normally sit next to the rpostback binary; in the
+    // in-place bin/<platform>/ layout the binary moves but the shared scripts
+    // stay at the top-level bin/postback
+-   FilePath dir = rPostbackPath().getParent().completeChildPath("postback");
++   FilePath dir = rPostbackPath().getParent();
+    if (!dir.exists())
+       dir = session::options().resourcePath().completeChildPath("bin/postback");
+    return dir;
+--- a/src/cpp/session/include/session/SessionConstants.hpp
++++ b/src/cpp/session/include/session/SessionConstants.hpp
+@@ -165,7 +165,7 @@
+ #ifdef _WIN32
+ # define kDefaultPostbackPath       "bin/rpostback.exe"
+ #else
+-# define kDefaultPostbackPath       "bin/rpostback"
++# define kDefaultPostbackPath       "../../../../bin/rpostback"
+ #endif
+ 
+ // json rpc methods we handle (the rest are delegated to the HttpServer)
+--- a/src/cpp/session/postback/CMakeLists.txt
++++ b/src/cpp/session/postback/CMakeLists.txt
+@@ -61,7 +61,7 @@ if (RSTUDIO_SERVER)
+ endif()
+ 
+ # configure postback scripts
+-set(POSTBACK_SCRIPT_DIR ${CMAKE_CURRENT_BINARY_DIR}/postback)
++set(POSTBACK_SCRIPT_DIR ${CMAKE_CURRENT_BINARY_DIR})
+ file(MAKE_DIRECTORY ${POSTBACK_SCRIPT_DIR})
+ configure_file(askpass-passthrough ${POSTBACK_SCRIPT_DIR}/askpass-passthrough)
+ configure_file(rpostback-askpass   ${POSTBACK_SCRIPT_DIR}/rpostback-askpass)
+@@ -83,6 +83,6 @@ if(NOT RSTUDIO_SESSION_WIN32)
+    file(GLOB POSTBACK_SCRIPTS "rpostback-*")
+    set(POSTBACK_SCRIPTS ${POSTBACK_SCRIPTS} "askpass-passthrough")
+    install(PROGRAMS ${POSTBACK_SCRIPTS}
+-           DESTINATION ${RSTUDIO_INSTALL_BIN}/postback)
++           DESTINATION ${RSTUDIO_INSTALL_BIN})
+ endif()
+ 
