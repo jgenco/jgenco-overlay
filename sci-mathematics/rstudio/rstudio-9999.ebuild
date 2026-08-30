@@ -7,14 +7,15 @@ LLVM_OPTIONAL=1
 inherit cmake java-pkg-2 java-ant-2 llvm-r2 multiprocessing npm optfeature pam
 inherit qmake-utils prefix xdg-utils
 
-P_PREBUILT="${PN}-2026.07.1.147"
-#DAILY_COMMIT="49299327da3b03a79e7aa615c2388bcd05a1261a"
-ELECTRON_VERSION="41.9.0"
-QUARTO_COMMIT="418291e7a8a9c221255cc332437cebf215612c6d"
-QUARTO_BRANCH="release/rstudio-pacific-dogwood"
-QUARTO_DATE="20260706"
+P_PREBUILT="${PN}-2026.08.2.200"
+#DAILY_COMMIT="1b2c764d96f951e5d3e80c05e095a53bdcde7c78"
+ELECTRON_VERSION="42.7.1"
+QUARTO_COMMIT="63eebf6039c74573f54a87edbc9d29b30d26ceab"
+QUARTO_BRANCH="release/rstudio-yellow-yarrow"
+QUARTO_DATE="20260728"
 QUARTO_CLI_VER="1.9.38"
 GWT_VERSION="2.12.2-apple-blossom"
+MATHJAX4_VER="4.1.3"
 QT6_HASH="470ed93c9810d1304b6eeac57b56eb12bcaeca40"
 
 #####Start of RMARKDOWN package list#####
@@ -125,6 +126,7 @@ build_r_src_uri() {
 SRC_URI+="
 	https://rstudio-buildtools.s3.us-east-1.amazonaws.com/gwt/gwt-${GWT_VERSION}.tar.gz ->
 		rstudio-gwt-${GWT_VERSION}.tar.gz
+	https://rstudio-buildtools.s3.amazonaws.com/mathjax-${MATHJAX4_VER}.zip
 	panmirror? (
 		https://github.com/jgenco/jgenco-overlay-files/releases/download/${P_PREBUILT}/${P_PREBUILT}-panmirror-node_modules.tar.xz
 	)
@@ -232,6 +234,7 @@ RDEPEND="
 
 DEPEND="${RDEPEND}"
 BDEPEND="
+	app-arch/unzip
 	dev-cpp/dtl
 	dev-libs/rapidjson
 	dev-java/aopalliance:1
@@ -260,7 +263,7 @@ BDEPEND="
 "
 PATCHES=(
 	"${FILESDIR}/${PN}_cmake4.patch"
-	"${FILESDIR}/${PN}-2026.06.0.242-cmake-bundled-dependencies.patch"
+	"${FILESDIR}/${PN}-2026.08.1.195-cmake-bundled-dependencies.patch"
 	"${FILESDIR}/${PN}-2026.04.0.526-resource-path.patch"
 	"${FILESDIR}/${PN}-2024.04.0.735-server-paths.patch"
 	"${FILESDIR}/${PN}-2024.12.0.467-package-build.patch"
@@ -270,9 +273,9 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2022.12.0.353-system-clang.patch"
 	"${FILESDIR}/${PN}-2024.12.0.467-disable-panmirror.patch"
 	"${FILESDIR}/${PN}-2026.01.0.392-copilot.patch"
-	"${FILESDIR}/${PN}-2026.01.0.392-postback.patch"
+	"${FILESDIR}/${PN}-2026.08.1.195-postback.patch"
 	"${FILESDIR}/${PN}-clang.patch"
-	"${FILESDIR}/${PN}-2026.06.0.242-yauzl.patch"
+	"${FILESDIR}/${PN}-2026.08.1.195-yauzl.patch"
 )
 
 DOCS=(CONTRIBUTING.md COPYING INSTALL NOTICE README.md version/news )
@@ -314,6 +317,8 @@ src_unpack() {
 	pushd "${S}/dependencies/common/gwtproject" > /dev/null || die
 	unpack rstudio-gwt-${GWT_VERSION}.tar.gz
 	popd > /dev/null
+
+	unzip "${DISTDIR}/mathjax-${MATHJAX4_VER}.zip" -d "${S}/dependencies" || die
 
 	if use panmirror;then
 		pushd "${S}/src/gwt/lib" > /dev/null|| die
@@ -425,6 +430,7 @@ src_prepare() {
 	done
 
 	ln -s "${EPREFIX}/usr/share/mathjax" "${S}/dependencies/mathjax-27" || die
+	#ln -s "${EPREFIX}/usr/share/mathjax" "${S}/dependencies/mathjax-4" || die
 	#/usr/share/hunspell might not exist if no dictionary is installed so no need to die
 	ln -s "${EPREFIX}/usr/share/hunspell" "${S}/dependencies/dictionaries"
 
@@ -445,6 +451,10 @@ src_prepare() {
 		#this allows the checking SHASUM256.txt file - easier way?
 		sed -i "s/ElectronDownloadCacheMode.Bypass/ElectronDownloadCacheMode.ReadOnly/" \
 			src/node/desktop-build-x86_64/node_modules/@electron/get/dist/cjs/index.js || die
+		#headers are missing std:: -  clang errors
+		sed -Ei "s/([^:])nullptr_t/\1std::nullptr_t/g" \
+			"${WORKDIR}/.electron-gyp/${ELECTRON_VERSION}/include/node/"v8-{object,template}.h || die
+		PATCHES+=( "${S}/src/node/desktop-build-x86_64/rstudio-yargs_fix.patch")
 	elif use qt;then
 		cp -a "${WORKDIR}/rstudio-qt-old-${QT6_HASH}/src/cpp/desktop" "${S}/src/cpp/desktop" || die
 		PATCHES+=( "${WORKDIR}/rstudio-qt-old-${QT6_HASH}/patches/rstudio-2024.07.0.267-restore-qt.patch")
@@ -521,7 +531,9 @@ src_configure() {
 		-DRSTUDIO_TARGET=TRUE
 		-DRSTUDIO_SERVER=${rstudio_server}
 		-DRSTUDIO_ELECTRON=${rstudio_electron}
-		-DRSTUDIO_ENABLE_AI_FEATURES=$(usex ai)
+		#note RSTUDIO_ENABLE_AI_FEATURES controlls both
+		-DRSTUDIO_ENABLE_COPILOT=$(usex ai)
+		-DRSTUDIO_ENABLE_POSIT_ASSISTANT=$(usex ai)
 		-DRSTUDIO_UNIT_TESTS_DISABLED=$(usex test OFF ON)
 		#note RSTUDIO_USE_SYSTEM_DEPENDENCIES exist
 		-DRSTUDIO_USE_SYSTEM_BOOST=ON
