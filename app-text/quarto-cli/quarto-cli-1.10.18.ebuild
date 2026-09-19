@@ -34,7 +34,7 @@ LICENSE+=" MIT" #deno_cache
 LICENSE+=" 0BSD Apache-2.0 BSD ISC MIT" #node_modules
 
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 IUSE="system-pandoc"
 RESTRICT="mirror test"
 PATCHES="
