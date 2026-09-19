@@ -56,7 +56,7 @@ LICENSE+="
 "
 #rg license\ = third_party/rust/chromium_crates_io/vendor/*/Cargo.toml -IN|sed "s/license = //"|sort -u
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 IUSE="llvm v8-prebuilt test"
 RESTRICT="mirror !test? ( test )"
 
