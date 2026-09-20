@@ -16,7 +16,7 @@ S="${WORKDIR}"
 
 LICENSE="BSD"
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 
 DOCS=(lib/dart/README lib/dart/LICENSE)
 
