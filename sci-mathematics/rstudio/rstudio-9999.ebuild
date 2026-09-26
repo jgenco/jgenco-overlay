@@ -7,15 +7,16 @@ LLVM_OPTIONAL=1
 inherit cmake java-pkg-2 java-ant-2 llvm-r2 multiprocessing npm optfeature pam
 inherit qmake-utils prefix xdg-utils
 
-P_PREBUILT="${PN}-2026.08.2.200"
-#DAILY_COMMIT="1b2c764d96f951e5d3e80c05e095a53bdcde7c78"
-ELECTRON_VERSION="42.7.1"
-QUARTO_COMMIT="63eebf6039c74573f54a87edbc9d29b30d26ceab"
-QUARTO_BRANCH="release/rstudio-yellow-yarrow"
-QUARTO_DATE="20260728"
-QUARTO_CLI_VER="1.9.38"
-GWT_VERSION="2.12.2-apple-blossom"
+P_PREBUILT="${PN}-2026.09.0.174"
+#DAILY_COMMIT=""
+ELECTRON_VERSION="42.11.1"
+QUARTO_COMMIT="828ae28e53b796fb95a33bd7f3c7c109e0709649"
+QUARTO_BRANCH="release/rstudio-autumn-hawkbit"
+QUARTO_DATE="20260803"
+QUARTO_CLI_VER="1.10.18"
+GWT_VERSION="2.12.2-autumn-hawkbit"
 MATHJAX4_VER="4.1.3"
+
 QT6_HASH="470ed93c9810d1304b6eeac57b56eb12bcaeca40"
 
 #####Start of RMARKDOWN package list#####
@@ -263,7 +264,7 @@ BDEPEND="
 "
 PATCHES=(
 	"${FILESDIR}/${PN}_cmake4.patch"
-	"${FILESDIR}/${PN}-2026.08.1.195-cmake-bundled-dependencies.patch"
+	"${FILESDIR}/${PN}-2026.09.0.174-cmake-bundled-dependencies.patch"
 	"${FILESDIR}/${PN}-2026.04.0.526-resource-path.patch"
 	"${FILESDIR}/${PN}-2024.04.0.735-server-paths.patch"
 	"${FILESDIR}/${PN}-2024.12.0.467-package-build.patch"
