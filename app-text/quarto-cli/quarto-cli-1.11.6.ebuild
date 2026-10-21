@@ -40,7 +40,7 @@ RESTRICT="mirror test"
 PATCHES="
 	${FILESDIR}/quarto-cli-1.10.11-pathfixes.patch
 	${FILESDIR}/quarto-cli-1.3.340-configuration.patch
-	${FILESDIR}/quarto-cli-1.8.4-check.patch
+	${FILESDIR}/quarto-cli-1.11.6-check.patch
 "
 ESBUILD_DEP_SLOT="0.28"
 DEPEND="

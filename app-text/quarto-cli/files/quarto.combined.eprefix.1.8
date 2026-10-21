@@ -28,7 +28,7 @@ export QUARTO_BIN_PATH="${SCRIPT_PATH}"
 export DENO_DOM_PLUGIN="@GENTOO_PORTAGE_EPREFIX@/usr/lib64/deno-dom.so"
 
 QUARTO_ACTION="run"
-QUARTO_DENO_OPTIONS="--unstable-ffi --unstable-kv --no-config --no-lock --allow-import ${QUARTO_CACHE_OPTIONS} --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi ${QUARTO_DENO_OPTIONS}"
+QUARTO_DENO_OPTIONS="--unstable-ffi --unstable-kv --no-config --no-lock --allow-import ${QUARTO_CACHE_OPTIONS} --allow-read --allow-write --allow-run --allow-env --allow-net --allow-ffi --allow-sys ${QUARTO_DENO_OPTIONS}"
 
 #RSTUDIO need --paths
 if [ "$1" == "--paths" ]; then
