@@ -60,7 +60,7 @@ QUARTO_DIR_G="${HOME}/.local/share/quarto"
 [[ -w "${QUARTO_DIR_G}/deno-version" ]] && rm "${QUARTO_DIR_G}/deno-version" > /dev/null 2> /dev/null
 [[ -w "${QUARTO_DIR_G}/quarto-version" ]] && rm "${QUARTO_DIR_G}/quarto-version" > /dev/null 2> /dev/null
 
-export DENO_TLS_CA_STORE=system,mozilla
+export DENO_TLS_CA_STORE=system #,mozilla
 export DENO_NO_UPDATE_CHECK=1
 
 QUARTO_DENO_V8_OPTIONS_DEFAULT="--enable-experimental-regexp-engine,--max-old-space-size=8192,--max-heap-size=8192"
