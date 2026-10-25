@@ -91,6 +91,7 @@ RDEPEND="!dev-lang/deno-bin"
 PATCHES=(
 	"${FILESDIR}/deno-2.4.5-local_esbuild.patch"
 	"${FILESDIR}/deno-2.7.14-disable_tests.patch"
+	"${FILESDIR}/deno-2.7.14-unbundle-ca-certs.patch"
 )
 DOCS=(Releases.md LICENSE.md README.md)
 
