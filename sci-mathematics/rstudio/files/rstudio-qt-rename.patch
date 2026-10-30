@@ -1,0 +1,11 @@
+--- a/src/cpp/desktop/CMakeLists.txt
++++ b/src/cpp/desktop/CMakeLists.txt
+@@ -376,6 +376,8 @@ if(NOT RSTUDIO_ELECTRON)
+          ${DESKTOP_UI_SOURCES}
+       )
+ 
++      set_target_properties(rstudio PROPERTIES OUTPUT_NAME rstudio-qt)
++
+       if(WIN32)
+          set_target_properties(rstudio PROPERTIES WIN32_EXECUTABLE YES)
+       endif()

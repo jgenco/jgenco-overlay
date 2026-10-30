@@ -1,0 +1,89 @@
+* adds clang include pathsadds detection of a specific liblclang.so version(if req. by SYSTEM_LIBCLANG_PATH)
+* generic detection of libclang.so locations in Gentoo
+* adds clang include dirs.
+* I don't know
+	- if there is better way to include clang dirs.
+	- how sensitive to diff. clang versions RStudio code is
+* The detection lib/lib64 seems bad
+* @GENTOO_PORTAGE_EPREFIX@
+* .rs.setClangDiagnostics(n) where n>0 
+--- a/src/cpp/core/CMakeLists.txt
++++ b/src/cpp/core/CMakeLists.txt
+@@ -345,6 +345,15 @@ include_directories(
+ add_library(rstudio-core STATIC ${CORE_SOURCE_FILES} ${CORE_HEADER_FILES})
+ define_source_file_names(rstudio-core)
+ 
++if(DEFINED SYSTEM_LIBCLANG_PATH)
++   if(EXISTS ${SYSTEM_LIBCLANG_PATH}/lib64/libclang.so)
++      target_compile_definitions(rstudio-core PUBLIC SYSTEM_LIBCLANG_SO="${SYSTEM_LIBCLANG_PATH}/lib64/libclang.so")
++   else()
++      target_compile_definitions(rstudio-core PUBLIC SYSTEM_LIBCLANG_SO="${SYSTEM_LIBCLANG_PATH}/lib/libclang.so")
++   endif()
++   include_directories(SYSTEM ${SYSTEM_LIBCLANG_PATH}/include)
++endif()
++
+ # link dependencies
+ target_link_libraries(rstudio-core
+    rstudio-shared-core
+--- a/src/cpp/core/include/core/libclang/LibClang.hpp
++++ b/src/cpp/core/include/core/libclang/LibClang.hpp
+@@ -36,6 +36,9 @@
+ 
+ #include "clang-c/Index.h"
+ #include "clang-c/CXCompilationDatabase.h"
++#ifdef SYSTEM_LIBCLANG_SO
++#include "clang-c/Documentation.h"
++#endif
+ 
+ namespace rstudio {
+ namespace core {
+--- a/src/cpp/core/libclang/LibClang.cpp
++++ b/src/cpp/core/libclang/LibClang.cpp
+@@ -89,14 +89,13 @@ std::vector<std::string> systemClangVersions()
+ #elif defined(__unix__)
+    // default set of versions
+    clangVersions = {
+-      "/usr/lib/libclang.so",
+-      "/usr/lib/llvm/libclang.so",
+-      "/usr/lib64/libclang.so",
+-      "/usr/lib64/llvm/libclang.so",
++# ifdef SYSTEM_LIBCLANG_SO
++      SYSTEM_LIBCLANG_SO,
++# endif
+    };
+    
+    // iterate through the set of available 'llvm' directories
+-   for (const char* prefix : {"/usr/lib", "/usr/lib64"})
++   for (const char* prefix : {"@GENTOO_PORTAGE_EPREFIX@/usr/lib/llvm", "@GENTOO_PORTAGE_EPREFIX@/usr/lib64/llvm"})
+    {
+       FilePath prefixPath(prefix);
+       if (!prefixPath.exists())
+@@ -108,9 +107,12 @@ std::vector<std::string> systemClangVersions()
+          LOG_ERROR(error);
+ 
+       // generate a path for each 'llvm' directory
+-      for (const FilePath& path : directories)
+-         if (path.getFilename().find("llvm") == 0)
+-            clangVersions.push_back(path.completePath("lib/libclang.so.1").getAbsolutePath());
++      for (const FilePath& path : directories){
++         if (path.completePath("lib64/libclang.so").exists())
++            clangVersions.push_back(path.completePath("lib64/libclang.so").getAbsolutePath());
++         if (path.completePath("lib/libclang.so").exists())
++            clangVersions.push_back(path.completePath("lib/libclang.so").getAbsolutePath());
++      }
+    }
+ #endif
+    
+--- a/src/cpp/session/CMakeLists.txt
++++ b/src/cpp/session/CMakeLists.txt
+@@ -398,6 +398,10 @@ set(SESSION_SOURCE_FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/SessionAddins.cpp"
+ )
+ 
++if(DEFINED SYSTEM_LIBCLANG_PATH)
++   include_directories(SYSTEM ${SYSTEM_LIBCLANG_PATH}/include)
++endif()
++
+ # platform specific source files
+ if(UNIX)
+    set(SESSION_SOURCE_FILES ${SESSION_SOURCE_FILES}
