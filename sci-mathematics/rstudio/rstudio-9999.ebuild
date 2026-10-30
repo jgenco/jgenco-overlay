@@ -7,12 +7,12 @@ LLVM_OPTIONAL=1
 inherit cmake java-pkg-2 java-ant-2 llvm-r2 multiprocessing npm optfeature pam
 inherit qmake-utils prefix xdg-utils
 
-P_PREBUILT="${PN}-2026.09.0.174"
+P_PREBUILT="${PN}-2026.10.1.239"
 #DAILY_COMMIT=""
-ELECTRON_VERSION="42.11.1"
-QUARTO_COMMIT="828ae28e53b796fb95a33bd7f3c7c109e0709649"
-QUARTO_BRANCH="release/rstudio-autumn-hawkbit"
-QUARTO_DATE="20260803"
+ELECTRON_VERSION="43.8.1"
+QUARTO_COMMIT="2d5a23d918079ce38f584a31b4639aa769379d64"
+QUARTO_BRANCH="release/rstudio-blue-mistflower"
+QUARTO_DATE="20260911"
 QUARTO_CLI_VER="1.10.18"
 GWT_VERSION="2.12.2-autumn-hawkbit"
 MATHJAX4_VER="4.1.3"
@@ -263,18 +263,16 @@ BDEPEND="
 	)
 "
 PATCHES=(
-	"${FILESDIR}/${PN}_cmake4.patch"
-	"${FILESDIR}/${PN}-2026.09.0.174-cmake-bundled-dependencies.patch"
+	"${FILESDIR}/${PN}-2026.10.1.239-cmake-bundled-dependencies.patch"
 	"${FILESDIR}/${PN}-2026.04.0.526-resource-path.patch"
 	"${FILESDIR}/${PN}-2024.04.0.735-server-paths.patch"
-	"${FILESDIR}/${PN}-2024.12.0.467-package-build.patch"
 	"${FILESDIR}/${PN}-2022.07.0.548-quarto-version.patch"
 	"${FILESDIR}/${PN}-2025.09.0.387-node_electron_cmake.patch"
 	"${FILESDIR}/${PN}-2022.12.0.353-add-support-for-RapidJSON.patch"
-	"${FILESDIR}/${PN}-2022.12.0.353-system-clang.patch"
+	"${FILESDIR}/${PN}-2026.10.1.239-system-clang.patch"
 	"${FILESDIR}/${PN}-2024.12.0.467-disable-panmirror.patch"
-	"${FILESDIR}/${PN}-2026.01.0.392-copilot.patch"
-	"${FILESDIR}/${PN}-2026.08.1.195-postback.patch"
+	"${FILESDIR}/${PN}-2026.10.1.239-copilot.patch"
+	"${FILESDIR}/${PN}-2026.10.1.239-postback.patch"
 	"${FILESDIR}/${PN}-clang.patch"
 	"${FILESDIR}/${PN}-2026.08.1.195-yauzl.patch"
 )
@@ -455,12 +453,19 @@ src_prepare() {
 		#headers are missing std:: -  clang errors
 		sed -Ei "s/([^:])nullptr_t/\1std::nullptr_t/g" \
 			"${WORKDIR}/.electron-gyp/${ELECTRON_VERSION}/include/node/"v8-{object,template}.h || die
-		PATCHES+=( "${S}/src/node/desktop-build-x86_64/rstudio-yargs_fix.patch")
+		PATCHES+=( "${S}/src/node/desktop-build-x86_64/rstudio-electron_fix.patch")
 	elif use qt;then
 		cp -a "${WORKDIR}/rstudio-qt-old-${QT6_HASH}/src/cpp/desktop" "${S}/src/cpp/desktop" || die
-		PATCHES+=( "${WORKDIR}/rstudio-qt-old-${QT6_HASH}/patches/rstudio-2024.07.0.267-restore-qt.patch")
+		PATCHES+=(
+			"${WORKDIR}/rstudio-qt-old-${QT6_HASH}/patches/rstudio-2024.07.0.267-restore-qt.patch"
+			"${FILESDIR}/${PN}-qt-rename.patch"
+		)
 	fi
-	sed "s/NO_DEFAULT_PATH//" -i src/node/CMakeNodeTools.txt || die
+
+
+	sed -i "s/NO_DEFAULT_PATH//" src/node/CMakeNodeTools.txt || die
+	sed -i '/Boost_USE_STATIC_LIBS/d' src/cpp/CMakeLists.txt || die
+	sed -i 's#${CMAKE_INSTALL_PREFIX}/##' src/gwt/CMakeLists.txt || die
 
 	#fix path rstudio bin path from "${EPREFIX}/usr/rstudio" to "${EPREFIX}/usr/bin/rstudio"
 	#NOTE: the actual bin is "${EPREFIX}/usr/share/rstudio/rstudio" but we symlink in src_install
@@ -679,7 +684,6 @@ src_install() {
 	fi
 	if use electron;then
 		mkdir -p "${ED}/usr/bin"
-		dosym -r /usr/share/${PN}/rstudio /usr/bin/rstudio
 		dodoc "${ED}/usr/share/rstudio/"{LICENSE,LICENSES.chromium.html}
 		rm "${ED}/usr/share/rstudio/"{LICENSE,LICENSES.chromium.html} || die
 	fi
