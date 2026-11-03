@@ -9,7 +9,7 @@ inherit qmake-utils prefix xdg-utils
 
 P_PREBUILT="${PN}-2026.09.0.174"
 #DAILY_COMMIT=""
-ELECTRON_VERSION="42.11.1"
+ELECTRON_VERSION="42.11.16"
 QUARTO_COMMIT="828ae28e53b796fb95a33bd7f3c7c109e0709649"
 QUARTO_BRANCH="release/rstudio-autumn-hawkbit"
 QUARTO_DATE="20260803"
@@ -129,10 +129,10 @@ SRC_URI+="
 		rstudio-gwt-${GWT_VERSION}.tar.gz
 	https://rstudio-buildtools.s3.amazonaws.com/mathjax-${MATHJAX4_VER}.zip
 	panmirror? (
-		https://github.com/jgenco/jgenco-overlay-files/releases/download/${P_PREBUILT}/${P_PREBUILT}-panmirror-node_modules.tar.xz
+		https://github.com/jgenco/jgenco-overlay-files/releases/download/${P_PREBUILT}/${P_PREBUILT}-r1-panmirror-node_modules.tar.xz
 	)
 	electron? (
-		https://github.com/jgenco/jgenco-overlay-files/releases/download/${P_PREBUILT}/${P_PREBUILT}-electron-node_modules.tar.xz
+		https://github.com/jgenco/jgenco-overlay-files/releases/download/${P_PREBUILT}/${P_PREBUILT}-r1-electron-node_modules.tar.xz
 		https://github.com/electron/electron/releases/download/v${ELECTRON_VERSION}/electron-v${ELECTRON_VERSION}-linux-x64.zip
 		https://www.electronjs.org/headers/v${ELECTRON_VERSION}/node-v${ELECTRON_VERSION}-headers.tar.gz
 			-> electron-v${ELECTRON_VERSION}-headers.tar.gz
@@ -154,7 +154,7 @@ LICENSE="
 		|| ( BSD GPL-2 ) CC0-1.0 CC-BY-3.0 CC-BY-4.0 ISC MIT PYTHON Unlicense )
 "
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 
 IUSE="ai clang debug doc +electron panmirror qt quarto server test"
 REQUIRED_USE="!server? ( ^^ ( electron qt ) ) clang? ( ${LLVM_REQUIRED_USE} )"
@@ -333,7 +333,7 @@ src_unpack() {
 			mv quarto-${QUARTO_COMMIT} quarto || die
 		fi
 		cd quarto || die
-		unpack ${P_PREBUILT}-panmirror-node_modules.tar.xz
+		unpack ${P_PREBUILT}-r1-panmirror-node_modules.tar.xz
 		popd > /dev/null
 	fi
 
@@ -348,7 +348,7 @@ src_unpack() {
 		#prepare electron node_modules
 		mkdir "${S}/src/node/desktop-build-x86_64"
 		pushd "${S}/src/node/desktop-build-x86_64" > /dev/null|| die
-		unpack ${P_PREBUILT}-electron-node_modules.tar.xz
+		unpack ${P_PREBUILT}-r1-electron-node_modules.tar.xz
 		tar xaf "${DISTDIR}/yauzl-3.4.0.tgz" --strip-components=1 -C node_modules/yauzl || die
 		sed -i "s/npm ci && //" ../desktop/package.json || die
 		popd > /dev/null
@@ -455,7 +455,7 @@ src_prepare() {
 		#headers are missing std:: -  clang errors
 		sed -Ei "s/([^:])nullptr_t/\1std::nullptr_t/g" \
 			"${WORKDIR}/.electron-gyp/${ELECTRON_VERSION}/include/node/"v8-{object,template}.h || die
-		PATCHES+=( "${S}/src/node/desktop-build-x86_64/rstudio-yargs_fix.patch")
+		PATCHES+=( "${S}/src/node/desktop-build-x86_64/rstudio-electron_fix.patch")
 	elif use qt;then
 		cp -a "${WORKDIR}/rstudio-qt-old-${QT6_HASH}/src/cpp/desktop" "${S}/src/cpp/desktop" || die
 		PATCHES+=( "${WORKDIR}/rstudio-qt-old-${QT6_HASH}/patches/rstudio-2024.07.0.267-restore-qt.patch")
